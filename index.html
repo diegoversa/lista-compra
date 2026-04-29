@@ -31,11 +31,10 @@
     .setup-field label { display: block; font-size: 12px; color: var(--text3); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
     .setup-field input { width: 100%; padding: 10px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-family: 'DM Mono', monospace; font-size: 12px; background: var(--surface); color: var(--text); outline: none; }
     .setup-field input:focus { border-color: var(--accent); }
-    .btn-primary { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 4px; transition: background 0.15s; }
+    .btn-primary { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 4px; }
     .btn-primary:active { background: var(--accent-dark); }
-    .setup-help { font-size: 12px; color: var(--text3); line-height: 1.7; }
-    .setup-help a { color: var(--accent); }
     .error-msg { background: #fdecea; color: #c0392b; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 1rem; display: none; }
+    .setup-help { font-size: 12px; color: var(--text3); line-height: 1.7; }
 
     #app-screen { display: none; flex-direction: column; flex: 1; }
     .app-header { padding: 1.25rem 1.25rem 0; flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; }
@@ -48,14 +47,14 @@
 
     .scroll-area { flex: 1; overflow-y: auto; padding: 1rem 1.25rem 6rem; }
 
-    /* Scan button — triggers native camera via file input */
-    .scan-btn { width: 100%; padding: 15px 20px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 1rem; transition: background 0.2s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
-    .scan-btn:active { transform: scale(0.98); background: var(--accent-dark); }
-    #barcodeInput { display: none; }
+    input[type="file"] { display: none; }
+
+    .scan-btn { width: 100%; padding: 15px 20px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 1rem; -webkit-tap-highlight-color: transparent; }
+    .scan-btn:active { background: var(--accent-dark); }
 
     .input-row { display: flex; gap: 8px; margin-bottom: 1.25rem; }
-    .input-row input { flex: 1; padding: 12px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.2s; }
-    .input-row input:focus { border-color: var(--accent); }
+    .input-row input[type="text"] { flex: 1; padding: 12px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--surface); color: var(--text); outline: none; }
+    .input-row input[type="text"]:focus { border-color: var(--accent); }
     .input-row input::placeholder { color: var(--text3); }
     .add-btn { padding: 12px 16px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--text); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
     .add-btn:active { background: var(--surface2); }
@@ -64,10 +63,10 @@
     .count-pill { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 999px; font-family: 'DM Mono', monospace; }
 
     .item-list { list-style: none; }
-    .item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--surface); border-radius: var(--radius-sm); margin-bottom: 6px; border: 1px solid var(--border); transition: opacity 0.2s; }
+    .item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--surface); border-radius: var(--radius-sm); margin-bottom: 6px; border: 1px solid var(--border); }
     .item.checked { opacity: 0.45; }
     .item.checked .item-name { text-decoration: line-through; color: var(--text2); }
-    .check-circle { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+    .check-circle { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border2); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
     .check-circle.done { background: var(--accent); border-color: var(--accent); }
     .item-info { flex: 1; min-width: 0; }
     .item-name { font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -76,7 +75,7 @@
     .qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
     .qty-btn:active { background: var(--accent-light); }
     .qty-num { font-size: 13px; font-weight: 500; min-width: 18px; text-align: center; font-family: 'DM Mono', monospace; color: var(--text); }
-    .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px; border-radius: 6px; display: flex; align-items: center; -webkit-tap-highlight-color: transparent; }
+    .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px; display: flex; align-items: center; -webkit-tap-highlight-color: transparent; }
     .del-btn:active { color: var(--danger); }
 
     .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; line-height: 1.8; }
@@ -97,16 +96,16 @@
     .modal-sheet { background: var(--surface); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom)); }
     .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
     .modal-sub { font-size: 13px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 1rem; }
-    .modal-sheet input { width: 100%; padding: 12px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; background: var(--surface); color: var(--text); outline: none; margin-bottom: 12px; }
+    .modal-sheet input[type="text"] { width: 100%; padding: 12px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; background: var(--surface); color: var(--text); outline: none; margin-bottom: 12px; }
     .modal-sheet input:focus { border-color: var(--accent); }
     .modal-actions { display: flex; gap: 8px; }
     .modal-actions button { flex: 1; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; }
-    .modal-actions .mbtn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .modal-actions .mbtn-cancel { background: var(--surface2); color: var(--text2); }
+    .mbtn-primary { background: var(--accent); color: #fff; border-color: var(--accent) !important; }
+    .mbtn-cancel { background: var(--surface2); color: var(--text2); }
 
-    .scanning-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 150; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
-    .scanning-overlay.open { display: flex; }
-    .scanning-overlay p { color: #fff; font-size: 15px; }
+    .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 150; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
+    .loading-overlay.open { display: flex; }
+    .loading-overlay p { color: #fff; font-size: 15px; }
     .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #5ad4a0; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -122,7 +121,7 @@
     <div class="error-msg" id="setupError"></div>
     <div class="setup-field">
       <label>PROJECT ID</label>
-      <input type="text" id="projectId" placeholder="mi-lista-compra-12345" autocomplete="off" spellcheck="false"/>
+      <input type="text" id="projectId" placeholder="lista-compra-7baba" autocomplete="off" spellcheck="false"/>
     </div>
     <div class="setup-field">
       <label>API KEY</label>
@@ -134,9 +133,7 @@
     </div>
     <button class="btn-primary" id="connectBtn">Conectar y abrir lista</button>
   </div>
-  <div class="setup-help">
-    Comparte la misma <strong>sala</strong> con quien quieras para sincronizar la lista.
-  </div>
+  <div class="setup-help">Comparte la misma <strong>sala</strong> con quien quieras para sincronizar la lista.</div>
 </div>
 
 <div id="app-screen">
@@ -150,7 +147,6 @@
   <div class="scroll-area">
     <div style="height:1rem;"></div>
 
-    <!-- Input oculto: abre cámara nativa del iPhone con soporte de códigos de barras -->
     <input type="file" id="barcodeInput" accept="image/*" capture="environment"/>
 
     <button class="scan-btn" id="scanBtn">
@@ -190,9 +186,10 @@
   </div>
 </div>
 
+<!-- Modal nombre -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-sheet">
-    <div class="modal-title">Producto desconocido</div>
+    <div class="modal-title" id="modalTitle">Producto encontrado</div>
     <div class="modal-sub" id="modalBarcode"></div>
     <input type="text" id="modalInput" placeholder="Nombre del producto..." autocomplete="off"/>
     <div class="modal-actions">
@@ -202,45 +199,30 @@
   </div>
 </div>
 
-<div class="scanning-overlay" id="scanningOverlay">
+<div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <p>Leyendo código...</p>
+  <p id="loadingText">Buscando producto...</p>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/zxing-wasm@1.2.6/dist/iife/full/zxing_full.iife.min.js"></script>
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getDatabase, ref, onValue, set, remove, update, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const SETTINGS_KEY = 'lista_compra_settings_v1';
-  const BARCODE_DB = {
-    '8410376045611': { name: 'Cola Cao', brand: 'Cola Cao' },
-    '8000500310427': { name: 'Nutella 400g', brand: 'Ferrero' },
-    '5449000000439': { name: 'Coca-Cola 1.5L', brand: 'Coca-Cola' },
-    '5449000131805': { name: 'Fanta Naranja 1.5L', brand: 'Coca-Cola' },
-    '8437004151027': { name: 'Aceite Oliva Virgen Extra', brand: 'Carbonell' },
-    '8410188030048': { name: 'Leche entera 1L', brand: 'Puleva' },
-    '5000159407236': { name: 'Kit Kat', brand: 'Nestlé' },
-    '8001841504483': { name: 'Pringles Original', brand: 'Pringles' },
-    '8410100010066': { name: 'Zumo Don Simón', brand: 'Don Simón' },
-    '8480000102317': { name: 'Galletas María Hacendado', brand: 'Hacendado' },
-    '8410063004439': { name: 'Pasta espaguetis Gallo', brand: 'Gallo' },
-    '8437008496706': { name: 'Atún en aceite de oliva', brand: 'Calvo' },
-  };
-
   let db, listRef, roomName;
   let items = {};
   let pendingBarcode = '';
 
+  // ── Firebase setup ──────────────────────────────────────────
   const saved = (() => { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)); } catch { return null; } })();
   if (saved?.projectId && saved?.apiKey && saved?.roomId) connectFirebase(saved.projectId, saved.apiKey, saved.roomId);
 
   document.getElementById('connectBtn').addEventListener('click', () => {
     const projectId = document.getElementById('projectId').value.trim();
     const apiKey = document.getElementById('apiKey').value.trim();
-    const roomId = document.getElementById('roomId').value.trim().replace(/[^a-zA-Z0-9_-]/g,'') || 'familia';
+    const roomId = (document.getElementById('roomId').value.trim().replace(/[^a-zA-Z0-9_-]/g,'')) || 'familia';
     const err = document.getElementById('setupError');
     err.style.display = 'none';
     if (!projectId || !apiKey) { err.textContent = 'Rellena el Project ID y la API Key.'; err.style.display = 'block'; return; }
@@ -269,6 +251,123 @@
 
   function getRoom() { return roomName || 'familia'; }
 
+  // ── Producto lookup: Open Food Facts ────────────────────────
+  async function lookupBarcode(code) {
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,brands,product_name_es`);
+      const data = await res.json();
+      if (data.status === 1 && data.product) {
+        const p = data.product;
+        const name = p.product_name_es || p.product_name || '';
+        const brand = p.brands ? p.brands.split(',')[0].trim() : '';
+        if (name) return { name, brand };
+      }
+    } catch {}
+    return null;
+  }
+
+  // ── Scan flow ────────────────────────────────────────────────
+  document.getElementById('scanBtn').addEventListener('click', () => {
+    document.getElementById('barcodeInput').click();
+  });
+
+  document.getElementById('barcodeInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+
+    showLoading('Leyendo código de barras...');
+
+    // Decode barcode from image using canvas + ZXing
+    const code = await decodeBarcode(file);
+
+    if (!code) {
+      hideLoading();
+      openModal('', '', 'No se detectó el código. Escribe el nombre:');
+      return;
+    }
+
+    showLoading('Buscando producto...');
+    const product = await lookupBarcode(code);
+    hideLoading();
+
+    if (product) {
+      // Found in Open Food Facts — confirm and add
+      openModal(code, product.brand, `¿Añadir "${product.name}"?`, product.name);
+    } else {
+      // Not found — ask user
+      openModal(code, '', `Código: ${code}\nProducto no encontrado. ¿Cómo se llama?`);
+    }
+  });
+
+  async function decodeBarcode(file) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        try {
+          const MAX = 1600;
+          let w = img.width, h = img.height;
+          if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+          if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+
+          // Try multiple crops/scales for better detection
+          const attempts = [
+            () => ctx.getImageData(0, 0, w, h),
+            () => { // center crop
+              const cx = Math.floor(w*0.1), cy = Math.floor(h*0.25);
+              const cw = Math.floor(w*0.8), ch = Math.floor(h*0.5);
+              return ctx.getImageData(cx, cy, cw, ch);
+            }
+          ];
+
+          for (const attempt of attempts) {
+            try {
+              const imageData = attempt();
+              const lum = new ZXing.RGBLuminanceSource(imageData.data, imageData.width, imageData.height);
+              const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+              const result = new ZXing.MultiFormatReader().decode(bmp);
+              resolve(result.getText()); return;
+            } catch {}
+          }
+          resolve(null);
+        } catch { URL.revokeObjectURL(url); resolve(null); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+
+  // ── Modal ────────────────────────────────────────────────────
+  function openModal(barcode, brand = '', subtitle = '', prefill = '') {
+    pendingBarcode = barcode;
+    window._pendingBrand = brand;
+    document.getElementById('modalTitle').textContent = prefill ? '¿Es este producto?' : 'Añadir producto';
+    document.getElementById('modalBarcode').textContent = subtitle;
+    document.getElementById('modalInput').value = prefill;
+    document.getElementById('modalOverlay').classList.add('open');
+    setTimeout(() => { const inp = document.getElementById('modalInput'); inp.focus(); if (!prefill) inp.select(); }, 150);
+  }
+  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); pendingBarcode = ''; }
+
+  document.getElementById('modalConfirm').addEventListener('click', () => {
+    const v = document.getElementById('modalInput').value.trim();
+    if (v) { addItem(v, window._pendingBrand || '', pendingBarcode); closeModal(); }
+  });
+  document.getElementById('modalInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); });
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) closeModal(); });
+
+  // ── Loading overlay ──────────────────────────────────────────
+  function showLoading(msg) { document.getElementById('loadingText').textContent = msg; document.getElementById('loadingOverlay').classList.add('open'); }
+  function hideLoading() { document.getElementById('loadingOverlay').classList.remove('open'); }
+
+  // ── Data ops ─────────────────────────────────────────────────
   function addItem(name, brand = '', barcode = '') {
     name = name.trim(); if (!name) return;
     const existing = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
@@ -285,8 +384,7 @@
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const key = btn.dataset.id, action = btn.dataset.action;
-    const item = items[key];
-    if (!item) return;
+    const item = items[key]; if (!item) return;
     const iref = ref(db, `listas/${getRoom()}/items/${key}`);
     if (action === 'check') update(iref, { checked: !item.checked });
     if (action === 'plus') update(iref, { qty: (item.qty||1)+1 });
@@ -308,103 +406,7 @@
     if (confirm('¿Vaciar toda la lista para todos?')) set(listRef, null);
   });
 
-  // --- Escáner con imagen de cámara (compatible iPhone Safari) ---
-  document.getElementById('scanBtn').addEventListener('click', () => {
-    document.getElementById('barcodeInput').click();
-  });
-
-  document.getElementById('barcodeInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    e.target.value = '';
-    document.getElementById('scanningOverlay').classList.add('open');
-    try {
-      // Usar ZXing WASM para leer el código desde la imagen
-      const buffer = await file.arrayBuffer();
-      const uint8 = new Uint8Array(buffer);
-      let code = null;
-
-      // Intentar con zxing-wasm si está disponible
-      if (typeof ZXingWasm !== 'undefined') {
-        try {
-          const reader = await ZXingWasm.createImageDecoderModule();
-          const results = await reader.readBarcodesFromImageData(uint8, { formats: ['EAN13','EAN8','UPC_A','UPC_E','Code128','Code39','ITF'] });
-          if (results?.length) code = results[0].text;
-        } catch {}
-      }
-
-      // Fallback: usar canvas + ZXing browser si no funcionó
-      if (!code) {
-        code = await readWithCanvas(file);
-      }
-
-      document.getElementById('scanningOverlay').classList.remove('open');
-
-      if (code) {
-        const product = BARCODE_DB[code];
-        if (product) addItem(product.name, product.brand, code);
-        else openModal(code);
-      } else {
-        // No se detectó código — pedir nombre directamente
-        openModal('no detectado');
-      }
-    } catch(err) {
-      document.getElementById('scanningOverlay').classList.remove('open');
-      toast('No se pudo leer el código');
-    }
-  });
-
-  async function readWithCanvas(file) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX = 1200;
-        let w = img.width, h = img.height;
-        if (w > MAX) { h = h * MAX / w; w = MAX; }
-        if (h > MAX) { w = w * MAX / h; h = MAX; }
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(url);
-        try {
-          const imageData = ctx.getImageData(0, 0, w, h);
-          if (typeof ZXing !== 'undefined') {
-            const hints = new ZXing.DecodeHintType();
-            const reader = new ZXing.MultiFormatReader();
-            const luminanceSource = new ZXing.RGBLuminanceSource(imageData.data, w, h);
-            const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
-            try {
-              const result = reader.decode(binaryBitmap);
-              resolve(result.getText());
-            } catch { resolve(null); }
-          } else { resolve(null); }
-        } catch { resolve(null); }
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
-      img.src = url;
-    });
-  }
-
-  // --- Modal ---
-  function openModal(barcode) {
-    pendingBarcode = barcode;
-    document.getElementById('modalBarcode').textContent = barcode !== 'no detectado' ? `Código: ${barcode}` : 'No se detectó el código automáticamente';
-    document.getElementById('modalInput').value = '';
-    document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('modalInput').focus(), 100);
-  }
-  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); pendingBarcode = ''; }
-  document.getElementById('modalConfirm').addEventListener('click', () => {
-    const v = document.getElementById('modalInput').value.trim();
-    if (v) { addItem(v, '', pendingBarcode !== 'no detectado' ? pendingBarcode : ''); closeModal(); }
-  });
-  document.getElementById('modalInput').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('modalConfirm').click(); });
-  document.getElementById('modalCancel').addEventListener('click', () => { closeModal(); });
-  document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target===document.getElementById('modalOverlay')) closeModal(); });
-
-  // --- Render ---
+  // ── Render ───────────────────────────────────────────────────
   function render() {
     const all = Object.entries(items).map(([k,v])=>({...v,key:k})).sort((a,b)=>(a.ts||0)-(b.ts||0));
     const pending = all.filter(i=>!i.checked), checked = all.filter(i=>i.checked);
