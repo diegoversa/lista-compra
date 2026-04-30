@@ -259,6 +259,7 @@
     <button class="tbtn" id="clearchecked">Borrar tachados</button>
     <button class="tbtn danger" id="clearall">Vaciar</button>
   </div>
+  <button id="logoutbtn" style="position:fixed;top:10px;right:48px;background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;z-index:50;padding:4px 6px;">⚙️</button>
 </div>
 
 <!-- Modal producto -->
@@ -665,6 +666,12 @@ $('clearchecked').addEventListener('click',()=>{
   toast(`${d.length} eliminados`);
 });
 $('clearall').addEventListener('click',()=>{if(confirm('¿Vaciar la lista?'))set(ref(db,`listas/${room}/${curList}/items`),null);});
+$('logoutbtn').addEventListener('click',()=>{
+  if(confirm('¿Borrar configuración y volver a la pantalla de inicio?')){
+    ['lista_v4','lista_compra_v3','lista_compra_settings_v2','lista_compra_settings_v1'].forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  }
+});
 $('sharebtn').addEventListener('click',()=>{
   const s=JSON.parse(localStorage.getItem(SK)||'{}');
   const base=location.origin+location.pathname;
