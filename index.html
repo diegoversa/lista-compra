@@ -209,6 +209,7 @@
     <div class="tabs" id="tabs"></div>
     <button class="newtab" id="newtab">+</button>
     <div class="dot sync" id="dot"></div>
+    <button id="menubtn" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">☰</button>
   </div>
   <div class="progwrap" id="progwrap" style="display:none">
     <div class="proginfo"><span class="proglabel" id="proglabel"></span><span class="progpct" id="progpct"></span></div>
@@ -259,7 +260,7 @@
     <button class="tbtn" id="clearchecked">Borrar tachados</button>
     <button class="tbtn danger" id="clearall">Vaciar</button>
   </div>
-  <button id="logoutbtn" style="position:fixed;top:10px;right:48px;background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;z-index:50;padding:4px 6px;">⚙️</button>
+
 </div>
 
 <!-- Modal producto -->
@@ -301,6 +302,72 @@
       <button class="scancel" id="nlcancel">Cancelar</button>
       <button class="sok" id="nlok">Crear</button>
     </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;" ></div>
+<div id="sidebar" style="position:fixed;top:0;right:-320px;width:300px;height:100dvh;background:var(--surface);z-index:401;transition:right .25s ease;display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.15);overflow-y:auto;">
+  <div style="padding:1.25rem 1rem .75rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+    <div style="font-size:16px;font-weight:500;">⚙️ Ajustes</div>
+    <button id="sidebar-close" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);width:32px;height:32px;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+
+  <!-- Sala info -->
+  <div style="padding:1rem;border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.75rem;">Info de la sala</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.6rem;">
+      <span style="font-size:20px;">🏠</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;" id="si-room">-</div>
+        <div style="font-size:11px;color:var(--text3);">Sala</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.6rem;">
+      <span style="font-size:20px;">👤</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;" id="si-user">-</div>
+        <div style="font-size:11px;color:var(--text3);">Tu nombre</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">📋</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;" id="si-list">-</div>
+        <div style="font-size:11px;color:var(--text3);">Lista activa</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quién ha añadido -->
+  <div style="padding:1rem;border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.75rem;">Participantes</div>
+    <div id="si-users" style="display:flex;flex-direction:column;gap:.5rem;"></div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div style="padding:1rem;border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.75rem;">Esta lista</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;" id="si-stats"></div>
+  </div>
+
+  <!-- Compartir -->
+  <div style="padding:1rem;border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.75rem;">Compartir lista</div>
+    <button id="si-share" style="width:100%;padding:11px;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-light);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:.5rem;">📤 Compartir por WhatsApp</button>
+    <div style="font-size:12px;color:var(--text3);line-height:1.5;">El enlace abre la app directamente con tu sala. Solo tendrán que poner su nombre.</div>
+  </div>
+
+  <!-- Acciones -->
+  <div style="padding:1rem;border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.75rem;">Acciones</div>
+    <button id="si-clearcomplete" style="width:100%;padding:10px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-bottom:.5rem;">🗑 Borrar productos tachados</button>
+    <button id="si-clearall" style="width:100%;padding:10px;background:var(--surface2);color:var(--danger);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-bottom:.5rem;">⚠️ Vaciar lista completa</button>
+    <button id="si-logout" style="width:100%;padding:10px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">🔓 Cambiar de sala / cuenta</button>
+  </div>
+
+  <div style="padding:1rem;font-size:11px;color:var(--text3);text-align:center;line-height:1.6;">
+    Lista de la Compra<br>Hecho con ❤️ · Datos en Firebase
   </div>
 </div>
 
@@ -666,12 +733,7 @@ $('clearchecked').addEventListener('click',()=>{
   toast(`${d.length} eliminados`);
 });
 $('clearall').addEventListener('click',()=>{if(confirm('¿Vaciar la lista?'))set(ref(db,`listas/${room}/${curList}/items`),null);});
-$('logoutbtn').addEventListener('click',()=>{
-  if(confirm('¿Borrar configuración y volver a la pantalla de inicio?')){
-    ['lista_v4','lista_compra_v3','lista_compra_settings_v2','lista_compra_settings_v1'].forEach(k=>localStorage.removeItem(k));
-    location.reload();
-  }
-});
+
 $('sharebtn').addEventListener('click',()=>{
   const s=JSON.parse(localStorage.getItem(SK)||'{}');
   const base=location.origin+location.pathname;
@@ -763,6 +825,117 @@ function mkItem(item){
     </button>`;
   return li;
 }
+
+// ── Sidebar ──────────────────────────────────────────────────
+function openSidebar(){
+  // Update info
+  $('si-room').textContent=room||'-';
+  $('si-user').textContent=user||'-';
+  $('si-list').textContent=curList||'-';
+
+  // Participants - who added items
+  const userMap={};
+  Object.values(items).forEach(item=>{
+    const u=item.addedBy||'?';
+    if(!userMap[u])userMap[u]={count:0,checked:0};
+    userMap[u].count++;
+    if(item.checked)userMap[u].checked++;
+  });
+  const usersEl=$('si-users');
+  usersEl.innerHTML='';
+  if(!Object.keys(userMap).length){
+    usersEl.innerHTML='<div style="font-size:13px;color:var(--text3);">Nadie ha añadido productos aún</div>';
+  } else {
+    Object.entries(userMap).sort((a,b)=>b[1].count-a[1].count).forEach(([u,d])=>{
+      const col=ucolor(u);
+      const ini=u.charAt(0).toUpperCase();
+      const div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:10px;';
+      div.innerHTML=`
+        <div style="width:32px;height:32px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;">${ini}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;">${esc(u)}${u===user?' (tú)':''}</div>
+          <div style="font-size:11px;color:var(--text3);">${d.count} producto${d.count>1?'s':''} · ${d.checked} tachado${d.checked!==1?'s':''}</div>
+        </div>`;
+      usersEl.appendChild(div);
+    });
+  }
+
+  // Stats
+  const all=Object.values(items);
+  const pending=all.filter(i=>!i.checked);
+  const done=all.filter(i=>i.checked);
+  const total=all.reduce((s,i)=>s+(i.qty||1),0);
+  const cats=new Set(all.map(i=>i.cat||'otros')).size;
+  $('si-stats').innerHTML=`
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:.75rem;text-align:center;">
+      <div style="font-size:22px;font-weight:500;color:var(--accent);">${pending.length}</div>
+      <div style="font-size:11px;color:var(--text3);">pendientes</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:.75rem;text-align:center;">
+      <div style="font-size:22px;font-weight:500;color:var(--accent);">${done.length}</div>
+      <div style="font-size:11px;color:var(--text3);">en el carro</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:.75rem;text-align:center;">
+      <div style="font-size:22px;font-weight:500;color:var(--accent);">${total}</div>
+      <div style="font-size:11px;color:var(--text3);">unidades</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:.75rem;text-align:center;">
+      <div style="font-size:22px;font-weight:500;color:var(--accent);">${cats}</div>
+      <div style="font-size:11px;color:var(--text3);">categorías</div>
+    </div>`;
+
+  $('sidebar').style.right='0';
+  $('sidebar-overlay').style.display='block';
+  document.body.style.overflow='hidden';
+}
+
+function closeSidebar(){
+  $('sidebar').style.right='-320px';
+  $('sidebar-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+
+$('menubtn').addEventListener('click',openSidebar);
+$('sidebar-close').addEventListener('click',closeSidebar);
+$('sidebar-overlay').addEventListener('click',closeSidebar);
+
+$('si-share').addEventListener('click',()=>{
+  const s=JSON.parse(localStorage.getItem(SK)||'{}');
+  const base=location.origin+location.pathname;
+  const url=`${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
+  const text=`🛒 Lista de la compra compartida
+Sala: ${room} · ${curList}
+
+Entra directamente:
+${url}`;
+  if(navigator.share)navigator.share({title:'Lista de la compra',text,url});
+  else navigator.clipboard.writeText(text).then(()=>toast('Enlace copiado ✓'));
+  closeSidebar();
+});
+
+$('si-clearcomplete').addEventListener('click',()=>{
+  const d=Object.entries(items).filter(([,v])=>v.checked);
+  d.forEach(([k])=>remove(ref(db,`listas/${room}/${curList}/items/${k}`)));
+  toast(`${d.length} eliminados`);
+  closeSidebar();
+});
+
+$('si-clearall').addEventListener('click',()=>{
+  if(confirm('¿Vaciar la lista completa?')){
+    set(ref(db,`listas/${room}/${curList}/items`),null);
+    closeSidebar();
+  }
+});
+
+$('si-logout').addEventListener('click',()=>{
+  if(confirm('¿Cambiar de sala? Se borrará la configuración guardada.')){
+    ['lista_v4','lista_compra_v3','lista_compra_settings_v2','lista_compra_settings_v1'].forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  }
+});
+
+// Also update logout button handler (old one removed)
 </script>
 </body>
 </html>
