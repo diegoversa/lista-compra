@@ -466,24 +466,25 @@ function connectFirebase(p,k,r,u){
 
 // ── Online/offline detection ─────────────────────────────────
 function setupOnlineDetection(){
-  function update(){
-    isOnline=navigator.onLine;
-    document.getElementById('offlineBanner').classList.toggle('show',!isOnline);
-    document.getElementById('syncDot').className='sync-dot '+(isOnline?'online':'offline');
-    if(isOnline&&offlineQueue.length){flushQueue();}
-  }
-  window.addEventListener('online',update);
-  window.addEventListener('offline',update);
-  update();
+  window.addEventListener('online',()=>{
+    isOnline=true;
+    document.getElementById('offlineBanner').classList.remove('show');
+    if(offlineQueue.length) flushQueue();
+  });
+  window.addEventListener('offline',()=>{
+    isOnline=false;
+    document.getElementById('offlineBanner').classList.add('show');
+  });
+  // Always start as online - navigator.onLine is unreliable
+  isOnline=true;
 }
 
 function flushQueue(){
-  while(offlineQueue.length){
-    const op=offlineQueue.shift();
-    op();
-  }
-  toast(`${offlineQueue.length===0?'Sincronizado ✓':''}`);
+  const ops=[...offlineQueue]; offlineQueue=[];
+  ops.forEach(fn=>{try{fn();}catch{}});
+  toast('Sincronizado ✓');
 }
+
 
 // ── Lists ────────────────────────────────────────────────────
 function renderListTabs(){
@@ -679,13 +680,14 @@ document.getElementById('manualInput').addEventListener('keydown',e=>{if(e.key==
 
 document.addEventListener('click',e=>{
   const btn=e.target.closest('[data-action]');if(!btn)return;
+  e.stopPropagation();
   const key=btn.dataset.id,action=btn.dataset.action,item=items[key];if(!item)return;
   const iref=ref(db,`listas/${roomName}/${currentList}/items/${key}`);
   if(action==='check')doOp(()=>update(iref,{checked:!item.checked}));
   if(action==='plus')doOp(()=>update(iref,{qty:(item.qty||1)+1}));
   if(action==='minus'){if((item.qty||1)>1)doOp(()=>update(iref,{qty:item.qty-1}));else doOp(()=>remove(iref));}
   if(action==='del')doOp(()=>remove(iref));
-});
+},true);
 
 // Inline qty edit
 document.addEventListener('dblclick',e=>{
@@ -706,6 +708,7 @@ document.addEventListener('dblclick',e=>{
 
 // Inline name edit (tap on name)
 document.addEventListener('click',e=>{
+  if(e.target.closest('[data-action]'))return;
   const nameEl=e.target.closest('.item-info');if(!nameEl)return;
   const li=nameEl.closest('.item');if(!li)return;
   const key=li.dataset.key;if(!key||!items[key])return;
