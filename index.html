@@ -255,11 +255,7 @@
     <div id="empty" class="empty" style="display:none"><span class="emptyicon">🧺</span>La lista está vacía.<br>Escanea o escribe un producto.</div>
     <div id="container"></div>
   </div>
-  <div class="toolbar" id="toolbar">
-    <button class="tbtn sharebtn" id="sharebtn">📤 Compartir</button>
-    <button class="tbtn" id="clearchecked">Borrar tachados</button>
-    <button class="tbtn danger" id="clearall">Vaciar</button>
-  </div>
+  <div class="toolbar" id="toolbar" style="display:none!important;"></div>
 
 </div>
 
@@ -470,6 +466,8 @@ function connect(p,k,r,u){
     $('app').style.display='flex';
     if(il&&!lists.includes(il)){lists.push(il);localStorage.setItem(LK,JSON.stringify(lists));}
     if(il) curList=il;
+    // Register presence
+    registerPresence(r,u);
     renderTabs();
     subscribe(curList);
     // Online/offline
@@ -826,6 +824,41 @@ function mkItem(item){
   return li;
 }
 
+// ── Presence & Admin ─────────────────────────────────────────
+const ADMIN_KEY='lista_admin';
+
+function isAdmin(){
+  const s=JSON.parse(localStorage.getItem(SK)||'{}');
+  return s.userName===getAdminName();
+}
+
+function getAdminName(){
+  try{return localStorage.getItem(ADMIN_KEY+':'+room)||null;}catch{return null;}
+}
+
+function registerPresence(r,u){
+  // First person to connect becomes admin
+  const adminKey=ADMIN_KEY+':'+r;
+  if(!localStorage.getItem(adminKey)){
+    localStorage.setItem(adminKey,u);
+  }
+  // Write presence to Firebase
+  const presRef=ref(db,`listas/${r}/_presence/${u.replace(/[^a-zA-Z0-9]/g,'_')}`);
+  set(presRef,{name:u,lastSeen:Date.now(),isAdmin:localStorage.getItem(adminKey)===u});
+  // Update lastSeen every 30s
+  setInterval(()=>set(presRef,{name:u,lastSeen:Date.now(),isAdmin:localStorage.getItem(adminKey)===u}),30000);
+  // Listen for banned users
+  onValue(ref(db,`listas/${r}/_banned`),snap=>{
+    const banned=snap.val()||{};
+    const myKey=u.replace(/[^a-zA-Z0-9]/g,'_');
+    if(banned[myKey]){
+      alert('Has sido expulsado de la sala por el administrador.');
+      ['lista_v4','lista_compra_v3','lista_compra_settings_v2','lista_compra_settings_v1'].forEach(k=>localStorage.removeItem(k));
+      location.reload();
+    }
+  });
+}
+
 // ── Sidebar ──────────────────────────────────────────────────
 function openSidebar(){
   // Update info
@@ -833,33 +866,93 @@ function openSidebar(){
   $('si-user').textContent=user||'-';
   $('si-list').textContent=curList||'-';
 
-  // Participants - who added items
+  // Participants - from presence + items
   const userMap={};
   Object.values(items).forEach(item=>{
     const u=item.addedBy||'?';
-    if(!userMap[u])userMap[u]={count:0,checked:0};
+    if(!userMap[u])userMap[u]={count:0,checked:0,lastSeen:0};
     userMap[u].count++;
     if(item.checked)userMap[u].checked++;
   });
   const usersEl=$('si-users');
   usersEl.innerHTML='';
-  if(!Object.keys(userMap).length){
-    usersEl.innerHTML='<div style="font-size:13px;color:var(--text3);">Nadie ha añadido productos aún</div>';
-  } else {
-    Object.entries(userMap).sort((a,b)=>b[1].count-a[1].count).forEach(([u,d])=>{
+  const adminName=getAdminName();
+  const amAdmin=isAdmin();
+
+  // Read presence from Firebase
+  onValue(ref(db,`listas/${room}/_presence`),snap=>{
+    const presence=snap.val()||{};
+    const banned={};
+    onValue(ref(db,`listas/${room}/_banned`),bsnap=>{
+      const b=bsnap.val()||{};
+      Object.assign(banned,b);
+    },{onlyOnce:true});
+
+    // Merge presence with item counts
+    const allUsers={...userMap};
+    Object.values(presence).forEach(p=>{
+      if(!allUsers[p.name])allUsers[p.name]={count:0,checked:0};
+      allUsers[p.name].lastSeen=p.lastSeen||0;
+      allUsers[p.name].online=(Date.now()-p.lastSeen)<60000;
+    });
+
+    usersEl.innerHTML='';
+    if(!Object.keys(allUsers).length){
+      usersEl.innerHTML='<div style="font-size:13px;color:var(--text3);">Nadie ha participado aún</div>';
+      return;
+    }
+    Object.entries(allUsers).sort((a,b)=>b[1].count-a[1].count).forEach(([u,d])=>{
       const col=ucolor(u);
       const ini=u.charAt(0).toUpperCase();
+      const isMe=u===user;
+      const isAdminUser=u===adminName;
+      const bannedKey=u.replace(/[^a-zA-Z0-9]/g,'_');
+      const isBanned=!!banned[bannedKey];
+
       const div=document.createElement('div');
-      div.style.cssText='display:flex;align-items:center;gap:10px;';
+      div.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 0;';
       div.innerHTML=`
-        <div style="width:32px;height:32px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;">${ini}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:500;">${esc(u)}${u===user?' (tú)':''}</div>
-          <div style="font-size:11px;color:var(--text3);">${d.count} producto${d.count>1?'s':''} · ${d.checked} tachado${d.checked!==1?'s':''}</div>
-        </div>`;
+        <div style="position:relative;flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;">${ini}</div>
+          ${d.online?`<div style="position:absolute;bottom:1px;right:1px;width:9px;height:9px;background:#1a6b4a;border-radius:50%;border:2px solid var(--surface);"></div>`:''}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:5px;">
+            ${esc(u)}
+            ${isMe?'<span style="font-size:10px;background:var(--accent-light);color:var(--accent);padding:1px 6px;border-radius:999px;">tú</span>':''}
+            ${isAdminUser?'<span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:999px;">admin</span>':''}
+            ${isBanned?'<span style="font-size:10px;background:#fdecea;color:#c0392b;padding:1px 6px;border-radius:999px;">expulsado</span>':''}
+          </div>
+          <div style="font-size:11px;color:var(--text3);">${d.count} producto${d.count!==1?'s':''} añadido${d.count!==1?'s':''}${d.online?' · en línea':''}</div>
+        </div>
+        ${amAdmin&&!isMe?`<button data-banuser="${esc(u)}" style="padding:5px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:${isBanned?'var(--accent-light)':'#fdecea'};color:${isBanned?'var(--accent)':'var(--danger)'};font-size:12px;cursor:pointer;flex-shrink:0;">${isBanned?'Readmitir':'Echar'}</button>`:''}`;
       usersEl.appendChild(div);
     });
-  }
+
+    // Ban/unban handlers
+    usersEl.querySelectorAll('[data-banuser]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const targetUser=btn.dataset.banuser;
+        const targetKey=targetUser.replace(/[^a-zA-Z0-9]/g,'_');
+        const banRef=ref(db,`listas/${room}/_banned/${targetKey}`);
+        // Check if already banned
+        onValue(banRef,snap=>{
+          if(snap.val()){
+            // Unban
+            remove(banRef);
+            toast(`${targetUser} readmitido`);
+          } else {
+            // Ban
+            if(confirm(`¿Echar a ${targetUser} de la sala?`)){
+              set(banRef,{name:targetUser,bannedAt:Date.now(),bannedBy:user});
+              toast(`${targetUser} expulsado`);
+            }
+          }
+          openSidebar(); // refresh
+        },{onlyOnce:true});
+      });
+    });
+  },{onlyOnce:true});
 
   // Stats
   const all=Object.values(items);
