@@ -493,6 +493,23 @@ function renderListTabs(){
     btn.className='list-tab'+(l===currentList?' active':'');
     btn.textContent=l;
     btn.addEventListener('click',()=>{if(l!==currentList)subscribeToList(l);});
+    // Long press to delete
+    let pressTimer;
+    btn.addEventListener('touchstart',()=>{
+      pressTimer=setTimeout(()=>{
+        if(lists.length<=1){toast('No puedes borrar la única lista');return;}
+        if(confirm(`¿Borrar la lista "${l}"? Se eliminarán todos sus productos.`)){
+          doOp(()=>set(ref(db,`listas/${roomName}/${l}`),null));
+          lists=lists.filter(x=>x!==l);
+          localStorage.setItem(LISTS_KEY,JSON.stringify(lists));
+          if(currentList===l) subscribeToList(lists[0]);
+          else renderListTabs();
+          toast(`Lista "${l}" eliminada`);
+        }
+      },600);
+    },{passive:true});
+    btn.addEventListener('touchend',()=>clearTimeout(pressTimer));
+    btn.addEventListener('touchmove',()=>clearTimeout(pressTimer));
     sel.appendChild(btn);
   });
 }
