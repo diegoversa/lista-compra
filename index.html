@@ -417,14 +417,24 @@ function connect(p,k,r,u){
 function subscribe(listName){
   curList=listName; renderTabs();
   $('dot').className='dot sync';
-  onValue(ref(db,`listas/${room}/${listName}/items`),snap=>{
+  $('sub').textContent='Conectando...';
+  const dbRef=ref(db,`listas/${room}/${listName}/items`);
+  onValue(dbRef,snap=>{
     items=snap.val()||{};
     $('dot').className='dot ok';
     render();
   },err=>{
     $('dot').className='dot err';
-    toast('Error Firebase: '+err.message);
+    $('sub').textContent='Error: '+err.message;
+    toast('Error: '+err.message);
   });
+  // If still loading after 5s, show helpful message
+  setTimeout(()=>{
+    if($('dot').className.includes('sync')){
+      $('sub').textContent='Sin respuesta — revisa las reglas de Firebase';
+      $('dot').className='dot err';
+    }
+  },5000);
 }
 
 // ── List tabs ────────────────────────────────────────────────
