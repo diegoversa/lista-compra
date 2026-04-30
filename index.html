@@ -587,7 +587,13 @@ async function handleCode(code){
   showLoading('Buscando producto...');
   let name='',brand='',img='',offCat='';
   try{
-    const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`);
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),5000);
+    const res=await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`,
+      {signal:controller.signal}
+    );
+    clearTimeout(timeout);
     const data=await res.json();
     if(data.status===1&&data.product){
       name=data.product.product_name_es||data.product.product_name||'';
@@ -595,12 +601,15 @@ async function handleCode(code){
       img=data.product.image_front_small_url||'';
       offCat=(data.product.categories_tags||[]).join(' ');
     }
-  }catch{}
-  hideLoading();
+  }catch(err){
+    // timeout or network error — continue without product info
+  }finally{
+    hideLoading();
+  }
   pendingBrand=brand;pendingImg=img;pendingBarcode=code;
   const cat=guessCategory(name,offCat);
   if(name){openModal(code,`${brand?brand+' · ':''}${code}`,name,'¿Es este producto?',img,cat);}
-  else{openModal(code,`Código: ${code} — no encontrado`,'','Escribe el nombre','','otros');}
+  else{openModal(code,`Código: ${code}\nNo encontrado — escribe el nombre`,'','Añadir producto','','otros');}
 }
 
 // ── Autocomplete ─────────────────────────────────────────────
@@ -687,7 +696,7 @@ document.addEventListener('click',e=>{
   if(action==='plus')doOp(()=>update(iref,{qty:(item.qty||1)+1}));
   if(action==='minus'){if((item.qty||1)>1)doOp(()=>update(iref,{qty:item.qty-1}));else doOp(()=>remove(iref));}
   if(action==='del')doOp(()=>remove(iref));
-},true);
+});
 
 // Inline qty edit
 document.addEventListener('dblclick',e=>{
