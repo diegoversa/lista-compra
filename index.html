@@ -44,6 +44,31 @@
     .invbox h3{font-size:14px;font-weight:500;color:var(--acd);margin-bottom:3px;}
     .invbox p{font-size:13px;color:var(--tx2);}
 
+    /* ── WAITING SCREEN ── */
+    #waiting{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem 1.5rem;text-align:center;}
+    .wait-spinner{width:48px;height:48px;border:3px solid var(--acl);border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:1.5rem;}
+    #waiting h2{font-size:22px;font-weight:500;margin-bottom:.75rem;}
+    #waiting p{font-size:14px;color:var(--tx2);line-height:1.6;max-width:280px;}
+    .wait-cancel{margin-top:2rem;padding:10px 20px;border-radius:999px;border:1px solid var(--bd2);background:var(--sf);color:var(--tx2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;}
+
+    /* ── TUTORIAL ── */
+    #tutorial{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center;padding:1.5rem;}
+    #tutorial.on{display:flex;}
+    .tut-card{background:var(--sf);border-radius:var(--r);padding:1.5rem;max-width:340px;width:100%;}
+    .tut-steps{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;}
+    .tut-step{display:flex;align-items:flex-start;gap:12px;}
+    .tut-ico{font-size:24px;flex-shrink:0;margin-top:2px;}
+    .tut-step h3{font-size:14px;font-weight:500;margin-bottom:2px;}
+    .tut-step p{font-size:13px;color:var(--tx2);line-height:1.5;}
+    .tut-dots{display:flex;gap:6px;justify-content:center;margin-bottom:1.25rem;}
+    .tut-dot{width:7px;height:7px;border-radius:50%;background:var(--sf3);}
+    .tut-dot.on{background:var(--ac);}
+    .tut-nav{display:flex;gap:8px;}
+    .tut-nav button{flex:1;padding:11px;border-radius:var(--rs);border:1px solid var(--bd2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;}
+    .tut-next{background:var(--ac);color:#fff;border-color:var(--ac)!important;}
+    .tut-skip{background:var(--sf2);color:var(--tx2);}
+    .tut-header{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin-bottom:1rem;}
+
     /* ── APP ── */
     #app{display:none;flex-direction:column;flex:1;min-height:0;}
     .topbar{padding:.75rem 1rem 0;display:flex;align-items:center;gap:6px;}
@@ -51,10 +76,13 @@
     .tabs::-webkit-scrollbar{display:none;}
     .tab{padding:6px 14px;border-radius:999px;border:1px solid var(--bd2);font-size:13px;font-weight:500;background:var(--sf);color:var(--tx2);cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
     .tab.on{background:var(--ac);color:#fff;border-color:var(--ac);}
-    .icoBtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--bd2);background:var(--sf);color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+    .icoBtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--bd2);background:var(--sf);color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;position:relative;}
+    .notif-badge{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:9px;font-weight:500;width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;}
+    .notif-badge.on{display:flex;}
     .dot{width:7px;height:7px;border-radius:50%;background:var(--tx3);flex-shrink:0;transition:background .3s;}
     .dot.ok{background:#1a6b4a;}.dot.sy{background:#e8a020;animation:blink 1s infinite;}.dot.er{background:var(--red);}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
     .progwrap{padding:.4rem 1rem 0;}
     .proginfo{display:flex;justify-content:space-between;margin-bottom:3px;}
@@ -155,9 +183,8 @@
     .sblabel{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin-bottom:.75rem;}
     .sbrow{display:flex;align-items:center;gap:10px;margin-bottom:.6rem;}
     .sbrow:last-child{margin-bottom:0;}
-    .sbicon{font-size:20px;}
     .sbval{font-size:13px;font-weight:500;}
-    .sbsub{font-size:11px;color:var(--tx3);}
+    .sbsub2{font-size:11px;color:var(--tx3);}
     .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
     .statbox{background:var(--sf2);border-radius:var(--rs);padding:.75rem;text-align:center;}
     .statnum{font-size:22px;font-weight:500;color:var(--ac);}
@@ -166,18 +193,20 @@
     .sbBtn:last-child{margin-bottom:0;}
     .sbBtn.accent{background:var(--acl);color:var(--ac);border-color:transparent;font-weight:500;}
     .sbBtn.danger{color:var(--red);}
-    .userrow{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--bd);}
+    .userrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd);}
     .userrow:last-child{border-bottom:none;}
-    .userava{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#fff;flex-shrink:0;position:relative;}
-    .onlinedot{position:absolute;bottom:1px;right:1px;width:9px;height:9px;background:#1a6b4a;border-radius:50%;border:2px solid var(--sf);}
+    .userava{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#fff;flex-shrink:0;}
     .usernamerow{font-size:13px;font-weight:500;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
     .badge{font-size:10px;padding:1px 6px;border-radius:999px;}
     .badge.me{background:var(--acl);color:var(--ac);}
     .badge.admin{background:#fff3cd;color:#856404;}
     .badge.banned{background:#fdecea;color:var(--red);}
-    .kickbtn{padding:5px 10px;border-radius:var(--rs);border:1px solid var(--bd2);font-size:12px;cursor:pointer;flex-shrink:0;}
+    .badge.pending{background:#fff3cd;color:#856404;}
+    .kickbtn{padding:5px 8px;border-radius:var(--rs);border:1px solid var(--bd2);font-size:11px;cursor:pointer;flex-shrink:0;}
     .kickbtn.kick{background:#fdecea;color:var(--red);}
     .kickbtn.unkick{background:var(--acl);color:var(--ac);}
+    .kickbtn.approve{background:var(--acl);color:var(--ac);}
+    .pendingbanner{background:#fff3cd;border:1px solid #ffc107;border-radius:var(--rs);padding:10px 12px;font-size:13px;color:#856404;margin-bottom:.75rem;display:flex;align-items:center;gap:8px;}
 
     /* ── MODALS ── */
     .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center;}
@@ -195,14 +224,10 @@
     .sok{background:var(--ac)!important;color:#fff!important;border-color:var(--ac)!important;}
     .scancel{background:var(--sf2);color:var(--tx2);}
 
-    /* ── SPINNER ── */
     .spinwrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
     .spinwrap.on{display:flex;}
     .spinwrap p{color:#fff;font-size:15px;}
     .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#5ad4a0;border-radius:50%;animation:spin .8s linear infinite;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* ── TOAST ── */
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--acd);color:#a8e6cc;padding:10px 18px;border-radius:999px;font-size:13px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s;z-index:500;}
     .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
   </style>
@@ -229,13 +254,37 @@
   </div>
 </div>
 
+<!-- WAITING FOR APPROVAL -->
+<div id="waiting">
+  <div class="wait-spinner"></div>
+  <h2>Esperando aprobación</h2>
+  <p id="waitText">El administrador de la sala tiene que aprobarte. Te avisaremos cuando puedas entrar.</p>
+  <button class="wait-cancel" id="waitCancel">Cancelar</button>
+</div>
+
+<!-- TUTORIAL -->
+<div id="tutorial">
+  <div class="tut-card">
+    <div class="tut-header" id="tutHeader">Tutorial · 1 de 5</div>
+    <div class="tut-steps" id="tutContent"></div>
+    <div class="tut-dots" id="tutDots"></div>
+    <div class="tut-nav">
+      <button class="tut-skip" id="tutSkip">Saltar</button>
+      <button class="tut-next" id="tutNext">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app">
   <div class="topbar">
     <div class="tabs" id="tabs"></div>
     <button class="icoBtn" id="newtab" title="Nueva lista">+</button>
     <div class="dot sy" id="dot"></div>
-    <button class="icoBtn" id="menubtn" title="Menú">☰</button>
+    <button class="icoBtn" id="menubtn" title="Menú">
+      ☰
+      <span class="notif-badge" id="notifBadge">0</span>
+    </button>
   </div>
   <div class="progwrap" id="progwrap" style="display:none">
     <div class="proginfo"><span class="proglbl" id="proglbl"></span><span class="progpct" id="progpct"></span></div>
@@ -250,6 +299,9 @@
   </div>
   <div class="scroll">
     <div style="height:.5rem"></div>
+    <div id="pendingBanner" class="pendingbanner" style="display:none">
+      ⏳ <span id="pendingText"></span> — <strong style="cursor:pointer" id="pendingAction">Ver en el menú ☰</strong>
+    </div>
     <button class="scanbtn" id="scanbtn">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
         <rect x="3" y="7" width="4" height="10" rx="1"/><rect x="9" y="7" width="2" height="10" rx="0.5"/>
@@ -285,38 +337,32 @@
 <!-- SIDEBAR -->
 <div id="sbOverlay"></div>
 <div id="sb">
-  <div class="sbhead">
-    <h2>⚙️ Menú</h2>
-    <button class="sbclose" id="sbclose">✕</button>
-  </div>
-  <!-- Sala info -->
+  <div class="sbhead"><h2>⚙️ Menú</h2><button class="sbclose" id="sbclose">✕</button></div>
   <div class="sbsec">
     <div class="sblabel">Info de la sala</div>
-    <div class="sbrow"><span class="sbicon">🏠</span><div><div class="sbval" id="si-room">-</div><div class="sbsub">Sala</div></div></div>
-    <div class="sbrow"><span class="sbicon">👤</span><div><div class="sbval" id="si-user">-</div><div class="sbsub">Tu nombre</div></div></div>
-    <div class="sbrow"><span class="sbicon">📋</span><div><div class="sbval" id="si-list">-</div><div class="sbsub">Lista activa</div></div></div>
+    <div class="sbrow"><span style="font-size:20px">🏠</span><div><div class="sbval" id="si-room">-</div><div class="sbsub2">Sala</div></div></div>
+    <div class="sbrow"><span style="font-size:20px">👤</span><div><div class="sbval" id="si-user">-</div><div class="sbsub2">Tu nombre</div></div></div>
+    <div class="sbrow"><span style="font-size:20px">📋</span><div><div class="sbval" id="si-list">-</div><div class="sbsub2">Lista activa</div></div></div>
   </div>
-  <!-- Stats -->
-  <div class="sbsec">
-    <div class="sblabel">Esta lista</div>
-    <div class="statgrid" id="si-stats"></div>
+  <div class="sbsec"><div class="sblabel">Esta lista</div><div class="statgrid" id="si-stats"></div></div>
+  <div class="sbsec" id="si-pending-sec" style="display:none">
+    <div class="sblabel">⏳ Esperando aprobación <span class="pill" id="si-pending-count">0</span></div>
+    <div id="si-pending-list"></div>
   </div>
-  <!-- Users -->
   <div class="sbsec">
     <div class="sblabel">Participantes</div>
     <div id="si-users"></div>
   </div>
-  <!-- Share -->
   <div class="sbsec">
     <div class="sblabel">Compartir</div>
     <button class="sbBtn accent" id="si-share">📤 Compartir por WhatsApp</button>
-    <div style="font-size:12px;color:var(--tx3);line-height:1.5;margin-top:.25rem;">El enlace abre la app directo. Solo tienen que poner su nombre.</div>
+    <div style="font-size:12px;color:var(--tx3);line-height:1.5;margin-top:.25rem;">El enlace abre la app directo. El admin tiene que aprobar al nuevo usuario.</div>
   </div>
-  <!-- Actions -->
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista</button>
+    <button class="sbBtn" id="si-tutorial" style="color:var(--tx3)">❓ Ver tutorial</button>
     <button class="sbBtn" id="si-logout" style="color:var(--tx3)">🔓 Cambiar de sala</button>
   </div>
   <div style="padding:1rem;font-size:11px;color:var(--tx3);text-align:center;">Lista de la Compra · Datos en Firebase</div>
@@ -339,15 +385,12 @@
     <select id="mcat">
       <option value="otros">📦 Otros</option><option value="frutas">🍎 Frutas y verduras</option>
       <option value="lacteos">🥛 Lácteos y huevos</option><option value="carnes">🥩 Carnes y pescados</option>
-      <option value="panaderia">🍞 Panadería y cereales</option><option value="bebidas">🥤 Bebidas</option>
-      <option value="congelados">🧊 Congelados</option><option value="limpieza">🧹 Limpieza y hogar</option>
-      <option value="higiene">🧴 Higiene personal</option><option value="conservas">🥫 Conservas y salsas</option>
-      <option value="snacks">🍿 Snacks y dulces</option>
+      <option value="panaderia">🍞 Panadería</option><option value="bebidas">🥤 Bebidas</option>
+      <option value="congelados">🧊 Congelados</option><option value="limpieza">🧹 Limpieza</option>
+      <option value="higiene">🧴 Higiene</option><option value="conservas">🥫 Conservas</option>
+      <option value="snacks">🍿 Snacks</option>
     </select>
-    <div class="sactions">
-      <button class="scancel" id="mcancel">Cancelar</button>
-      <button class="sok" id="mok">Añadir</button>
-    </div>
+    <div class="sactions"><button class="scancel" id="mcancel">Cancelar</button><button class="sok" id="mok">Añadir</button></div>
   </div>
 </div>
 
@@ -357,10 +400,7 @@
     <div class="stitle">Nueva lista</div>
     <div class="ssub">Elige un nombre</div>
     <input type="text" id="nlinput" placeholder="Mercadona, Farmacia, Ikea..."/>
-    <div class="sactions">
-      <button class="scancel" id="nlcancel">Cancelar</button>
-      <button class="sok" id="nlok">Crear</button>
-    </div>
+    <div class="sactions"><button class="scancel" id="nlcancel">Cancelar</button><button class="sok" id="nlok">Crear</button></div>
   </div>
 </div>
 
@@ -381,6 +421,7 @@ function unspin(){$('spinner').classList.remove('on');}
 function beep(){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=1200;g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.15);o.start();o.stop(c.currentTime+0.15);}catch{}}
 function vib(){try{navigator.vibrate&&navigator.vibrate(60);}catch{}}
 function ucolor(n){const c=['#4f8ef7','#e67e22','#9b59b6','#e91e8c','#16a085','#c0392b'];let h=0;for(let i=0;i<(n||'').length;i++)h=(n||'').charCodeAt(i)+h*31;return c[Math.abs(h)%c.length];}
+function genUID(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
 function guesscat(n,oc=''){
   const s=(n+' '+oc).toLowerCase();
   if(/leche|yogur|queso|mantequilla|nata|huevo/.test(s))return'lacteos';
@@ -399,15 +440,18 @@ const CATS={frutas:{l:'Frutas y verduras',i:'🍎'},lacteos:{l:'Lácteos y huevo
 const CATORDER=['frutas','lacteos','carnes','panaderia','bebidas','congelados','conservas','snacks','limpieza','higiene','otros'];
 
 // ── State ────────────────────────────────────────────────────
-const SK='lc_v5', LK='lc_lists', HK='lc_hist', CK='lc_cols', AK='lc_admin';
-let db, room, user, curList='Principal';
-let lists=[], items={}, hist=[], collapsed={};
-let scanning=false, lastCode='', lastT=0;
-let pBrand='', pImg='', pCode='';
+const SK='lc_v5',LK='lc_lists',HK='lc_hist',CK='lc_cols',AK='lc_admin',UK='lc_uid',TK='lc_tutorial';
+let db,room,user,uid,curList='Principal';
+let lists=[],items={},hist=[],collapsed={};
+let scanning=false,lastCode='',lastT=0;
+let pBrand='',pImg='',pCode='';
+let amAdmin=false;
 
 lists=(()=>{try{return JSON.parse(localStorage.getItem(LK))||['Principal'];}catch{return['Principal'];}})();
 hist=(()=>{try{return JSON.parse(localStorage.getItem(HK))||[];}catch{return[];}})();
 collapsed=(()=>{try{return JSON.parse(localStorage.getItem(CK))||{};}catch{return{};}})();
+// Persistent device UID — so bans are by device, not just name
+uid=(()=>{let u=localStorage.getItem(UK);if(!u){u=genUID();localStorage.setItem(UK,u);}return u;})();
 
 // ── URL invite ───────────────────────────────────────────────
 const up=new URLSearchParams(location.search);
@@ -416,12 +460,12 @@ if(ip&&ik&&ir){
   $('spid').value=ip;$('skey').value=ik;$('sroom').value=ir;
   $('fpid').style.display='none';$('fkey').style.display='none';$('froom').style.display='none';
   $('invbox').style.display='block';
-  $('invtext').textContent=`Sala: "${ir}"${il?` · Lista: "${il}"`:''}. Solo pon tu nombre.`;
+  $('invtext').textContent=`Sala: "${ir}"${il?` · Lista: "${il}"`:''}. Pon tu nombre — el admin te tiene que aprobar.`;
 }
 
 // ── Auto-login ───────────────────────────────────────────────
 const saved=(()=>{
-  for(const k of[SK,'lista_v4','lista_compra_v3','lista_compra_settings_v2','lista_compra_settings_v1']){
+  for(const k of[SK,'lista_v4','lista_compra_v3','lista_compra_settings_v2']){
     try{const v=JSON.parse(localStorage.getItem(k));if(v?.projectId&&v?.apiKey&&v?.roomId)return v;}catch{}
   }
   return null;
@@ -442,18 +486,27 @@ function doConnect(p,k,r,u){
   try{
     const app=initializeApp({apiKey:k,databaseURL:`https://${p}-default-rtdb.europe-west1.firebasedatabase.app`,projectId:p},'lc');
     db=getDatabase(app);
-    room=r; user=u||'Yo';
+    room=r;user=u||'Yo';
     localStorage.setItem(SK,JSON.stringify({projectId:p,apiKey:k,roomId:r,userName:u}));
-    // Admin: first user in this room becomes admin
-    const adminKey=AK+':'+r;
-    if(!localStorage.getItem(adminKey)) localStorage.setItem(adminKey,u);
-    $('setup').style.display='none';
-    $('app').style.display='flex';
-    if(il&&!lists.includes(il)){lists.push(il);localStorage.setItem(LK,JSON.stringify(lists));}
-    if(il) curList=il;
-    renderTabs();
-    subscribe(curList);
-    watchBan(r,u);
+
+    // Check if first user (admin)
+    onValue(ref(db,`listas/${r}/_admin`),snap=>{
+      const adminData=snap.val();
+      if(!adminData){
+        // First user — become admin
+        set(ref(db,`listas/${r}/_admin`),{name:u,uid});
+        amAdmin=true;
+        localStorage.setItem(AK+':'+r,uid);
+        launchApp(r,u);
+      } else {
+        amAdmin=(adminData.uid===uid||adminData.name===u&&!adminData.uid);
+        if(amAdmin){
+          launchApp(r,u);
+        } else {
+          checkAccessAndWait(r,u);
+        }
+      }
+    },{onlyOnce:true});
     window.addEventListener('offline',()=>$('dot').className='dot er');
     window.addEventListener('online',()=>$('dot').className='dot ok');
   }catch(e){
@@ -461,32 +514,125 @@ function doConnect(p,k,r,u){
   }
 }
 
-// ── Ban watch ────────────────────────────────────────────────
-function watchBan(r,u){
-  const bk=u.replace(/[^a-zA-Z0-9]/g,'_');
-  onValue(ref(db,`listas/${r}/_banned/${bk}`),snap=>{
-    if(snap.val()){
-      alert('Has sido expulsado de la sala.');
-      [SK,'lista_v4','lista_compra_v3','lista_compra_settings_v2'].forEach(k=>localStorage.removeItem(k));
-      location.reload();
+// ── Access control ───────────────────────────────────────────
+function checkAccessAndWait(r,u){
+  // Check if banned by UID or name
+  onValue(ref(db,`listas/${r}/_banned`),bsnap=>{
+    const banned=bsnap.val()||{};
+    const isBanned=Object.values(banned).some(b=>b.uid===uid||b.name===u);
+    if(isBanned){
+      $('setup').style.display='none';
+      alert('Has sido expulsado de esta sala y no puedes volver a entrar.');
+      return;
+    }
+    // Check if already approved
+    onValue(ref(db,`listas/${r}/_members`),msnap=>{
+      const members=msnap.val()||{};
+      const myEntry=Object.values(members).find(m=>m.uid===uid);
+      if(myEntry&&myEntry.approved){
+        launchApp(r,u);
+      } else {
+        // Request access
+        requestAccess(r,u);
+      }
+    },{onlyOnce:true});
+  },{onlyOnce:true});
+}
+
+function requestAccess(r,u){
+  // Add to pending list
+  const memberRef=ref(db,`listas/${r}/_members/${uid}`);
+  set(memberRef,{name:u,uid,requestedAt:Date.now(),approved:false});
+  // Show waiting screen
+  $('setup').style.display='none';
+  $('waiting').style.display='flex';
+  $('waitText').textContent=`Hola ${u}! El administrador de la sala tiene que aprobarte. Espera aquí.`;
+  // Watch for approval
+  onValue(memberRef,snap=>{
+    const data=snap.val();
+    if(!data){
+      // Rejected/removed
+      $('waiting').style.display='none';
+      $('setup').style.display='flex';
+      alert('Tu solicitud fue rechazada.');
+    } else if(data.approved){
+      $('waiting').style.display='none';
+      launchApp(r,u);
     }
   });
 }
 
+$('waitCancel').onclick=()=>{
+  $('waiting').style.display='none';
+  $('setup').style.display='flex';
+};
+
+// ── Launch app ───────────────────────────────────────────────
+function launchApp(r,u){
+  if(il&&!lists.includes(il)){lists.push(il);localStorage.setItem(LK,JSON.stringify(lists));}
+  if(il) curList=il;
+  $('setup').style.display='none';
+  $('waiting').style.display='none';
+  $('app').style.display='flex';
+  renderTabs();
+  subscribe(curList);
+  if(amAdmin) watchPending(r);
+  // Show tutorial first time
+  if(!localStorage.getItem(TK)) showTutorial();
+}
+
+// ── Watch pending (admin only) ───────────────────────────────
+function watchPending(r){
+  onValue(ref(db,`listas/${r}/_members`),snap=>{
+    const members=snap.val()||{};
+    const pending=Object.entries(members).filter(([,v])=>!v.approved);
+    const badge=$('notifBadge');
+    const banner=$('pendingBanner');
+    if(pending.length>0){
+      badge.textContent=pending.length;badge.classList.add('on');
+      banner.style.display='flex';
+      $('pendingText').textContent=`${pending.length} persona${pending.length>1?'s':''} esperando aprobación`;
+    } else {
+      badge.classList.remove('on');
+      banner.style.display='none';
+    }
+  });
+}
+$('pendingAction').onclick=openSidebar;
+
+// ── Tutorial ─────────────────────────────────────────────────
+const TUTORIAL_STEPS=[
+  {ico:'🛒',title:'Bienvenido a tu lista de la compra',desc:'Todo se sincroniza en tiempo real. Cuando añades algo, todos lo ven al instante.'},
+  {ico:'📷',title:'Escanea códigos de barras',desc:'Pulsa el botón verde y apunta la cámara al código. La app busca el producto automáticamente.'},
+  {ico:'✍️',title:'O escríbelo directamente',desc:'También puedes escribir el nombre del producto. Recuerda los productos que ya añadiste antes.'},
+  {ico:'✅',title:'Tacha mientras compras',desc:'Pulsa el círculo de cada producto para tacharlo. En modo 🛒 Comprar la vista es más limpia.'},
+  {ico:'☰',title:'Menú lateral',desc:'Pulsa ☰ para ver estadísticas, gestionar usuarios, compartir la lista y más opciones.'},
+];
+let tutStep=0;
+function showTutorial(){
+  tutStep=0;renderTutStep();$('tutorial').classList.add('on');
+}
+function renderTutStep(){
+  const s=TUTORIAL_STEPS[tutStep];
+  $('tutHeader').textContent=`Tutorial · ${tutStep+1} de ${TUTORIAL_STEPS.length}`;
+  $('tutContent').innerHTML=`<div class="tut-step"><span class="tut-ico">${s.ico}</span><div><h3>${s.title}</h3><p>${s.desc}</p></div></div>`;
+  const dots=$('tutDots');dots.innerHTML='';
+  TUTORIAL_STEPS.forEach((_,i)=>{const d=document.createElement('div');d.className='tut-dot'+(i===tutStep?' on':'');dots.appendChild(d);});
+  $('tutNext').textContent=tutStep===TUTORIAL_STEPS.length-1?'¡Empezar! 🎉':'Siguiente →';
+}
+$('tutNext').onclick=()=>{
+  if(tutStep<TUTORIAL_STEPS.length-1){tutStep++;renderTutStep();}
+  else{$('tutorial').classList.remove('on');localStorage.setItem(TK,'done');}
+};
+$('tutSkip').onclick=()=>{$('tutorial').classList.remove('on');localStorage.setItem(TK,'done');};
+
 // ── Subscribe ────────────────────────────────────────────────
 function subscribe(name){
-  curList=name; renderTabs();
-  $('dot').className='dot sy';
-  $('sub').textContent='Conectando...';
+  curList=name;renderTabs();
+  $('dot').className='dot sy';$('sub').textContent='Conectando...';
   onValue(ref(db,`listas/${room}/${name}/items`),snap=>{
-    items=snap.val()||{};
-    $('dot').className='dot ok';
-    render();
-  },e=>{
-    $('dot').className='dot er';
-    $('sub').textContent='Error: '+e.message;
-    toast('Error Firebase: '+e.message);
-  });
+    items=snap.val()||{};$('dot').className='dot ok';render();
+  },e=>{$('dot').className='dot er';$('sub').textContent='Error: '+e.message;toast('Error Firebase: '+e.message);});
 }
 
 // ── Tabs ─────────────────────────────────────────────────────
@@ -494,16 +640,15 @@ function renderTabs(){
   $('tabs').innerHTML='';
   lists.forEach(l=>{
     const b=document.createElement('button');
-    b.className='tab'+(l===curList?' on':'');
-    b.textContent=l;
+    b.className='tab'+(l===curList?' on':'');b.textContent=l;
     b.onclick=()=>{if(l!==curList)subscribe(l);};
     let pt;
     b.addEventListener('touchstart',()=>{pt=setTimeout(()=>{
+      if(!amAdmin){toast('Solo el admin puede borrar listas');return;}
       if(lists.length<=1){toast('No puedes borrar la única lista');return;}
       if(confirm(`¿Borrar "${l}"?`)){
         set(ref(db,`listas/${room}/${l}`),null);
-        lists=lists.filter(x=>x!==l);
-        localStorage.setItem(LK,JSON.stringify(lists));
+        lists=lists.filter(x=>x!==l);localStorage.setItem(LK,JSON.stringify(lists));
         subscribe(curList===l?lists[0]:curList);
       }
     },600);},{passive:true});
@@ -523,9 +668,7 @@ $('medit').onclick=()=>{document.body.classList.remove('shop');$('medit').classL
 
 // ── Scanner ──────────────────────────────────────────────────
 function startScan(){
-  $('scanwrap').style.display='block';
-  $('scanbtn').textContent='Escaneando...';
-  lastCode='';lastT=0;
+  $('scanwrap').style.display='block';$('scanbtn').textContent='Escaneando...';lastCode='';lastT=0;
   Quagga.init({
     inputStream:{name:'Live',type:'LiveStream',target:$('qtarget'),
       constraints:{facingMode:'environment',width:{min:640,ideal:1280},height:{min:480,ideal:720}},
@@ -537,8 +680,8 @@ function startScan(){
   Quagga.onDetected(async r=>{
     const c=r.codeResult?.code;if(!c)return;
     const now=Date.now();if(c===lastCode&&now-lastT<3000)return;
-    lastCode=c;lastT=now;
-    beep();vib();$('flashEl').classList.add('on');setTimeout(()=>$('flashEl').classList.remove('on'),250);
+    lastCode=c;lastT=now;beep();vib();
+    $('flashEl').classList.add('on');setTimeout(()=>$('flashEl').classList.remove('on'),250);
     stopScan();await handleCode(c);
   });
 }
@@ -555,8 +698,7 @@ async function handleCode(code){
   spin('Buscando producto...');
   let name='',brand='',img='',oc='';
   try{
-    const ctrl=new AbortController();
-    setTimeout(()=>ctrl.abort(),6000);
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),6000);
     const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`,{signal:ctrl.signal});
     const d=await res.json();
     if(d.status===1&&d.product){
@@ -569,18 +711,16 @@ async function handleCode(code){
   finally{unspin();}
   pBrand=brand;pImg=img;pCode=code;
   const cat=guesscat(name,oc);
-  if(name) openModal(code,`${brand?brand+' · ':''}${code}`,name,'¿Es este producto?',img,cat);
+  if(name)openModal(code,`${brand?brand+' · ':''}${code}`,name,'¿Es este producto?',img,cat);
   else openModal(code,`Código: ${code} — no encontrado`,'','Escribe el nombre','','otros');
 }
 
 // ── Modal ────────────────────────────────────────────────────
 function openModal(code,sub,prefill,title,img,cat){
-  pCode=code;
-  $('mtitle').textContent=title||'Añadir';$('msub').textContent=sub||'';
+  pCode=code;$('mtitle').textContent=title||'Añadir';$('msub').textContent=sub||'';
   $('mname').value=prefill||'';$('munitm').value='';$('mcat').value=cat||'otros';
   const im=$('mimg');if(img){im.src=img;im.style.display='block';}else{im.style.display='none';}
-  $('modal').classList.add('on');
-  setTimeout(()=>$('mname').focus(),200);
+  $('modal').classList.add('on');setTimeout(()=>$('mname').focus(),200);
 }
 function closeModal(){$('modal').classList.remove('on');}
 $('mok').onclick=()=>{const v=$('mname').value.trim();if(!v)return;addItem(v,pBrand,pCode,$('mcat').value,$('munitm').value,pImg);closeModal();};
@@ -597,8 +737,7 @@ $('addbtn').onclick=()=>{
 };
 $('minput').addEventListener('keydown',e=>{if(e.key==='Enter')$('addbtn').click();});
 $('minput').addEventListener('input',()=>{
-  const q=$('minput').value.trim().toLowerCase();
-  const al=$('aclist');
+  const q=$('minput').value.trim().toLowerCase();const al=$('aclist');
   if(!q||q.length<2){al.classList.remove('on');return;}
   const m=hist.filter(h=>h.name.toLowerCase().includes(q)).slice(0,6);
   if(!m.length){al.classList.remove('on');return;}
@@ -639,16 +778,16 @@ document.addEventListener('click',e=>{
   const li=info.closest('.item');if(!li)return;
   const key=li.dataset.key;if(!key||!items[key])return;
   const nd=info.querySelector('.iname');if(!nd||nd.querySelector('input'))return;
-  const cur=items[key].name;
-  const inp=document.createElement('input');inp.className='nameinput';inp.value=cur;
+  const cur2=items[key].name;
+  const inp=document.createElement('input');inp.className='nameinput';inp.value=cur2;
   nd.innerHTML='';nd.appendChild(inp);inp.focus();inp.select();
-  function commit(){const v=inp.value.trim();nd.textContent=v||cur;if(v&&v!==cur)update(ref(db,`listas/${room}/${curList}/items/${key}`),{name:v});}
+  function commit(){const v=inp.value.trim();nd.textContent=v||cur2;if(v&&v!==cur2)update(ref(db,`listas/${room}/${curList}/items/${key}`),{name:v});}
   inp.addEventListener('blur',commit,{once:true});
-  inp.addEventListener('keydown',e2=>{if(e2.key==='Enter'){e2.preventDefault();inp.blur();}else if(e2.key==='Escape'){inp.value=cur;inp.blur();}});
+  inp.addEventListener('keydown',e2=>{if(e2.key==='Enter'){e2.preventDefault();inp.blur();}else if(e2.key==='Escape'){inp.value=cur2;inp.blur();}});
 });
 document.addEventListener('dblclick',e=>{
   const qn=e.target.closest('.qnum');if(!qn)return;
-  const key=qn.dataset.id;const item=items[key];if(!item)return;
+  const key=qn.dataset.id,item=items[key];if(!item)return;
   qn.contentEditable='true';qn.focus();
   const sel=window.getSelection(),rng=document.createRange();rng.selectNodeContents(qn);sel.removeAllRanges();sel.addRange(rng);
   function commit2(){qn.contentEditable='false';const v=parseInt(qn.textContent);const r2=ref(db,`listas/${room}/${curList}/items/${key}`);if(v>0)update(r2,{qty:v});else remove(r2);}
@@ -665,73 +804,136 @@ document.addEventListener('click',e=>{
 // ── Sidebar ──────────────────────────────────────────────────
 function openSidebar(){
   $('si-room').textContent=room||'-';
-  $('si-user').textContent=user||'-';
+  $('si-user').textContent=user+(amAdmin?' 👑':'')||'-';
   $('si-list').textContent=curList||'-';
-
-  const all=Object.values(items);
-  const done=all.filter(i=>i.checked);
-  const total=all.reduce((s,i)=>s+(i.qty||1),0);
-  const cats=new Set(all.map(i=>i.cat||'otros')).size;
+  const all=Object.values(items),done=all.filter(i=>i.checked),total=all.reduce((s,i)=>s+(i.qty||1),0),cats=new Set(all.map(i=>i.cat||'otros')).size;
   $('si-stats').innerHTML=`
     <div class="statbox"><div class="statnum">${all.length-done.length}</div><div class="statlbl">pendientes</div></div>
     <div class="statbox"><div class="statnum">${done.length}</div><div class="statlbl">en el carro</div></div>
     <div class="statbox"><div class="statnum">${total}</div><div class="statlbl">unidades</div></div>
     <div class="statbox"><div class="statnum">${cats}</div><div class="statlbl">categorías</div></div>`;
 
-  // Participants
-  const adminName=localStorage.getItem(AK+':'+room);
-  const amAdmin=user===adminName;
-  const userMap={};
-  Object.values(items).forEach(item=>{
-    const u=item.addedBy||'?';
-    if(!userMap[u])userMap[u]={count:0,checked:0};
-    userMap[u].count++;if(item.checked)userMap[u].checked++;
-  });
-  // Load banned list once then render users
-  onValue(ref(db,`listas/${room}/_banned`),bsnap=>{
-    const banned=bsnap.val()||{};
-    const usersEl=$('si-users');usersEl.innerHTML='';
-    if(!Object.keys(userMap).length){usersEl.innerHTML='<div style="font-size:13px;color:var(--tx3)">Nadie ha añadido productos aún</div>';return;}
-    Object.entries(userMap).sort((a,b)=>b[1].count-a[1].count).forEach(([u,d])=>{
-      const col=ucolor(u);const ini=u.charAt(0).toUpperCase();
-      const isMe=u===user,isAdm=u===adminName;
-      const bk=u.replace(/[^a-zA-Z0-9]/g,'_');const isBanned=!!banned[bk];
-      const div=document.createElement('div');div.className='userrow';
-      div.innerHTML=`
-        <div class="userava" style="background:${col}">${ini}</div>
-        <div style="flex:1;min-width:0">
-          <div class="usernamerow">
-            ${esc(u)}
-            ${isMe?'<span class="badge me">tú</span>':''}
-            ${isAdm?'<span class="badge admin">admin</span>':''}
-            ${isBanned?'<span class="badge banned">expulsado</span>':''}
-          </div>
-          <div style="font-size:11px;color:var(--tx3)">${d.count} producto${d.count!==1?'s':''}</div>
-        </div>
-        ${amAdmin&&!isMe?`<button class="kickbtn ${isBanned?'unkick':'kick'}" data-ku="${esc(u)}" data-bk="${bk}" data-banned="${isBanned}">${isBanned?'Readmitir':'Echar'}</button>`:''}`;
-      usersEl.appendChild(div);
-    });
-    // Kick/unkick handlers
-    usersEl.querySelectorAll('.kickbtn').forEach(btn=>{
-      btn.onclick=()=>{
-        const targetUser=btn.dataset.ku, bk=btn.dataset.bk, isBanned=btn.dataset.banned==='true';
-        const banRef=ref(db,`listas/${room}/_banned/${bk}`);
-        if(isBanned){remove(banRef);toast(`${targetUser} readmitido`);}
-        else if(confirm(`¿Echar a ${targetUser}?`)){set(banRef,{name:targetUser,at:Date.now(),by:user});toast(`${targetUser} expulsado`);}
-        setTimeout(openSidebar,500);
-      };
-    });
+  // Pending approvals (admin only)
+  if(amAdmin){
+    onValue(ref(db,`listas/${room}/_members`),snap=>{
+      const members=snap.val()||{};
+      const pending=Object.entries(members).filter(([,v])=>!v.approved);
+      const sec=$('si-pending-sec'),list=$('si-pending-list');
+      if(pending.length>0){
+        sec.style.display='block';
+        $('si-pending-count').textContent=pending.length;
+        list.innerHTML='';
+        pending.forEach(([memberUid,m])=>{
+          const div=document.createElement('div');div.className='userrow';
+          const col=ucolor(m.name);const ini=m.name.charAt(0).toUpperCase();
+          div.innerHTML=`
+            <div class="userava" style="background:${col}">${ini}</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:500">${esc(m.name)}</div><div style="font-size:11px;color:var(--tx3)">Quiere unirse</div></div>
+            <button class="kickbtn approve" data-uid="${memberUid}" data-name="${esc(m.name)}">✓ Aprobar</button>
+            <button class="kickbtn kick" data-uid="${memberUid}" data-name="${esc(m.name)}" data-reject="1" style="margin-left:4px">✕</button>`;
+          div.querySelector('.approve').onclick=()=>{
+            update(ref(db,`listas/${room}/_members/${memberUid}`),{approved:true});
+            toast(`${m.name} aprobado ✓`);setTimeout(openSidebar,300);
+          };
+          div.querySelector('[data-reject]').onclick=()=>{
+            if(confirm(`¿Rechazar a ${m.name}?`)){
+              remove(ref(db,`listas/${room}/_members/${memberUid}`));
+              toast(`${m.name} rechazado`);setTimeout(openSidebar,300);
+            }
+          };
+          list.appendChild(div);
+        });
+      } else {sec.style.display='none';}
+    },{onlyOnce:true});
+  }
+
+  // Members list
+  onValue(ref(db,`listas/${room}/_members`),msnap=>{
+    const members=msnap.val()||{};
+    onValue(ref(db,`listas/${room}/_banned`),bsnap=>{
+      const banned=bsnap.val()||{};
+      const usersEl=$('si-users');usersEl.innerHTML='';
+
+      // Build user map from items + members
+      const userMap={};
+      Object.values(items).forEach(item=>{
+        const u=item.addedBy||'?';if(!userMap[u])userMap[u]={count:0,checked:0,uid:null};
+        userMap[u].count++;if(item.checked)userMap[u].checked++;
+      });
+      // Add members who haven't added items
+      Object.values(members).filter(m=>m.approved).forEach(m=>{
+        if(!userMap[m.name])userMap[m.name]={count:0,checked:0,uid:m.uid};
+        else userMap[m.name].uid=m.uid;
+      });
+
+      // Admin entry
+      onValue(ref(db,`listas/${room}/_admin`),asnap=>{
+        const adminData=asnap.val()||{};
+        const adminName=adminData.name||'';
+        if(adminName&&!userMap[adminName])userMap[adminName]={count:0,checked:0,uid:adminData.uid};
+
+        if(!Object.keys(userMap).length){usersEl.innerHTML='<div style="font-size:13px;color:var(--tx3)">Nadie ha participado aún</div>';return;}
+
+        Object.entries(userMap).sort((a,b)=>b[1].count-a[1].count).forEach(([u,d])=>{
+          const col=ucolor(u),ini=u.charAt(0).toUpperCase();
+          const isMe=u===user,isAdm=u===adminName;
+          const isBanned=Object.values(banned).some(b=>b.uid===d.uid||b.name===u);
+          const div=document.createElement('div');div.className='userrow';
+          div.innerHTML=`
+            <div class="userava" style="background:${col}">${ini}</div>
+            <div style="flex:1;min-width:0">
+              <div class="usernamerow">
+                ${esc(u)}
+                ${isMe?'<span class="badge me">tú</span>':''}
+                ${isAdm?'<span class="badge admin">👑 admin</span>':''}
+                ${isBanned?'<span class="badge banned">expulsado</span>':''}
+              </div>
+              <div style="font-size:11px;color:var(--tx3)">${d.count} producto${d.count!==1?'s':''} añadido${d.count!==1?'s':''}</div>
+            </div>
+            ${amAdmin&&!isMe&&!isAdm?`<button class="kickbtn ${isBanned?'unkick':'kick'}" data-name="${esc(u)}" data-muid="${d.uid||''}" data-banned="${isBanned}">${isBanned?'Readmitir':'Echar'}</button>`:''}`;
+          usersEl.appendChild(div);
+        });
+
+        // Ban/unban handlers
+        usersEl.querySelectorAll('.kickbtn[data-banned]').forEach(btn=>{
+          btn.onclick=()=>{
+            const targetName=btn.dataset.name,targetUid=btn.dataset.muid,isBanned2=btn.dataset.banned==='true';
+            if(isBanned2){
+              // Unban: find by name or uid
+              onValue(ref(db,`listas/${room}/_banned`),s=>{
+                const b=s.val()||{};
+                Object.entries(b).forEach(([k,v])=>{if(v.name===targetName||v.uid===targetUid)remove(ref(db,`listas/${room}/_banned/${k}`));});
+                toast(`${targetName} readmitido`);setTimeout(openSidebar,300);
+              },{onlyOnce:true});
+            } else {
+              if(confirm(`¿Echar a ${targetName}? No podrá volver a entrar aunque use el mismo link.`)){
+                const banKey=(targetUid||targetName).replace(/[^a-zA-Z0-9]/g,'_')+'_'+Date.now();
+                set(ref(db,`listas/${room}/_banned/${banKey}`),{name:targetName,uid:targetUid||null,at:Date.now(),by:user});
+                // Also remove from members
+                onValue(ref(db,`listas/${room}/_members`),s=>{
+                  const m=s.val()||{};
+                  Object.entries(m).forEach(([k,v])=>{if(v.name===targetName||v.uid===targetUid)remove(ref(db,`listas/${room}/_members/${k}`));});
+                },{onlyOnce:true});
+                toast(`${targetName} expulsado`);setTimeout(openSidebar,300);
+              }
+            }
+          };
+        });
+      },{onlyOnce:true});
+    },{onlyOnce:true});
   },{onlyOnce:true});
 
   $('sb').classList.add('open');
   $('sbOverlay').style.display='block';
   document.body.style.overflow='hidden';
 }
+
 function closeSidebar(){
   $('sb').classList.remove('open');
   $('sbOverlay').style.display='none';
   document.body.style.overflow='';
 }
+
 $('menubtn').onclick=openSidebar;
 $('sbclose').onclick=closeSidebar;
 $('sbOverlay').onclick=closeSidebar;
@@ -739,7 +941,7 @@ $('si-share').onclick=()=>{
   const s=JSON.parse(localStorage.getItem(SK)||'{}');
   const base=location.origin+location.pathname;
   const url=`${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
-  const text=`🛒 Lista de la compra\nSala: ${room} · ${curList}\n\nEntra directo:\n${url}`;
+  const text=`🛒 Lista de la compra compartida\nSala: ${room}\n\nEntra directo (el admin tiene que aprobarte):\n${url}`;
   if(navigator.share)navigator.share({title:'Lista',text,url});
   else navigator.clipboard.writeText(text).then(()=>toast('Copiado ✓'));
   closeSidebar();
@@ -750,25 +952,23 @@ $('si-clearchecked').onclick=()=>{
   toast(`${d.length} eliminados`);closeSidebar();
 };
 $('si-clearall').onclick=()=>{if(confirm('¿Vaciar la lista?')){set(ref(db,`listas/${room}/${curList}/items`),null);closeSidebar();}};
-$('si-logout').onclick=()=>{if(confirm('¿Cambiar de sala?')){[SK,'lista_v4','lista_compra_v3','lista_compra_settings_v2'].forEach(k=>localStorage.removeItem(k));location.reload();}};
+$('si-tutorial').onclick=()=>{closeSidebar();showTutorial();};
+$('si-logout').onclick=()=>{if(confirm('¿Cambiar de sala?')){[SK,'lista_v4','lista_compra_v3'].forEach(k=>localStorage.removeItem(k));location.reload();}};
 
 // ── Render ───────────────────────────────────────────────────
 function render(){
   const all=Object.entries(items).map(([k,v])=>({...v,key:k})).sort((a,b)=>(a.ts||0)-(b.ts||0));
-  const pending=all.filter(i=>!i.checked),done=all.filter(i=>i.checked);
-  const total=all.reduce((s,i)=>s+(i.qty||1),0);
+  const pending2=all.filter(i=>!i.checked),done=all.filter(i=>i.checked),total=all.reduce((s,i)=>s+(i.qty||1),0);
   $('emptyMsg').style.display=all.length?'none':'block';
   $('sub').textContent=all.length?`${all.length} producto${all.length>1?'s':''} · ${total} unidad${total>1?'es':''}`:'sin productos';
   if(all.length){
     $('progwrap').style.display='block';
     const pct=Math.round(done.length/all.length*100);
-    $('proglbl').textContent=`${done.length} de ${all.length}`;
-    $('progpct').textContent=pct+'%';
-    $('progfill').style.width=pct+'%';
+    $('proglbl').textContent=`${done.length} de ${all.length}`;$('progpct').textContent=pct+'%';$('progfill').style.width=pct+'%';
   }else{$('progwrap').style.display='none';}
   const c=$('container');c.innerHTML='';
-  if(pending.length){
-    const byCat={};pending.forEach(i=>{const cat=i.cat||'otros';if(!byCat[cat])byCat[cat]=[];byCat[cat].push(i);});
+  if(pending2.length){
+    const byCat={};pending2.forEach(i=>{const cat=i.cat||'otros';if(!byCat[cat])byCat[cat]=[];byCat[cat].push(i);});
     CATORDER.forEach(cat=>{
       if(!byCat[cat]?.length)return;
       const info=CATS[cat],col=collapsed[cat];
@@ -780,7 +980,7 @@ function render(){
   }
   if(done.length){
     const sec=document.createElement('div');sec.className='checksec';
-    sec.innerHTML=`<div class="cathdr" style="margin-top:.5rem">✅ En el carro<span class="pill">${done.length}</span></div>`;
+    sec.innerHTML=`<div class="cathdr">✅ En el carro<span class="pill">${done.length}</span></div>`;
     const ul=document.createElement('ul');ul.className='items';
     done.forEach(item=>ul.appendChild(mkItem(item)));
     sec.appendChild(ul);c.appendChild(sec);
@@ -789,7 +989,7 @@ function render(){
 function mkItem(item){
   const li=document.createElement('li');li.className='item'+(item.checked?' done':'');li.dataset.key=item.key;
   const qty=item.unit?`${item.qty||1} ${item.unit}`:(item.qty||1);
-  const col=ucolor(item.addedBy||'');const ini=(item.addedBy||'?').charAt(0).toUpperCase();
+  const col=ucolor(item.addedBy||''),ini=(item.addedBy||'?').charAt(0).toUpperCase();
   li.innerHTML=`
     ${item.img?`<img class="iimg" src="${esc(item.img)}" loading="lazy"/>`:`<div class="iemoji">${CATS[item.cat||'otros']?.i||'📦'}</div>`}
     <div class="chk${item.checked?' on':''}" data-a="chk" data-id="${item.key}">
