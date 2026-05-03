@@ -230,6 +230,69 @@
     .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#5ad4a0;border-radius:50%;animation:spin .8s linear infinite;}
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--acd);color:#a8e6cc;padding:10px 18px;border-radius:999px;font-size:13px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s;z-index:500;}
     .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+  
+    /* ── CHAT ── */
+    #chatBtn{position:fixed;bottom:20px;right:calc(50% - 220px);z-index:90;width:52px;height:52px;border-radius:50%;background:var(--ac);color:#fff;border:none;font-size:22px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.2);-webkit-tap-highlight-color:transparent;}
+    @media(max-width:480px){#chatBtn{right:20px;}}
+    #chatBtn.show{display:flex;}
+    .chat-notif{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:10px;font-weight:500;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 5px;}
+    .chat-notif.on{display:flex;}
+    #chatPanel{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;height:75dvh;background:var(--sf);z-index:402;border-radius:20px 20px 0 0;display:flex;flex-direction:column;transition:transform .3s ease;box-shadow:0 -4px 20px rgba(0,0,0,.15);}
+    #chatPanel.open{transform:translateX(-50%) translateY(0);}
+    .chat-head{padding:1rem 1.25rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .chat-head h3{font-size:15px;font-weight:500;}
+    .chat-msgs{flex:1;overflow-y:auto;padding:1rem 1rem .5rem;display:flex;flex-direction:column;gap:8px;}
+    .chat-msg{max-width:85%;padding:8px 12px;border-radius:14px;font-size:14px;line-height:1.4;word-wrap:break-word;}
+    .chat-msg.mine{align-self:flex-end;background:var(--ac);color:#fff;border-bottom-right-radius:4px;}
+    .chat-msg.theirs{align-self:flex-start;background:var(--sf2);color:var(--tx);border-bottom-left-radius:4px;}
+    .chat-msg.system{align-self:center;background:transparent;color:var(--tx3);font-size:11px;font-style:italic;padding:4px 12px;}
+    .chat-meta{font-size:10px;color:var(--tx3);margin-top:2px;display:flex;gap:6px;align-items:center;}
+    .chat-msg.mine .chat-meta{justify-content:flex-end;}
+    .chat-author{font-weight:500;color:var(--tx2);font-size:11px;margin-bottom:2px;}
+    .chat-input-row{padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom));border-top:1px solid var(--bd);display:flex;gap:6px;flex-shrink:0;}
+    .chat-input-row input{flex:1;padding:11px 14px;border:1px solid var(--bd2);border-radius:999px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--sf);color:var(--tx);outline:none;}
+    .chat-input-row input:focus{border-color:var(--ac);}
+    .chat-send{width:40px;height:40px;border-radius:50%;background:var(--ac);color:#fff;border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .chat-empty{text-align:center;color:var(--tx3);font-size:13px;padding:2rem 1rem;}
+
+    /* ── SEARCH BAR ── */
+    .search-box{position:relative;margin-bottom:.75rem;display:none;}
+    .search-box.show{display:block;}
+    .search-box input{width:100%;padding:10px 36px 10px 14px;border:1px solid var(--bd2);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--sf);color:var(--tx);outline:none;}
+    .search-box input:focus{border-color:var(--ac);}
+    .search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--tx3);cursor:pointer;padding:4px;}
+    .item.search-hide{display:none;}
+
+    /* ── ITEM EXTRAS (note, assignment, reactions) ── */
+    .item-extras{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap;}
+    .item-note{font-style:italic;color:var(--tx2);background:var(--sf2);padding:1px 6px;border-radius:4px;font-size:11px;font-family:'DM Sans',sans-serif;font-style:normal;}
+    .item-assigned{font-size:11px;background:var(--acl);color:var(--ac);padding:1px 6px;border-radius:999px;display:inline-flex;align-items:center;gap:3px;}
+    .item-reactions{display:flex;gap:3px;align-items:center;}
+    .reaction-pill{font-size:11px;background:var(--sf2);padding:1px 6px;border-radius:999px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .reaction-pill.mine{background:var(--acl);}
+
+    /* ── ITEM ACTIONS POPUP ── */
+    .item-menu-btn{background:none;border:none;cursor:pointer;color:var(--tx3);padding:4px;font-size:14px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;flex-shrink:0;}
+    .item-menu-btn:active{color:var(--tx);}
+
+    /* ── CONTINUOUS SCAN ── */
+    #scanCounter{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:4px 10px;border-radius:999px;display:none;z-index:20;}
+    #scanCounter.on{display:block;}
+
+    /* ── SEARCH/CHAT TOGGLES ── */
+    .top-actions{display:flex;gap:6px;margin-left:auto;}
+
+    /* ── ITEM ACTIONS SHEET ── */
+    .item-actions-list{display:flex;flex-direction:column;gap:4px;margin-bottom:.5rem;}
+    .ia-btn{padding:12px 14px;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--tx);cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;}
+    .ia-btn:active{background:var(--sf3);}
+    .ia-ico{font-size:18px;}
+
+    /* ── ASSIGN MENU ── */
+    .assign-list{display:flex;flex-direction:column;gap:4px;}
+    .assign-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--rs);cursor:pointer;background:var(--sf2);border:1px solid transparent;}
+    .assign-item.selected{border-color:var(--ac);background:var(--acl);}
+
   </style>
 </head>
 <body>
@@ -293,12 +356,17 @@
   <div class="modebar">
     <div class="sub" id="sub">cargando...</div>
     <div class="modes">
+      <button class="modeBtn" id="searchBtn" title="Buscar">🔍</button>
       <button class="modeBtn on" id="medit">Editar</button>
       <button class="modeBtn" id="mshop">🛒 Comprar</button>
     </div>
   </div>
   <div class="scroll">
     <div style="height:.5rem"></div>
+    <div class="search-box" id="searchBox">
+      <input type="text" id="searchInput" placeholder="🔍 Buscar en la lista..." autocomplete="off"/>
+      <button class="search-clear" id="searchClear">✕</button>
+    </div>
     <div id="pendingBanner" class="pendingbanner" style="display:none">
       ⏳ <span id="pendingText"></span> — <strong style="cursor:pointer" id="pendingAction">Ver en el menú ☰</strong>
     </div>
@@ -316,6 +384,7 @@
       <div class="vfhint">Apunta el código al recuadro</div>
       <button class="closeScan" id="closeScan">✕</button>
       <div class="flashEl" id="flashEl"></div>
+      <div id="scanCounter">0 escaneados</div>
     </div>
     <div class="inputwrap">
       <div class="inputrow">
@@ -401,6 +470,86 @@
     <div class="ssub">Elige un nombre</div>
     <input type="text" id="nlinput" placeholder="Mercadona, Farmacia, Ikea..."/>
     <div class="sactions"><button class="scancel" id="nlcancel">Cancelar</button><button class="sok" id="nlok">Crear</button></div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<button id="chatBtn" title="Chat de la sala">
+  💬
+  <span class="chat-notif" id="chatNotif">0</span>
+</button>
+<div id="chatPanel">
+  <div class="chat-head">
+    <h3>💬 Chat de la sala</h3>
+    <button class="sbclose" id="chatClose">✕</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs">
+    <div class="chat-empty">Aún no hay mensajes. ¡Empieza la conversación!</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Escribe un mensaje..." autocomplete="off" maxlength="500"/>
+    <button class="chat-send" id="chatSend">→</button>
+  </div>
+</div>
+
+<!-- ITEM ACTIONS MODAL -->
+<div class="overlay" id="itemActionsModal">
+  <div class="sheet">
+    <div class="stitle" id="iaTitle">Acciones</div>
+    <div class="ssub" id="iaSub"></div>
+    <div class="item-actions-list">
+      <button class="ia-btn" id="iaAddNote"><span class="ia-ico">📝</span><span>Añadir/editar nota</span></button>
+      <button class="ia-btn" id="iaAssign"><span class="ia-ico">👤</span><span>Asignar a alguien</span></button>
+      <button class="ia-btn" id="iaReact"><span class="ia-ico">😊</span><span>Reaccionar</span></button>
+    </div>
+    <div class="sactions"><button class="scancel" id="iaCancel" style="flex:1">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="overlay" id="noteModal">
+  <div class="sheet">
+    <div class="stitle">Nota del producto</div>
+    <div class="ssub" id="noteSub"></div>
+    <input type="text" id="noteInput" placeholder="Ej: el de marca blanca, los grandes..." maxlength="100"/>
+    <div class="sactions">
+      <button class="scancel" id="noteCancel">Cancelar</button>
+      <button class="sok" id="noteOk">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSIGN MODAL -->
+<div class="overlay" id="assignModal">
+  <div class="sheet">
+    <div class="stitle">Asignar a alguien</div>
+    <div class="ssub">¿Quién va a coger este producto?</div>
+    <div class="assign-list" id="assignList"></div>
+    <div class="sactions">
+      <button class="scancel" id="assignCancel">Cancelar</button>
+      <button class="sok" id="assignClear">Quitar asignación</button>
+    </div>
+  </div>
+</div>
+
+<!-- REACT MODAL -->
+<div class="overlay" id="reactModal">
+  <div class="sheet">
+    <div class="stitle">Reacción</div>
+    <div class="ssub">Tu reacción rápida a este producto</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem">
+      <button class="ia-btn" data-rx="👍" style="justify-content:center;padding:14px;font-size:20px">👍</button>
+      <button class="ia-btn" data-rx="❌" style="justify-content:center;padding:14px;font-size:20px">❌</button>
+      <button class="ia-btn" data-rx="❤️" style="justify-content:center;padding:14px;font-size:20px">❤️</button>
+      <button class="ia-btn" data-rx="🤔" style="justify-content:center;padding:14px;font-size:20px">🤔</button>
+      <button class="ia-btn" data-rx="🔥" style="justify-content:center;padding:14px;font-size:20px">🔥</button>
+      <button class="ia-btn" data-rx="💸" style="justify-content:center;padding:14px;font-size:20px">💸</button>
+      <button class="ia-btn" data-rx="⚠️" style="justify-content:center;padding:14px;font-size:20px">⚠️</button>
+      <button class="ia-btn" data-rx="❓" style="justify-content:center;padding:14px;font-size:20px">❓</button>
+    </div>
+    <div class="sactions">
+      <button class="scancel" id="reactCancel" style="flex:1">Cerrar</button>
+    </div>
   </div>
 </div>
 
@@ -577,6 +726,8 @@ function launchApp(r,u){
   renderTabs();
   subscribe(curList);
   if(amAdmin) watchPending(r);
+  watchChat();
+  showChatBtn();
   // Show tutorial first time
   if(!localStorage.getItem(TK)) showTutorial();
 }
@@ -669,6 +820,7 @@ $('medit').onclick=()=>{document.body.classList.remove('shop');$('medit').classL
 // ── Scanner ──────────────────────────────────────────────────
 function startScan(){
   $('scanwrap').style.display='block';$('scanbtn').textContent='Escaneando...';lastCode='';lastT=0;
+  scanCount=0;continuousScan=false;
   Quagga.init({
     inputStream:{name:'Live',type:'LiveStream',target:$('qtarget'),
       constraints:{facingMode:'environment',width:{min:640,ideal:1280},height:{min:480,ideal:720}},
@@ -679,15 +831,40 @@ function startScan(){
   Quagga.offDetected();
   Quagga.onDetected(async r=>{
     const c=r.codeResult?.code;if(!c)return;
-    const now=Date.now();if(c===lastCode&&now-lastT<3000)return;
+    const now=Date.now();if(c===lastCode&&now-lastT<2500)return;
     lastCode=c;lastT=now;beep();vib();
     $('flashEl').classList.add('on');setTimeout(()=>$('flashEl').classList.remove('on'),250);
-    stopScan();await handleCode(c);
+    scanCount++;continuousScan=true;updateScanCounter();
+    // Look up product silently and add directly without modal in continuous mode
+    handleCodeContinuous(c);
   });
+}
+
+async function handleCodeContinuous(code){
+  let name='',brand='',img='',oc='';
+  try{
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),4000);
+    const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`,{signal:ctrl.signal});
+    const d=await res.json();
+    if(d.status===1&&d.product){
+      name=d.product.product_name_es||d.product.product_name||'';
+      brand=d.product.brands?d.product.brands.split(',')[0].trim():'';
+      img=d.product.image_front_small_url||'';
+      oc=(d.product.categories_tags||[]).join(' ');
+    }
+  }catch{}
+  if(name){
+    addItem(name,brand,code,guesscat(name,oc),'',img);
+  } else {
+    // Unknown product — add as "Producto [code]" so user can rename later
+    addItem(`Producto ${code}`,'',code,'otros','','');
+  }
 }
 function stopScan(){
   if(scanning){try{Quagga.stop();}catch{}scanning=false;}
   $('scanwrap').style.display='none';
+  $('scanCounter').classList.remove('on');
+  if(scanCount>1)toast(`✓ ${scanCount} productos añadidos`);
   $('scanbtn').innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="4" height="10" rx="1"/><rect x="9" y="7" width="2" height="10" rx="0.5"/><rect x="13" y="7" width="3" height="10" rx="0.5"/><rect x="18" y="7" width="3" height="10" rx="1"/><path d="M1 5h4M1 19h4M19 5h4M19 19h4" stroke-linecap="round"/></svg> Escanear código de barras`;
 }
 $('scanbtn').onclick=startScan;
@@ -764,13 +941,25 @@ function addItem(name,brand,barcode,cat,unit,img){
 
 // ── Item events ──────────────────────────────────────────────
 document.addEventListener('click',e=>{
+  // Reaction toggle
+  const rxBtn=e.target.closest('[data-rx-toggle]');
+  if(rxBtn){
+    e.stopPropagation();
+    const rx=rxBtn.dataset.rxToggle,key=rxBtn.dataset.id,item=items[key];
+    if(!item)return;
+    const reactions=item.reactions||{};
+    if(reactions[user]===rx)delete reactions[user];else reactions[user]=rx;
+    update(ref(db,`listas/${room}/${curList}/items/${key}`),{reactions});
+    return;
+  }
   const btn=e.target.closest('[data-a]');if(!btn)return;
   const key=btn.dataset.id,a=btn.dataset.a,item=items[key];if(!item)return;
   const r2=ref(db,`listas/${room}/${curList}/items/${key}`);
   if(a==='chk')update(r2,{checked:!item.checked});
   if(a==='+')update(r2,{qty:(item.qty||1)+1});
   if(a==='-'){if((item.qty||1)>1)update(r2,{qty:item.qty-1});else remove(r2);}
-  if(a==='del')remove(r2);
+  if(a==='del'){if(confirm('¿Eliminar '+item.name+'?'))remove(r2);}
+  if(a==='menu')openItemActions(key);
 });
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-a]'))return;
@@ -800,6 +989,173 @@ document.addEventListener('click',e=>{
   const cat=hdr.dataset.cat;if(!cat)return;
   collapsed[cat]=!collapsed[cat];localStorage.setItem(CK,JSON.stringify(collapsed));render();
 });
+
+
+// ── Search ───────────────────────────────────────────────────
+let searchQuery='';
+$('searchBtn').onclick=()=>{
+  const sb=$('searchBox');sb.classList.toggle('show');
+  if(sb.classList.contains('show'))setTimeout(()=>$('searchInput').focus(),100);
+  else{$('searchInput').value='';searchQuery='';render();}
+};
+$('searchInput').addEventListener('input',()=>{searchQuery=$('searchInput').value.trim().toLowerCase();render();});
+$('searchClear').onclick=()=>{$('searchInput').value='';searchQuery='';render();};
+
+// ── Continuous Scan ──────────────────────────────────────────
+let continuousScan=false,scanCount=0;
+function updateScanCounter(){if(continuousScan){$('scanCounter').textContent=`${scanCount} escaneados — pulsa ✕ para parar`;$('scanCounter').classList.add('on');}}
+
+// ── Item action menu ─────────────────────────────────────────
+let actionItemKey=null;
+function openItemActions(key){
+  const item=items[key];if(!item)return;
+  actionItemKey=key;
+  $('iaTitle').textContent=item.name;
+  $('iaSub').textContent=item.brand||'Acciones para este producto';
+  $('itemActionsModal').classList.add('on');
+}
+$('iaCancel').onclick=()=>$('itemActionsModal').classList.remove('on');
+$('itemActionsModal').onclick=e=>{if(e.target===$('itemActionsModal'))$('itemActionsModal').classList.remove('on');};
+
+$('iaAddNote').onclick=()=>{
+  const item=items[actionItemKey];if(!item)return;
+  $('noteSub').textContent=item.name;
+  $('noteInput').value=item.note||'';
+  $('itemActionsModal').classList.remove('on');
+  $('noteModal').classList.add('on');
+  setTimeout(()=>$('noteInput').focus(),200);
+};
+$('noteOk').onclick=()=>{
+  const v=$('noteInput').value.trim();
+  if(actionItemKey)update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{note:v||null});
+  $('noteModal').classList.remove('on');
+};
+$('noteCancel').onclick=()=>$('noteModal').classList.remove('on');
+$('noteInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('noteOk').click();});
+
+$('iaAssign').onclick=()=>{
+  $('itemActionsModal').classList.remove('on');
+  // Build user list from items + admin
+  const users=new Set();
+  Object.values(items).forEach(i=>{if(i.addedBy)users.add(i.addedBy);});
+  users.add(user);
+  const item=items[actionItemKey];
+  const list=$('assignList');list.innerHTML='';
+  users.forEach(u=>{
+    const div=document.createElement('div');
+    div.className='assign-item'+(item.assignedTo===u?' selected':'');
+    const col=ucolor(u);const ini=u.charAt(0).toUpperCase();
+    div.innerHTML=`<div class="userava" style="background:${col};width:32px;height:32px;font-size:14px">${ini}</div><div style="flex:1;font-size:14px">${esc(u)}${u===user?' (tú)':''}</div>${item.assignedTo===u?'<span style="color:var(--ac)">✓</span>':''}`;
+    div.onclick=()=>{
+      update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{assignedTo:u});
+      $('assignModal').classList.remove('on');
+      toast(`Asignado a ${u}`);
+    };
+    list.appendChild(div);
+  });
+  $('assignModal').classList.add('on');
+};
+$('assignCancel').onclick=()=>$('assignModal').classList.remove('on');
+$('assignClear').onclick=()=>{
+  if(actionItemKey)update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{assignedTo:null});
+  $('assignModal').classList.remove('on');
+};
+
+$('iaReact').onclick=()=>{
+  $('itemActionsModal').classList.remove('on');
+  $('reactModal').classList.add('on');
+};
+document.querySelectorAll('[data-rx]').forEach(btn=>{
+  btn.onclick=()=>{
+    const rx=btn.dataset.rx;
+    if(!actionItemKey)return;
+    const item=items[actionItemKey];
+    const reactions=item.reactions||{};
+    // Toggle: if user already reacted with this, remove; else set
+    if(reactions[user]===rx){delete reactions[user];}
+    else{reactions[user]=rx;}
+    update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{reactions});
+    $('reactModal').classList.remove('on');
+  };
+});
+$('reactCancel').onclick=()=>$('reactModal').classList.remove('on');
+
+// ── Chat ─────────────────────────────────────────────────────
+let chatMessages=[];
+let lastReadTs=parseInt(localStorage.getItem('lc_lastread')||'0');
+let unreadCount=0;
+
+function watchChat(){
+  onValue(ref(db,`listas/${room}/_chat`),snap=>{
+    const data=snap.val()||{};
+    chatMessages=Object.entries(data).map(([k,v])=>({...v,key:k})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    renderChat();
+    // Count unread
+    unreadCount=chatMessages.filter(m=>(m.ts||0)>lastReadTs&&m.author!==user).length;
+    const badge=$('chatNotif');
+    if(unreadCount>0){badge.textContent=unreadCount>99?'99+':unreadCount;badge.classList.add('on');}
+    else{badge.classList.remove('on');}
+  });
+}
+
+function renderChat(){
+  const cont=$('chatMsgs');
+  if(!chatMessages.length){
+    cont.innerHTML='<div class="chat-empty">Aún no hay mensajes.<br>¡Empieza la conversación!</div>';
+    return;
+  }
+  cont.innerHTML='';
+  let lastAuthor='',lastDate='';
+  chatMessages.forEach(m=>{
+    if(m.system){
+      const div=document.createElement('div');div.className='chat-msg system';
+      div.textContent=m.text;cont.appendChild(div);
+      return;
+    }
+    const isMine=m.author===user;
+    const showAuthor=!isMine&&m.author!==lastAuthor;
+    const date=new Date(m.ts||0);
+    const time=`${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    const div=document.createElement('div');
+    div.className='chat-msg '+(isMine?'mine':'theirs');
+    let html='';
+    if(showAuthor)html+=`<div class="chat-author" style="color:${ucolor(m.author)}">${esc(m.author)}</div>`;
+    html+=esc(m.text);
+    html+=`<div class="chat-meta">${time}</div>`;
+    div.innerHTML=html;
+    cont.appendChild(div);
+    lastAuthor=m.author;
+  });
+  // Scroll to bottom
+  setTimeout(()=>cont.scrollTop=cont.scrollHeight,50);
+}
+
+function openChat(){
+  $('chatPanel').classList.add('open');
+  setTimeout(()=>{$('chatInput').focus();$('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;},300);
+  // Mark all as read
+  if(chatMessages.length){
+    lastReadTs=chatMessages[chatMessages.length-1].ts||Date.now();
+    localStorage.setItem('lc_lastread',lastReadTs.toString());
+  }
+  unreadCount=0;
+  $('chatNotif').classList.remove('on');
+}
+function closeChat(){$('chatPanel').classList.remove('open');}
+$('chatBtn').onclick=openChat;
+$('chatClose').onclick=closeChat;
+$('chatSend').onclick=sendChat;
+$('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+
+function sendChat(){
+  const v=$('chatInput').value.trim();
+  if(!v)return;
+  push(ref(db,`listas/${room}/_chat`),{text:v,author:user,ts:Date.now()});
+  $('chatInput').value='';
+}
+
+// Show chat button when in app
+function showChatBtn(){$('chatBtn').classList.add('show');}
 
 // ── Sidebar ──────────────────────────────────────────────────
 function openSidebar(){
@@ -957,7 +1313,15 @@ $('si-logout').onclick=()=>{if(confirm('¿Cambiar de sala?')){[SK,'lista_v4','li
 
 // ── Render ───────────────────────────────────────────────────
 function render(){
-  const all=Object.entries(items).map(([k,v])=>({...v,key:k})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  let allEntries=Object.entries(items).map(([k,v])=>({...v,key:k}));
+  // Apply search filter
+  if(searchQuery){
+    allEntries=allEntries.filter(i=>{
+      const hay=(i.name||'')+' '+(i.brand||'')+' '+(i.note||'')+' '+(i.assignedTo||'');
+      return hay.toLowerCase().includes(searchQuery);
+    });
+  }
+  const all=allEntries.sort((a,b)=>(a.ts||0)-(b.ts||0));
   const pending2=all.filter(i=>!i.checked),done=all.filter(i=>i.checked),total=all.reduce((s,i)=>s+(i.qty||1),0);
   $('emptyMsg').style.display=all.length?'none':'block';
   $('sub').textContent=all.length?`${all.length} producto${all.length>1?'s':''} · ${total} unidad${total>1?'es':''}`:'sin productos';
@@ -990,6 +1354,26 @@ function mkItem(item){
   const li=document.createElement('li');li.className='item'+(item.checked?' done':'');li.dataset.key=item.key;
   const qty=item.unit?`${item.qty||1} ${item.unit}`:(item.qty||1);
   const col=ucolor(item.addedBy||''),ini=(item.addedBy||'?').charAt(0).toUpperCase();
+
+  // Build extras (note, assigned, reactions)
+  let extras='';
+  if(item.note)extras+=`<span class="item-note">📝 ${esc(item.note)}</span>`;
+  if(item.assignedTo){
+    const acol=ucolor(item.assignedTo);
+    extras+=`<span class="item-assigned"><span style="width:10px;height:10px;border-radius:50%;background:${acol};display:inline-block"></span>${esc(item.assignedTo)}</span>`;
+  }
+  if(item.reactions&&Object.keys(item.reactions).length){
+    const counts={};
+    Object.entries(item.reactions).forEach(([u,r])=>{counts[r]=(counts[r]||0)+1;});
+    let rxHtml='<span class="item-reactions">';
+    Object.entries(counts).forEach(([rx,n])=>{
+      const mine=item.reactions[user]===rx?' mine':'';
+      rxHtml+=`<span class="reaction-pill${mine}" data-rx-toggle="${rx}" data-id="${item.key}">${rx} ${n}</span>`;
+    });
+    rxHtml+='</span>';
+    extras+=rxHtml;
+  }
+
   li.innerHTML=`
     ${item.img?`<img class="iimg" src="${esc(item.img)}" loading="lazy"/>`:`<div class="iemoji">${CATS[item.cat||'otros']?.i||'📦'}</div>`}
     <div class="chk${item.checked?' on':''}" data-a="chk" data-id="${item.key}">
@@ -998,15 +1382,14 @@ function mkItem(item){
     <div class="iinfo">
       <div class="iname">${esc(item.name)}</div>
       <div class="imeta">${item.brand?`<span>${esc(item.brand)}</span>`:''}<span class="ubadge" style="background:${col};color:#fff">${ini}</span></div>
+      ${extras?`<div class="item-extras">${extras}</div>`:''}
     </div>
     <div class="qty">
       <button class="qbtn" data-a="-" data-id="${item.key}">−</button>
       <span class="qnum" data-id="${item.key}">${qty}</span>
       <button class="qbtn" data-a="+" data-id="${item.key}">+</button>
     </div>
-    <button class="delbtn" data-a="del" data-id="${item.key}">
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 2.5l10 10M12.5 2.5l-10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </button>`;
+    <button class="item-menu-btn" data-a="menu" data-id="${item.key}" title="Opciones">⋯</button>`;
   return li;
 }
 </script>
