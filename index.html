@@ -293,6 +293,111 @@
     .assign-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--rs);cursor:pointer;background:var(--sf2);border:1px solid transparent;}
     .assign-item.selected{border-color:var(--ac);background:var(--acl);}
 
+
+    /* ── ANIMATIONS ── */
+    @keyframes slideIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes slideOut{from{opacity:1;transform:translateY(0);max-height:80px;margin-bottom:5px;padding-top:10px;padding-bottom:10px;}to{opacity:0;transform:translateX(100px);max-height:0;margin-bottom:0;padding-top:0;padding-bottom:0;border-width:0;}}
+    @keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+    @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1;}100%{transform:translateY(-100px) rotate(360deg);opacity:0;}}
+    @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(26,107,74,.4);}50%{box-shadow:0 0 0 6px rgba(26,107,74,0);}}
+    @keyframes slideUpIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+    .item{transition:transform .2s ease, opacity .2s ease, background .2s ease;animation:slideIn .25s ease-out;}
+    .item.removing{animation:slideOut .35s ease-in forwards;}
+    .item.justAdded{animation:slideIn .35s ease-out, glow 1s ease-out;}
+    .chk{transition:all .2s ease;}
+    .chk.on{animation:pop .3s ease;}
+    .qbtn:active{animation:pop .2s ease;}
+    .item-note,.item-assigned,.reaction-pill{animation:slideUpIn .25s ease-out;}
+    .reaction-pill{transition:transform .15s ease, background .15s ease;}
+    .reaction-pill:active{transform:scale(.9);}
+    .toast{animation:none;}
+    .toast.on{animation:slideUpIn .3s ease-out;}
+    .modal-sheet,.sheet{animation:slideUpIn .3s ease-out;}
+    .tab{transition:all .2s ease;}
+    .tab.on{animation:pop .25s ease;}
+    .progfill{transition:width .6s cubic-bezier(.4,0,.2,1);}
+    .modeBtn{transition:all .2s ease;}
+    .catsec{animation:slideIn .3s ease-out;}
+    .catbody{transition:max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s ease;}
+    .cathdr.collapsed+.catbody{opacity:.5;}
+
+    .dup-warn{background:#fff3cd;border:1px solid #ffc107;border-radius:var(--rs);padding:10px 12px;font-size:13px;color:#856404;margin-bottom:.5rem;display:flex;align-items:center;gap:8px;animation:shake .35s ease;}
+
+    .item.dragging{opacity:.5;transform:scale(.97);}
+    .item.dragover{border-top:2px solid var(--ac);}
+    .drag-handle{cursor:grab;color:var(--tx3);padding:4px 2px;font-size:14px;-webkit-tap-highlight-color:transparent;touch-action:none;flex-shrink:0;}
+    .drag-handle:active{cursor:grabbing;}
+    body.shop .drag-handle{display:none;}
+
+    /* ── FORGOTTEN PRODUCTS ── */
+    .forgotten-section{background:linear-gradient(135deg,#fff8e7,#ffe8c4);border:1px solid #ffc107;border-radius:var(--r);padding:1rem;margin-bottom:1rem;animation:slideUpIn .35s ease-out;}
+    @media(prefers-color-scheme:dark){.forgotten-section{background:linear-gradient(135deg,#3d2f0f,#2a1f0a);border-color:#856404;}}
+    .forgotten-section h3{font-size:13px;font-weight:500;color:#856404;margin-bottom:.5rem;display:flex;align-items:center;gap:6px;}
+    @media(prefers-color-scheme:dark){.forgotten-section h3{color:#ffc107;}}
+    .forgotten-list{display:flex;flex-direction:column;gap:6px;}
+    .forgotten-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.6);border-radius:var(--rs);font-size:13px;}
+    @media(prefers-color-scheme:dark){.forgotten-item{background:rgba(255,255,255,.05);}}
+    .forgotten-item .fname{flex:1;color:var(--tx);}
+    .forgotten-item .ftime{font-size:11px;color:var(--tx3);}
+    .forgotten-add{padding:5px 10px;background:var(--ac);color:#fff;border:none;border-radius:999px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+    .forgotten-dismiss{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:14px;padding:2px 4px;}
+
+    /* ── DUPLICATE WARNING ── */
+    .dup-modal-sheet h3{font-size:15px;margin-bottom:8px;}
+    .dup-options{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem;}
+    .dup-option{padding:10px 12px;background:var(--sf2);border-radius:var(--rs);border:1px solid var(--bd2);font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+    .dup-option:active{background:var(--sf3);}
+
+    /* ── STATS PAGE ── */
+    .stats-section{padding:1rem 0;animation:fadeIn .3s ease;}
+    .stats-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:1rem;margin-bottom:.75rem;}
+    .stats-card h4{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin-bottom:.75rem;}
+    .stats-bignum{font-size:32px;font-weight:300;color:var(--tx);font-family:'DM Sans',sans-serif;}
+    .stats-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px;}
+    .stats-row:last-child{border-bottom:none;}
+    .stats-bar{height:6px;background:var(--sf2);border-radius:999px;overflow:hidden;margin-top:4px;}
+    .stats-bar-fill{height:100%;background:var(--ac);border-radius:999px;transition:width .6s ease;}
+    .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:.5rem;}
+    .month-cell{aspect-ratio:1;border-radius:3px;background:var(--sf2);position:relative;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--tx3);}
+    .month-cell.has-activity{background:var(--acl);color:var(--ac);font-weight:500;}
+    .month-cell.high{background:var(--ac);color:#fff;}
+
+    /* ── PANTRY MODE ── */
+    .pantry-toggle{display:flex;gap:0;background:var(--sf2);border-radius:999px;padding:3px;margin-bottom:.75rem;}
+    .pantry-toggle button{flex:1;padding:8px 12px;background:none;border:none;border-radius:999px;font-size:13px;font-weight:500;color:var(--tx2);cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;transition:all .2s;}
+    .pantry-toggle button.on{background:var(--sf);color:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+
+    .item.in-pantry{background:linear-gradient(135deg,var(--sf),var(--sf2));}
+    .item.in-pantry .iname::before{content:'🏠 ';margin-right:2px;}
+
+    /* ── RECIPE IMPORT ── */
+    .recipe-preview{background:var(--sf2);border-radius:var(--rs);padding:.75rem;margin-bottom:.75rem;font-size:13px;max-height:200px;overflow-y:auto;}
+    .recipe-ing{padding:6px 0;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;}
+    .recipe-ing:last-child{border-bottom:none;}
+    .recipe-ing input[type=checkbox]{width:18px;height:18px;flex-shrink:0;}
+
+    /* ── PRICE INPUT ── */
+    .price-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;background:var(--acl);color:var(--ac);padding:1px 6px;border-radius:999px;font-family:'DM Mono',monospace;cursor:pointer;}
+    .price-history{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace;}
+    .price-up{color:var(--red);}
+    .price-down{color:var(--ac);}
+
+    /* ── CONFETTI on complete list ── */
+    .confetti-piece{position:fixed;width:10px;height:10px;pointer-events:none;animation:confetti 1.5s ease-out forwards;z-index:999;}
+
+    /* ── THEME PICKER ── */
+    .theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:.5rem;}
+    .theme-btn{aspect-ratio:1;border-radius:50%;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .2s;}
+    .theme-btn:active{transform:scale(.9);}
+    .theme-btn.on{border-color:var(--tx);}
+
+    /* ── COMPLETION CELEBRATION ── */
+    @keyframes celebrate{0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
+    .progress-complete{animation:celebrate .6s ease;}
+
   </style>
 </head>
 <body>
@@ -363,6 +468,14 @@
   </div>
   <div class="scroll">
     <div style="height:.5rem"></div>
+    <div id="forgottenSection" class="forgotten-section" style="display:none">
+      <h3>💡 Productos olvidados</h3>
+      <div class="forgotten-list" id="forgottenList"></div>
+    </div>
+    <div class="pantry-toggle" id="pantryToggle">
+      <button class="on" data-view="list">🛒 Lista de la compra</button>
+      <button data-view="pantry">🏠 Mi despensa</button>
+    </div>
     <div class="search-box" id="searchBox">
       <input type="text" id="searchInput" placeholder="🔍 Buscar en la lista..." autocomplete="off"/>
       <button class="search-clear" id="searchClear">✕</button>
@@ -429,6 +542,9 @@
   </div>
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
+    <button class="sbBtn accent" id="si-stats">📊 Ver estadísticas</button>
+    <button class="sbBtn" id="si-recipe">🍳 Importar receta desde URL</button>
+    <button class="sbBtn" id="si-theme">🎨 Cambiar tema</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista</button>
     <button class="sbBtn" id="si-tutorial" style="color:var(--tx3)">❓ Ver tutorial</button>
@@ -473,6 +589,68 @@
   </div>
 </div>
 
+<!-- DUPLICATE WARNING MODAL -->
+<div class="overlay" id="dupModal">
+  <div class="sheet dup-modal-sheet">
+    <h3>⚠️ Producto similar ya en la lista</h3>
+    <div class="ssub" id="dupSub"></div>
+    <div class="dup-options" id="dupOptions"></div>
+    <div class="sactions">
+      <button class="scancel" id="dupCancel">Cancelar</button>
+      <button class="sok" id="dupAddNew">Añadir como nuevo</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS MODAL -->
+<div class="overlay" id="statsModal">
+  <div class="sheet" style="max-height:85dvh;overflow-y:auto;">
+    <div class="stitle">📊 Estadísticas</div>
+    <div class="ssub">Tu actividad en esta sala</div>
+    <div id="statsContent"></div>
+    <div class="sactions"><button class="scancel" id="statsClose" style="flex:1">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- RECIPE MODAL -->
+<div class="overlay" id="recipeModal">
+  <div class="sheet">
+    <div class="stitle">🍳 Importar receta</div>
+    <div class="ssub">Pega la URL de una receta y extraeremos los ingredientes</div>
+    <input type="text" id="recipeUrl" placeholder="https://..." autocomplete="off"/>
+    <div id="recipePreview" class="recipe-preview" style="display:none"></div>
+    <div class="sactions">
+      <button class="scancel" id="recipeCancel">Cancelar</button>
+      <button class="sok" id="recipeFetch">Buscar ingredientes</button>
+    </div>
+    <button class="sok" id="recipeAdd" style="width:100%;margin-top:8px;display:none">Añadir seleccionados</button>
+  </div>
+</div>
+
+<!-- PRICE MODAL -->
+<div class="overlay" id="priceModal">
+  <div class="sheet">
+    <div class="stitle">💰 Precio</div>
+    <div class="ssub" id="priceSub"></div>
+    <input type="number" id="priceInput" step="0.01" min="0" placeholder="0.00"/>
+    <div id="priceHistory" style="font-size:12px;color:var(--tx3);margin-bottom:.5rem;"></div>
+    <div class="sactions">
+      <button class="scancel" id="priceCancel">Cancelar</button>
+      <button class="sok" id="priceOk">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- THEME MODAL -->
+<div class="overlay" id="themeModal">
+  <div class="sheet">
+    <div class="stitle">🎨 Tema de color</div>
+    <div class="ssub">Elige tu color preferido</div>
+    <div class="theme-grid" id="themeGrid"></div>
+    <div class="sactions"><button class="scancel" id="themeClose" style="flex:1">Cerrar</button></div>
+  </div>
+</div>
+
 <!-- CHAT -->
 <button id="chatBtn" title="Chat de la sala">
   💬
@@ -501,6 +679,8 @@
       <button class="ia-btn" id="iaAddNote"><span class="ia-ico">📝</span><span>Añadir/editar nota</span></button>
       <button class="ia-btn" id="iaAssign"><span class="ia-ico">👤</span><span>Asignar a alguien</span></button>
       <button class="ia-btn" id="iaReact"><span class="ia-ico">😊</span><span>Reaccionar</span></button>
+      <button class="ia-btn" id="iaPrice"><span class="ia-ico">💰</span><span>Precio</span></button>
+      <button class="ia-btn" id="iaPantry"><span class="ia-ico">🏠</span><span>Mover a despensa / lista</span></button>
     </div>
     <div class="sactions"><button class="scancel" id="iaCancel" style="flex:1">Cerrar</button></div>
   </div>
@@ -960,6 +1140,7 @@ document.addEventListener('click',e=>{
   if(a==='-'){if((item.qty||1)>1)update(r2,{qty:item.qty-1});else remove(r2);}
   if(a==='del'){if(confirm('¿Eliminar '+item.name+'?'))remove(r2);}
   if(a==='menu')openItemActions(key);
+  if(a==='price-tag'){actionItemKey=key;$('iaPrice').click();}
 });
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-a]'))return;
@@ -1312,8 +1493,467 @@ $('si-tutorial').onclick=()=>{closeSidebar();showTutorial();};
 $('si-logout').onclick=()=>{if(confirm('¿Cambiar de sala?')){[SK,'lista_v4','lista_compra_v3'].forEach(k=>localStorage.removeItem(k));location.reload();}};
 
 // ── Render ───────────────────────────────────────────────────
+
+// ── View toggle (list / pantry) ──────────────────────────────
+let currentView='list';
+$('pantryToggle').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-view]');if(!btn)return;
+  currentView=btn.dataset.view;
+  $('pantryToggle').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.view===currentView));
+  render();
+});
+
+// ── Duplicate detection ──────────────────────────────────────
+function findDuplicates(name){
+  const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').trim();
+  const target=norm(name);
+  if(!target||target.length<3)return [];
+  return Object.entries(items).filter(([,v])=>{
+    const existing=norm(v.name||'');
+    if(!existing)return false;
+    if(existing===target)return false; // exact match handled separately
+    // Word overlap
+    const w1=new Set(target.split(/\s+/).filter(w=>w.length>2));
+    const w2=new Set(existing.split(/\s+/).filter(w=>w.length>2));
+    if(!w1.size||!w2.size)return false;
+    let overlap=0;w1.forEach(w=>{if(w2.has(w))overlap++;});
+    return overlap>=Math.min(w1.size,w2.size)*0.6 || existing.includes(target) || target.includes(existing);
+  }).map(([k,v])=>({...v,key:k}));
+}
+
+// Override addItem to check duplicates
+const origAddItem=addItem;
+window.addItem=function(name,brand,barcode,cat,unit,img){
+  name=name.trim();if(!name)return;
+  // Exact match → increment qty (existing behavior)
+  const exact=Object.entries(items).find(([,v])=>v.name.toLowerCase()===name.toLowerCase());
+  if(exact){
+    update(ref(db,`listas/${room}/${curList}/items/${exact[0]}`),{qty:(exact[1].qty||1)+1});
+    toast(`+1 ${name}`);
+    saveActivity('add',name);
+    return;
+  }
+  // Check fuzzy duplicates
+  const dups=findDuplicates(name);
+  if(dups.length>0&&!barcode){ // only warn for manual additions, not scanned
+    showDupModal(name,brand,barcode,cat,unit,img,dups);
+    return;
+  }
+  pushItem(name,brand,barcode,cat,unit,img);
+};
+
+function pushItem(name,brand,barcode,cat,unit,img){
+  push(ref(db,`listas/${room}/${curList}/items`),{
+    name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',
+    unit:unit||'',img:img||'',qty:1,checked:false,
+    ts:Date.now(),addedBy:user,inPantry:false
+  });
+  if(!hist.find(h=>h.name.toLowerCase()===name.toLowerCase())){
+    hist.unshift({name,brand,cat,unit,lastAdded:Date.now()});
+    if(hist.length>200)hist.pop();
+  } else {
+    const h=hist.find(h=>h.name.toLowerCase()===name.toLowerCase());
+    h.lastAdded=Date.now();
+  }
+  localStorage.setItem(HK,JSON.stringify(hist));
+  toast(`Añadido: ${name}`);
+  saveActivity('add',name);
+}
+
+function showDupModal(name,brand,barcode,cat,unit,img,dups){
+  $('dupSub').textContent=`Vas a añadir "${name}". Estos productos parecen similares:`;
+  const opts=$('dupOptions');opts.innerHTML='';
+  dups.forEach(d=>{
+    const div=document.createElement('div');div.className='dup-option';
+    div.innerHTML=`<div><div style="font-weight:500">${esc(d.name)}</div>${d.brand?`<div style="font-size:11px;color:var(--tx3)">${esc(d.brand)}</div>`:''}</div><span style="color:var(--ac);font-weight:500">+1 →</span>`;
+    div.onclick=()=>{
+      update(ref(db,`listas/${room}/${curList}/items/${d.key}`),{qty:(d.qty||1)+1});
+      toast(`+1 ${d.name}`);
+      $('dupModal').classList.remove('on');
+    };
+    opts.appendChild(div);
+  });
+  $('dupCancel').onclick=()=>$('dupModal').classList.remove('on');
+  $('dupAddNew').onclick=()=>{
+    pushItem(name,brand,barcode,cat,unit,img);
+    $('dupModal').classList.remove('on');
+  };
+  $('dupModal').classList.add('on');
+}
+
+// ── Activity tracking (for stats) ─────────────────────────────
+function saveActivity(type,name){
+  try{
+    const acts=JSON.parse(localStorage.getItem('lc_activity')||'[]');
+    acts.push({type,name,ts:Date.now(),user});
+    if(acts.length>500)acts.splice(0,acts.length-500);
+    localStorage.setItem('lc_activity',JSON.stringify(acts));
+  }catch{}
+}
+
+// ── Forgotten products ───────────────────────────────────────
+function checkForgotten(){
+  if(!hist.length)return;
+  const now=Date.now();
+  const FORGOTTEN_DAYS=30; // not added in last 30 days
+  const forgotten=hist.filter(h=>{
+    if(!h.lastAdded)return false;
+    const days=(now-h.lastAdded)/86400000;
+    if(days<FORGOTTEN_DAYS||days>120)return false; // forgotten between 30-120 days
+    // Not in current list
+    return !Object.values(items).some(i=>i.name.toLowerCase()===h.name.toLowerCase());
+  }).slice(0,3);
+  
+  const sec=$('forgottenSection');
+  const dismissed=JSON.parse(localStorage.getItem('lc_forgotten_dismiss')||'[]');
+  const visible=forgotten.filter(f=>!dismissed.includes(f.name));
+  
+  if(visible.length===0){sec.style.display='none';return;}
+  sec.style.display='block';
+  const list=$('forgottenList');list.innerHTML='';
+  visible.forEach(f=>{
+    const days=Math.floor((now-f.lastAdded)/86400000);
+    const div=document.createElement('div');div.className='forgotten-item';
+    div.innerHTML=`
+      <span style="font-size:18px">${CATS[f.cat||'otros']?.i||'📦'}</span>
+      <div style="flex:1">
+        <div class="fname">${esc(f.name)}</div>
+        <div class="ftime">Hace ${days} días</div>
+      </div>
+      <button class="forgotten-add" data-name="${esc(f.name)}" data-cat="${f.cat||'otros'}" data-unit="${f.unit||''}">+ Añadir</button>
+      <button class="forgotten-dismiss" data-dismiss="${esc(f.name)}">✕</button>`;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('.forgotten-add').forEach(b=>{
+    b.onclick=()=>{addItem(b.dataset.name,'','',b.dataset.cat,b.dataset.unit,'');};
+  });
+  list.querySelectorAll('.forgotten-dismiss').forEach(b=>{
+    b.onclick=()=>{
+      const d=JSON.parse(localStorage.getItem('lc_forgotten_dismiss')||'[]');
+      d.push(b.dataset.dismiss);
+      localStorage.setItem('lc_forgotten_dismiss',JSON.stringify(d));
+      checkForgotten();
+    };
+  });
+}
+
+// ── Stats modal ──────────────────────────────────────────────
+$('si-stats').onclick=()=>{closeSidebar();showStats();};
+$('statsClose').onclick=()=>$('statsModal').classList.remove('on');
+$('statsModal').onclick=e=>{if(e.target===$('statsModal'))$('statsModal').classList.remove('on');};
+
+function showStats(){
+  const acts=JSON.parse(localStorage.getItem('lc_activity')||'[]');
+  const now=Date.now();
+  const monthAgo=now-30*86400000;
+  const thisMonth=acts.filter(a=>a.ts>monthAgo);
+  const totalAdded=acts.filter(a=>a.type==='add').length;
+  const monthAdded=thisMonth.filter(a=>a.type==='add').length;
+  
+  // Top products
+  const productCount={};
+  acts.filter(a=>a.type==='add').forEach(a=>{
+    productCount[a.name]=(productCount[a.name]||0)+1;
+  });
+  const topProducts=Object.entries(productCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  
+  // Activity by user
+  const byUser={};
+  thisMonth.filter(a=>a.type==='add').forEach(a=>{
+    byUser[a.user||'?']=(byUser[a.user||'?']||0)+1;
+  });
+  const userMax=Math.max(1,...Object.values(byUser));
+  
+  // Last 28 days grid
+  const days=[];
+  for(let i=27;i>=0;i--){
+    const d=new Date(now-i*86400000);d.setHours(0,0,0,0);
+    const start=d.getTime(),end=start+86400000;
+    const count=acts.filter(a=>a.ts>=start&&a.ts<end).length;
+    days.push({date:d,count});
+  }
+  const dayMax=Math.max(1,...days.map(d=>d.count));
+  
+  let html=`
+    <div class="stats-card">
+      <h4>Este mes</h4>
+      <div class="stats-bignum">${monthAdded}</div>
+      <div style="font-size:13px;color:var(--tx2);margin-top:2px;">productos añadidos</div>
+    </div>
+    <div class="stats-card">
+      <h4>Total histórico</h4>
+      <div style="font-size:13px;">${totalAdded} productos añadidos en total</div>
+    </div>
+    <div class="stats-card">
+      <h4>Actividad últimas 4 semanas</h4>
+      <div class="month-grid">
+        ${days.map(d=>{
+          const intensity=d.count/dayMax;
+          const cls=intensity===0?'':(intensity>0.5?'high':'has-activity');
+          return `<div class="month-cell ${cls}" title="${d.date.toLocaleDateString()} - ${d.count}">${d.date.getDate()}</div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  
+  if(topProducts.length){
+    html+='<div class="stats-card"><h4>Tus productos más añadidos</h4>';
+    topProducts.forEach(([n,c])=>{
+      const pct=Math.round(c/topProducts[0][1]*100);
+      html+=`<div class="stats-row"><span>${esc(n)}</span><span style="color:var(--ac);font-weight:500">${c}×</span></div><div class="stats-bar"><div class="stats-bar-fill" style="width:${pct}%"></div></div>`;
+    });
+    html+='</div>';
+  }
+  
+  if(Object.keys(byUser).length){
+    html+='<div class="stats-card"><h4>Quién añade más (este mes)</h4>';
+    Object.entries(byUser).sort((a,b)=>b[1]-a[1]).forEach(([u,c])=>{
+      const pct=Math.round(c/userMax*100);
+      const col=ucolor(u);
+      html+=`<div class="stats-row"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${col}"></span>${esc(u)}</span><span style="font-weight:500">${c}</span></div><div class="stats-bar"><div class="stats-bar-fill" style="width:${pct}%;background:${col}"></div></div>`;
+    });
+    html+='</div>';
+  }
+  
+  $('statsContent').innerHTML=html;
+  $('statsModal').classList.add('on');
+}
+
+// ── Recipe import ────────────────────────────────────────────
+$('si-recipe').onclick=()=>{
+  closeSidebar();
+  $('recipeUrl').value='';$('recipePreview').style.display='none';$('recipeAdd').style.display='none';
+  $('recipeModal').classList.add('on');
+};
+$('recipeCancel').onclick=()=>$('recipeModal').classList.remove('on');
+$('recipeModal').onclick=e=>{if(e.target===$('recipeModal'))$('recipeModal').classList.remove('on');};
+
+let parsedIngredients=[];
+$('recipeFetch').onclick=async()=>{
+  const url=$('recipeUrl').value.trim();
+  if(!url)return;
+  spin('Buscando ingredientes...');
+  try{
+    // Use a CORS proxy + try to extract structured data
+    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res=await fetch(proxy);
+    const d=await res.json();
+    const html=d.contents||'';
+    parsedIngredients=extractIngredients(html);
+    if(parsedIngredients.length===0){
+      toast('No se encontraron ingredientes en esa página');
+      $('recipePreview').style.display='none';
+      $('recipeAdd').style.display='none';
+    } else {
+      $('recipePreview').innerHTML=parsedIngredients.map((ing,i)=>
+        `<div class="recipe-ing"><input type="checkbox" id="ing${i}" checked/><label for="ing${i}" style="flex:1;cursor:pointer">${esc(ing)}</label></div>`
+      ).join('');
+      $('recipePreview').style.display='block';
+      $('recipeAdd').style.display='block';
+      toast(`${parsedIngredients.length} ingredientes encontrados`);
+    }
+  }catch(e){
+    toast('No se pudo abrir esa URL');
+  }finally{unspin();}
+};
+$('recipeAdd').onclick=()=>{
+  let count=0;
+  parsedIngredients.forEach((ing,i)=>{
+    if($('ing'+i)?.checked){addItem(ing,'','',guesscat(ing),'','');count++;}
+  });
+  toast(`${count} productos añadidos a la lista`);
+  $('recipeModal').classList.remove('on');
+};
+
+function extractIngredients(html){
+  const found=[];
+  // Try JSON-LD recipe schema
+  const jsonLdMatches=html.match(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)||[];
+  for(const m of jsonLdMatches){
+    try{
+      const json=m.replace(/<script[^>]*>/,'').replace(/<\/script>/,'');
+      const data=JSON.parse(json);
+      const items=Array.isArray(data)?data:[data];
+      for(const item of items){
+        const recipe=findRecipe(item);
+        if(recipe?.recipeIngredient){
+          recipe.recipeIngredient.forEach(i=>found.push(cleanIngredient(i)));
+          if(found.length)return found;
+        }
+      }
+    }catch{}
+  }
+  // Fallback: look for ul/li under "ingredient" headings
+  const ingSection=html.match(/<[^>]*(?:class|id)=["'][^"']*ingredient[^"']*["'][^>]*>([\s\S]*?)<\/(?:ul|ol|div|section)>/i);
+  if(ingSection){
+    const liMatches=ingSection[0].match(/<li[^>]*>([\s\S]*?)<\/li>/gi)||[];
+    liMatches.slice(0,30).forEach(li=>{
+      const text=li.replace(/<[^>]+>/g,'').trim();
+      if(text&&text.length<150)found.push(cleanIngredient(text));
+    });
+  }
+  return found;
+}
+function findRecipe(obj){
+  if(!obj||typeof obj!=='object')return null;
+  if(obj['@type']==='Recipe'||(Array.isArray(obj['@type'])&&obj['@type'].includes('Recipe')))return obj;
+  if(obj['@graph']){for(const g of obj['@graph']){const r=findRecipe(g);if(r)return r;}}
+  return null;
+}
+function cleanIngredient(s){
+  return s.replace(/\s+/g,' ').trim().replace(/^[\d\/.,\s]*(g|kg|ml|l|gr|cups?|tsp|tbsp|cucharada|cucharadita|taza|cda|cdita)?s?\s*/i,'').trim()||s;
+}
+
+// ── Price tracking ───────────────────────────────────────────
+$('iaPrice').onclick=()=>{
+  const item=items[actionItemKey];if(!item)return;
+  $('itemActionsModal').classList.remove('on');
+  $('priceSub').textContent=item.name;
+  $('priceInput').value=item.price||'';
+  // Show history
+  const history=JSON.parse(localStorage.getItem('lc_prices_'+(item.barcode||item.name.toLowerCase()))||'[]');
+  if(history.length){
+    const last=history[history.length-1];
+    const prev=history.length>1?history[history.length-2]:null;
+    let h=`Último precio: <strong>${last.price.toFixed(2)}€</strong> (${new Date(last.ts).toLocaleDateString()})`;
+    if(prev){
+      const diff=last.price-prev.price;
+      const cls=diff>0?'price-up':(diff<0?'price-down':'');
+      h+=` <span class="${cls}">${diff>0?'↑':'↓'} ${Math.abs(diff).toFixed(2)}€</span>`;
+    }
+    $('priceHistory').innerHTML=h;
+  } else {$('priceHistory').textContent='Sin historial todavía';}
+  $('priceModal').classList.add('on');
+  setTimeout(()=>$('priceInput').focus(),200);
+};
+$('priceOk').onclick=()=>{
+  const p=parseFloat($('priceInput').value);
+  if(isNaN(p)||p<0){$('priceModal').classList.remove('on');return;}
+  const item=items[actionItemKey];if(!item)return;
+  update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{price:p});
+  // Save to local history
+  const key='lc_prices_'+(item.barcode||item.name.toLowerCase());
+  const h=JSON.parse(localStorage.getItem(key)||'[]');
+  h.push({price:p,ts:Date.now()});
+  if(h.length>20)h.shift();
+  localStorage.setItem(key,JSON.stringify(h));
+  $('priceModal').classList.remove('on');
+  toast(`Precio guardado: ${p.toFixed(2)}€`);
+};
+$('priceCancel').onclick=()=>$('priceModal').classList.remove('on');
+$('priceModal').onclick=e=>{if(e.target===$('priceModal'))$('priceModal').classList.remove('on');};
+
+// ── Pantry toggle for individual item ────────────────────────
+$('iaPantry').onclick=()=>{
+  const item=items[actionItemKey];if(!item)return;
+  update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{inPantry:!item.inPantry});
+  toast(item.inPantry?'Movido a la lista':'Movido a la despensa');
+  $('itemActionsModal').classList.remove('on');
+};
+
+// ── Theme picker ─────────────────────────────────────────────
+const THEMES=[
+  {n:'Verde',ac:'#1a6b4a',acl:'#d4ede3',acd:'#0e4a32'},
+  {n:'Azul',ac:'#1e6091',acl:'#d4e3ed',acd:'#0e4570'},
+  {n:'Morado',ac:'#6b3a99',acl:'#e3d4ed',acd:'#4a2070'},
+  {n:'Naranja',ac:'#c25e1e',acl:'#fde0c8',acd:'#8e3e0e'},
+  {n:'Rosa',ac:'#c2185b',acl:'#fce4ec',acd:'#8a0e3e'},
+  {n:'Rojo',ac:'#c0392b',acl:'#fdecea',acd:'#7a1e0e'},
+  {n:'Negro',ac:'#1a1a1a',acl:'#e0e0e0',acd:'#000000'},
+  {n:'Aqua',ac:'#0e9b8c',acl:'#cdf0eb',acd:'#076b60'},
+];
+function applyTheme(idx){
+  const t=THEMES[idx]||THEMES[0];
+  document.documentElement.style.setProperty('--ac',t.ac);
+  document.documentElement.style.setProperty('--acl',t.acl);
+  document.documentElement.style.setProperty('--acd',t.acd);
+  localStorage.setItem('lc_theme',idx);
+}
+applyTheme(parseInt(localStorage.getItem('lc_theme')||'0'));
+
+$('si-theme').onclick=()=>{
+  closeSidebar();
+  const grid=$('themeGrid');grid.innerHTML='';
+  const cur=parseInt(localStorage.getItem('lc_theme')||'0');
+  THEMES.forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.className='theme-btn'+(i===cur?' on':'');
+    b.style.background=t.ac;
+    b.title=t.n;
+    b.onclick=()=>{
+      applyTheme(i);
+      grid.querySelectorAll('.theme-btn').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      toast(`Tema: ${t.n}`);
+    };
+    grid.appendChild(b);
+  });
+  $('themeModal').classList.add('on');
+};
+$('themeClose').onclick=()=>$('themeModal').classList.remove('on');
+$('themeModal').onclick=e=>{if(e.target===$('themeModal'))$('themeModal').classList.remove('on');};
+
+// ── Drag & drop reorder ──────────────────────────────────────
+let dragKey=null;
+document.addEventListener('touchstart',e=>{
+  const handle=e.target.closest('.drag-handle');if(!handle)return;
+  const item=handle.closest('.item');if(!item)return;
+  dragKey=item.dataset.key;
+  item.classList.add('dragging');
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!dragKey)return;
+  const t=e.touches[0];
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const target=el?.closest('.item');
+  document.querySelectorAll('.item.dragover').forEach(x=>x.classList.remove('dragover'));
+  if(target&&target.dataset.key!==dragKey)target.classList.add('dragover');
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!dragKey)return;
+  const target=document.querySelector('.item.dragover');
+  document.querySelectorAll('.dragging,.dragover').forEach(x=>{x.classList.remove('dragging');x.classList.remove('dragover');});
+  if(target){
+    const targetKey=target.dataset.key;
+    const sourceItem=items[dragKey],targetItem=items[targetKey];
+    if(sourceItem&&targetItem){
+      // Swap timestamps to reorder
+      const newSourceTs=targetItem.ts-1;
+      update(ref(db,`listas/${room}/${curList}/items/${dragKey}`),{ts:newSourceTs});
+    }
+  }
+  dragKey=null;
+});
+
+// ── Completion celebration ───────────────────────────────────
+let lastCompleted=false;
+function checkCompletion(allLen,doneLen){
+  if(allLen>0&&doneLen===allLen&&!lastCompleted){
+    lastCompleted=true;
+    $('progfill').parentElement.classList.add('progress-complete');
+    setTimeout(()=>$('progfill').parentElement.classList.remove('progress-complete'),600);
+    // Confetti
+    const colors=['#1a6b4a','#5ad4a0','#ffc107','#e67e22','#9b59b6'];
+    for(let i=0;i<30;i++){
+      const c=document.createElement('div');c.className='confetti-piece';
+      c.style.left=Math.random()*100+'%';
+      c.style.bottom='0';
+      c.style.background=colors[Math.floor(Math.random()*colors.length)];
+      c.style.animationDelay=(Math.random()*0.3)+'s';
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(),1500);
+    }
+    toast('🎉 ¡Lista completa!');
+  } else if(doneLen<allLen){lastCompleted=false;}
+}
+
 function render(){
   let allEntries=Object.entries(items).map(([k,v])=>({...v,key:k}));
+  // Filter by view
+  if(currentView==='pantry'){
+    allEntries=allEntries.filter(i=>i.inPantry);
+  } else {
+    allEntries=allEntries.filter(i=>!i.inPantry);
+  }
   // Apply search filter
   if(searchQuery){
     allEntries=allEntries.filter(i=>{
@@ -1349,6 +1989,8 @@ function render(){
     done.forEach(item=>ul.appendChild(mkItem(item)));
     sec.appendChild(ul);c.appendChild(sec);
   }
+  checkCompletion(all.length,done.length);
+  checkForgotten();
 }
 function mkItem(item){
   const li=document.createElement('li');li.className='item'+(item.checked?' done':'');li.dataset.key=item.key;
@@ -1374,7 +2016,16 @@ function mkItem(item){
     extras+=rxHtml;
   }
 
+  // Add price tag to extras
+  if(item.price){
+    extras+=`<span class="price-tag" data-a="price-tag" data-id="${item.key}">💰 ${item.price.toFixed(2)}€</span>`;
+  }
+
+  // Pantry indicator
+  if(item.inPantry)li.classList.add('in-pantry');
+
   li.innerHTML=`
+    <span class="drag-handle">⋮⋮</span>
     ${item.img?`<img class="iimg" src="${esc(item.img)}" loading="lazy"/>`:`<div class="iemoji">${CATS[item.cat||'otros']?.i||'📦'}</div>`}
     <div class="chk${item.checked?' on':''}" data-a="chk" data-id="${item.key}">
       ${item.checked?`<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
