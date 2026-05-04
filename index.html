@@ -1885,50 +1885,7 @@ function saveActivity(type,name){
 }
 
 // ── Forgotten products ───────────────────────────────────────
-function checkForgotten(){
-  if(!hist.length)return;
-  const now=Date.now();
-  const FORGOTTEN_DAYS=30; // not added in last 30 days
-  const forgotten=hist.filter(h=>{
-    if(!h.lastAdded)return false;
-    const days=(now-h.lastAdded)/86400000;
-    if(days<FORGOTTEN_DAYS||days>120)return false; // forgotten between 30-120 days
-    // Not in current list
-    return !Object.values(items).some(i=>i.name.toLowerCase()===h.name.toLowerCase());
-  }).slice(0,3);
-  
-  const sec=$('forgottenSection');
-  const dismissed=JSON.parse(localStorage.getItem('lc_forgotten_dismiss')||'[]');
-  const visible=forgotten.filter(f=>!dismissed.includes(f.name));
-  
-  if(visible.length===0){sec.style.display='none';return;}
-  sec.style.display='block';
-  const list=$('forgottenList');list.innerHTML='';
-  visible.forEach(f=>{
-    const days=Math.floor((now-f.lastAdded)/86400000);
-    const div=document.createElement('div');div.className='forgotten-item';
-    div.innerHTML=`
-      <span style="font-size:18px">${CATS[f.cat||'otros']?.i||'📦'}</span>
-      <div style="flex:1">
-        <div class="fname">${esc(f.name)}</div>
-        <div class="ftime">Hace ${days} días</div>
-      </div>
-      <button class="forgotten-add" data-name="${esc(f.name)}" data-cat="${f.cat||'otros'}" data-unit="${f.unit||''}">+ Añadir</button>
-      <button class="forgotten-dismiss" data-dismiss="${esc(f.name)}">✕</button>`;
-    list.appendChild(div);
-  });
-  list.querySelectorAll('.forgotten-add').forEach(b=>{
-    b.onclick=()=>{addItem(b.dataset.name,'','',b.dataset.cat,b.dataset.unit,'');};
-  });
-  list.querySelectorAll('.forgotten-dismiss').forEach(b=>{
-    b.onclick=()=>{
-      const d=JSON.parse(localStorage.getItem('lc_forgotten_dismiss')||'[]');
-      d.push(b.dataset.dismiss);
-      localStorage.setItem('lc_forgotten_dismiss',JSON.stringify(d));
-      checkForgotten();
-    };
-  });
-}
+
 
 // ── Stats modal ──────────────────────────────────────────────
 $('si-stats').onclick=()=>{closeSidebar();showStats();};
