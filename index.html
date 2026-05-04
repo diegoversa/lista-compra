@@ -462,6 +462,32 @@
     .recipe-url-row button{padding:11px 14px;background:var(--ac);color:#fff;border:none;border-radius:var(--rs);font-size:14px;cursor:pointer;white-space:nowrap;}
     .recipe-url-row button:active{background:var(--acd);}
 
+  
+    /* ── PANTRY SCAN ── */
+    .pantry-photo-btn{width:100%;padding:14px;background:var(--sf);border:2px dashed var(--bd2);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:.75rem;-webkit-tap-highlight-color:transparent;transition:all .15s;}
+    .pantry-photo-btn:active{background:var(--sf2);}
+    .pantry-preview{width:100%;border-radius:var(--rs);margin-bottom:.75rem;display:none;max-height:220px;object-fit:cover;}
+    .pantry-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd);}
+    .pantry-item:last-child{border-bottom:none;}
+    .pantry-item label{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;font-size:14px;}
+    .pantry-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--ac);flex-shrink:0;}
+    .pantry-badge{font-size:11px;padding:1px 7px;border-radius:999px;font-family:'DM Mono',monospace;flex-shrink:0;}
+    .pantry-badge.have{background:#d4ede3;color:#1a6b4a;}
+    .pantry-badge.missing{background:#fdecea;color:#c0392b;}
+    .pantry-results{max-height:45dvh;overflow-y:auto;margin-bottom:1rem;}
+    .pantry-tabs{display:flex;gap:6px;margin-bottom:.75rem;}
+    .pantry-tab{flex:1;padding:8px;border-radius:var(--rs);border:1px solid var(--bd2);background:var(--sf);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--tx2);cursor:pointer;text-align:center;}
+    .pantry-tab.on{background:var(--ac);color:#fff;border-color:var(--ac);}
+    .pantry-section-title{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin:.5rem 0 .25rem;padding:0 2px;}
+
+  
+    /* ── PANTRY UNCERTAIN ── */
+    .pantry-item.uncertain{background:var(--sf2);border-radius:var(--rs);padding:8px 10px;margin-bottom:4px;border-bottom:none;}
+    .pantry-item.uncertain label{font-size:14px;}
+    .uncertain-badge{font-size:11px;padding:1px 7px;border-radius:999px;background:#fff3cd;color:#856404;font-family:'DM Mono',monospace;flex-shrink:0;}
+    .uncertain-note{font-size:11px;color:var(--tx3);font-style:italic;margin-top:2px;padding-left:26px;}
+    .pantry-tab.on.uncertain-tab{background:#e8a020;border-color:#e8a020;}
+
   </style>
 </head>
 <body>
@@ -651,6 +677,10 @@
       <button class="sb-tool-btn" id="si-tutorial">
         <span style="font-size:22px">❓</span>
         <span>Tutorial</span>
+      </button>
+      <button class="sb-tool-btn" id="si-pantry">
+        <span style="font-size:22px">📸</span>
+        <span>Escanear despensa</span>
       </button>
     </div>
   </div>
@@ -898,6 +928,36 @@
     <div class="sactions" style="flex-shrink:0;margin-top:auto;padding-top:.75rem">
       <button class="scancel" id="recipeCancel">Cancelar</button>
       <button class="sok" id="recipeAdd" style="display:none">Añadir a la lista</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTRY SCAN MODAL -->
+<input type="file" id="pantryInput" accept="image/*" capture="environment" style="display:none"/>
+<div class="overlay" id="pantryModal">
+  <div class="sheet" style="max-height:92dvh;display:flex;flex-direction:column;">
+    <div class="stitle">📸 Escanear despensa</div>
+    <div class="ssub">Haz una foto a tu despensa, nevera o armario y la IA detectará qué tienes</div>
+
+    <button class="pantry-photo-btn" id="pantryPhotoBtn">
+      📷 Hacer foto / elegir imagen
+    </button>
+    <img id="pantryPreview" class="pantry-preview"/>
+
+    <div id="pantryStatus" style="font-size:13px;color:var(--tx3);margin-bottom:.5rem;display:none"></div>
+
+    <div id="pantryResultsWrap" style="display:none;flex:1;min-height:0;display:none;flex-direction:column;">
+      <div class="pantry-tabs" style="flex-wrap:wrap;gap:5px">
+        <button class="pantry-tab on" id="pantryTabHave">✅ Tienes (<span id="pantryHaveCount">0</span>)</button>
+        <button class="pantry-tab" id="pantryTabUncertain" style="display:none;background:#fff3cd;border-color:#ffc107;color:#856404">🤔 Dudas (<span id="pantryUncertainCount">0</span>)</button>
+        <button class="pantry-tab" id="pantryTabMissing">🛒 Falta (<span id="pantryMissingCount">0</span>)</button>
+      </div>
+      <div class="pantry-results" id="pantryResults"></div>
+    </div>
+
+    <div class="sactions" style="flex-shrink:0;margin-top:auto;padding-top:.75rem">
+      <button class="scancel" id="pantryCancel">Cerrar</button>
+      <button class="sok" id="pantryAddBtn" style="display:none">+ Añadir seleccionados</button>
     </div>
   </div>
 </div>
@@ -2552,6 +2612,215 @@ function mkItem(item){
   enableDrag(li,item.key);
   return li;
 }
+// ── PANTRY SCAN ──────────────────────────────────────────────
+let pantryMode='have'; // 'have' or 'missing'
+let pantryData={have:[],missing:[]};
+
+$('si-pantry').onclick=()=>{closeSidebar();openPantryModal();};
+
+function openPantryModal(){
+  $('pantryPreview').style.display='none';
+  $('pantryStatus').style.display='none';
+  $('pantryResultsWrap').style.display='none';
+  $('pantryAddBtn').style.display='none';
+  $('pantryPhotoBtn').style.display='flex';
+  pantryData={have:[],uncertain:[],missing:[]};
+  $('pantryModal').classList.add('on');
+}
+$('pantryCancel').onclick=()=>$('pantryModal').classList.remove('on');
+$('pantryModal').onclick=e=>{if(e.target===$('pantryModal'))$('pantryModal').classList.remove('on');};
+
+$('pantryPhotoBtn').onclick=()=>$('pantryInput').click();
+
+$('pantryInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  e.target.value='';
+  if(!file)return;
+
+  // Show preview
+  const previewUrl=URL.createObjectURL(file);
+  $('pantryPreview').src=previewUrl;
+  $('pantryPreview').style.display='block';
+  $('pantryPhotoBtn').style.display='none';
+
+  // Convert to base64
+  const base64=await new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+
+  const status=$('pantryStatus');
+  status.textContent='🔍 Analizando imagen con IA...';
+  status.style.display='block';
+  spin('Analizando despensa...');
+
+  try{
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        messages:[{
+          role:'user',
+          content:[
+            {
+              type:'image',
+              source:{type:'base64',media_type:file.type||'image/jpeg',data:base64}
+            },
+            {
+              type:'text',
+              text:`Analiza esta imagen de una despensa, nevera o armario.
+Identifica todos los productos que ves con claridad, los que ves pero tienes dudas, y sugiere lo que podría faltar.
+
+Responde SOLO con JSON válido sin texto extra:
+{
+  "have": [
+    {"name": "leche", "quantity": "casi llena", "cat": "lacteos"},
+    {"name": "arroz", "quantity": "medio paquete", "cat": "panaderia"}
+  ],
+  "uncertain": [
+    {"name": "yogur de fresa", "doubt": "no leo bien la etiqueta, puede ser natural", "cat": "lacteos"},
+    {"name": "aceite", "doubt": "parece oliva pero podria ser girasol", "cat": "conservas"}
+  ],
+  "missing": [
+    {"name": "aceite de oliva", "cat": "conservas"},
+    {"name": "sal", "cat": "conservas"}
+  ]
+}
+
+Reglas: "have"=ves claramente, "uncertain"=ves pero tienes dudas (marca/variedad/si está vacío), "missing"=no ves y podría faltar.
+Categorías: frutas, lacteos, carnes, panaderia, bebidas, congelados, limpieza, higiene, conservas, snacks, otros.
+Lista 5-10 en have, todos los dudosos en uncertain, 3-5 en missing.`
+            }
+          ]
+        }]
+      })
+    });
+
+    unspin();
+    const data=await response.json();
+    const text=data.content?.[0]?.text||'';
+
+    let parsed;
+    try{
+      const clean=text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+      parsed=JSON.parse(clean);
+    }catch{
+      status.textContent='No se pudo analizar la imagen. Intenta con una foto más clara.';
+      $('pantryPhotoBtn').style.display='flex';
+      return;
+    }
+
+    pantryData={
+      have:parsed.have||[],
+      uncertain:parsed.uncertain||[],
+      missing:parsed.missing||[]
+    };
+
+    status.style.display='none';
+    $('pantryHaveCount').textContent=pantryData.have.length;
+    $('pantryUncertainCount').textContent=pantryData.uncertain.length;
+    $('pantryMissingCount').textContent=pantryData.missing.length;
+    // Show uncertain tab if there are any
+    const uncTab=$('pantryTabUncertain');
+    if(pantryData.uncertain.length>0){
+      uncTab.style.display='block';
+      uncTab.classList.add('uncertain-tab');
+    } else {
+      uncTab.style.display='none';
+    }
+    $('pantryResultsWrap').style.display='flex';
+    // Start on uncertain tab if there are doubts, else on have
+    renderPantryTab(pantryData.uncertain.length>0?'uncertain':'have');
+  }catch(err){
+    unspin();
+    status.textContent='Error al analizar: '+err.message;
+    $('pantryPhotoBtn').style.display='flex';
+  }
+});
+
+function renderPantryTab(tab){
+  pantryMode=tab;
+  $('pantryTabHave').classList.toggle('on',tab==='have');
+  $('pantryTabMissing').classList.toggle('on',tab==='missing');
+  if($('pantryTabUncertain'))$('pantryTabUncertain').classList.toggle('on',tab==='uncertain');
+  $('pantryAddBtn').style.display=(tab==='missing'||tab==='uncertain')?'block':'none';
+  $('pantryAddBtn').textContent=tab==='uncertain'?'✓ Confirmar seleccionados':'+ Añadir seleccionados';
+
+  const list=$('pantryResults');list.innerHTML='';
+  const items2=pantryData[tab]||[];
+
+  if(!items2.length){
+    const msgs={have:'No se detectaron productos con claridad',uncertain:'Sin dudas — todo claro',missing:'No hay sugerencias'};
+    list.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--tx3);font-size:13px">${msgs[tab]||''}</div>`;
+    return;
+  }
+
+  items2.forEach(item=>{
+    const div=document.createElement('div');
+    const catInfo=CATS[item.cat||'otros']||CATS.otros;
+
+    if(tab==='uncertain'){
+      div.className='pantry-item uncertain';
+      div.innerHTML=`
+        <label>
+          <input type="checkbox" checked data-name="${esc(item.name)}" data-cat="${esc(item.cat||'otros')}"/>
+          <span>${catInfo.i} ${esc(item.name)}</span>
+        </label>
+        <span class="uncertain-badge">🤔 duda</span>
+        <div class="uncertain-note" style="width:100%">❓ ${esc(item.doubt||'¿Es correcto?')}</div>`;
+    } else if(tab==='missing'){
+      div.className='pantry-item';
+      div.innerHTML=`
+        <label>
+          <input type="checkbox" checked data-name="${esc(item.name)}" data-cat="${esc(item.cat||'otros')}"/>
+          <span>${catInfo.i} ${esc(item.name)}</span>
+        </label>
+        <span class="pantry-badge missing">falta</span>`;
+    } else {
+      div.className='pantry-item';
+      div.innerHTML=`
+        <span style="font-size:18px">${catInfo.i}</span>
+        <div style="flex:1">
+          <div style="font-size:14px">${esc(item.name)}</div>
+          ${item.quantity?`<div style="font-size:11px;color:var(--tx3)">${esc(item.quantity)}</div>`:''}
+        </div>
+        <span class="pantry-badge have">✓ tienes</span>`;
+    }
+    list.appendChild(div);
+  });
+}
+
+$('pantryTabHave').onclick=()=>renderPantryTab('have');
+$('pantryTabMissing').onclick=()=>renderPantryTab('missing');
+if($('pantryTabUncertain'))$('pantryTabUncertain').onclick=()=>renderPantryTab('uncertain');
+
+$('pantryAddBtn').onclick=()=>{
+  const checked=$('pantryResults').querySelectorAll('input[type=checkbox]:checked');
+  if(!checked.length){toast('Selecciona al menos un producto');return;}
+  if(pantryMode==='uncertain'){
+    // Move confirmed items to 'have', remove unchecked
+    const checkedNames=new Set([...checked].map(cb=>cb.dataset.name));
+    const confirmed=pantryData.uncertain.filter(i=>checkedNames.has(i.name));
+    pantryData.have=[...pantryData.have,...confirmed];
+    pantryData.uncertain=pantryData.uncertain.filter(i=>!checkedNames.has(i.name));
+    $('pantryHaveCount').textContent=pantryData.have.length;
+    $('pantryUncertainCount').textContent=pantryData.uncertain.length;
+    toast(`✓ ${confirmed.length} producto${confirmed.length>1?'s':''} confirmado${confirmed.length>1?'s':''}`);
+    // Move to missing tab automatically
+    renderPantryTab(pantryData.uncertain.length>0?'uncertain':'missing');
+  } else {
+    checked.forEach(cb=>{
+      addItem(cb.dataset.name,'','',cb.dataset.cat||'otros','','','');
+    });
+    toast(`✓ ${checked.length} producto${checked.length>1?'s':''} añadido${checked.length>1?'s':''} a la lista`);
+    $('pantryModal').classList.remove('on');
+  }
+};
+
 </script>
 </body>
 </html>
