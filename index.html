@@ -2143,7 +2143,6 @@ $('themeClose').onclick=()=>$('themeModal').classList.remove('on');
 $('themeModal').onclick=e=>{if(e.target===$('themeModal'))$('themeModal').classList.remove('on');};
 
 // ── Drag & drop reorder ──────────────────────────────────────
-let dragKey=null;
 document.addEventListener('touchstart',e=>{
   const handle=e.target.closest('.drag-handle');if(!handle)return;
   const item=handle.closest('.item');if(!item)return;
