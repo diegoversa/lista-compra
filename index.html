@@ -979,8 +979,22 @@ function launchApp(r,u){
   if(amAdmin) watchPending(r);
   watchChat();
   showChatBtn();
+  // Embed connection params in URL so iOS home screen shortcut auto-connects
+  embedParamsInUrl();
   // Show tutorial first time
   if(!localStorage.getItem(TK)) showTutorial();
+}
+
+function embedParamsInUrl(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SK)||'{}');
+    if(!s.projectId||!s.apiKey||!s.roomId) return;
+    const params=new URLSearchParams(location.search);
+    // Only update if params are missing or different
+    if(params.get('p')===s.projectId&&params.get('k')===s.apiKey&&params.get('r')===s.roomId) return;
+    const newUrl=`${location.pathname}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(s.roomId)}`;
+    history.replaceState(null,'',newUrl);
+  }catch{}
 }
 
 // ── Watch pending (admin only) ───────────────────────────────
