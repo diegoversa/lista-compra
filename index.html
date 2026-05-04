@@ -16,6 +16,11 @@
   <meta property="og:description" content="Tu lista de la compra compartida en tiempo real">
   <meta property="og:type" content="website">
   <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Lista%20de%20la%20Compra%22%2C%22short_name%22%3A%22Mercao%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'22'%20fill%3D'%231a6b4a'%2F%3E%3Ctext%20y%3D'72'%20x%3D'50'%20text-anchor%3D'middle'%20font-size%3D'62'%3E%F0%9F%9B%92%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a6b4a%22%2C%22theme_color%22%3A%22%231a6b4a%22%7D">
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -989,11 +994,21 @@ function embedParamsInUrl(){
   try{
     const s=JSON.parse(localStorage.getItem(SK)||'{}');
     if(!s.projectId||!s.apiKey||!s.roomId) return;
+    const paramStr=`?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(s.roomId)}`;
+    // Update visible URL
     const params=new URLSearchParams(location.search);
-    // Only update if params are missing or different
-    if(params.get('p')===s.projectId&&params.get('k')===s.apiKey&&params.get('r')===s.roomId) return;
-    const newUrl=`${location.pathname}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(s.roomId)}`;
-    history.replaceState(null,'',newUrl);
+    if(params.get('p')!==s.projectId||params.get('r')!==s.roomId){
+      history.replaceState(null,'',location.pathname+paramStr);
+    }
+    // Tell service worker to cache these params
+    if(navigator.serviceWorker?.controller){
+      navigator.serviceWorker.controller.postMessage({type:'SAVE_PARAMS',params:paramStr});
+    } else {
+      // SW not yet controlling — wait for it
+      navigator.serviceWorker?.ready.then(reg=>{
+        reg.active?.postMessage({type:'SAVE_PARAMS',params:paramStr});
+      });
+    }
   }catch{}
 }
 
