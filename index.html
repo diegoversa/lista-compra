@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#1a6b4a" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0a1a12" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Lista Compra">
-  <title>Lista de la Compra</title>
+  <meta name="apple-mobile-web-app-title" content="Mercao">
+  <title>Mercao</title>
   <!-- Favicon & PWA icons -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6b4a'/><text y='72' x='50' text-anchor='middle' font-size='62'>🛒</text></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6b4a'/><text y='72' x='50' text-anchor='middle' font-size='62'>🛒</text></svg>">
-  <meta name="description" content="Lista de la compra compartida en tiempo real">
-  <meta property="og:title" content="Lista de la Compra 🛒">
-  <meta property="og:description" content="Lista compartida en tiempo real con escaneo de códigos de barras">
+  <meta name="description" content="Mercao — tu lista de la compra compartida">
+  <meta property="og:title" content="Mercao 🛒">
+  <meta property="og:description" content="Tu lista de la compra compartida en tiempo real">
   <meta property="og:type" content="website">
-  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Lista%20de%20la%20Compra%22%2C%22short_name%22%3A%22Lista%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'22'%20fill%3D'%231a6b4a'%2F%3E%3Ctext%20y%3D'72'%20x%3D'50'%20text-anchor%3D'middle'%20font-size%3D'62'%3E%F0%9F%9B%92%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a6b4a%22%2C%22theme_color%22%3A%22%231a6b4a%22%7D">
+  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Lista%20de%20la%20Compra%22%2C%22short_name%22%3A%22Mercao%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'22'%20fill%3D'%231a6b4a'%2F%3E%3Ctext%20y%3D'72'%20x%3D'50'%20text-anchor%3D'middle'%20font-size%3D'62'%3E%F0%9F%9B%92%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a6b4a%22%2C%22theme_color%22%3A%22%231a6b4a%22%7D">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -446,7 +446,7 @@
 <!-- SETUP -->
 <div id="setup">
   <div style="font-size:48px;margin-bottom:1rem">🛒</div>
-  <h1>Lista de la Compra</h1>
+  <h1>Mercao</h1>
   <p>Compartida en tiempo real.<br>Todos ven los cambios al instante.</p>
   <div id="invbox" class="invbox" style="display:none">
     <h3>📨 Invitación recibida</h3>
@@ -565,7 +565,7 @@
 <!-- SIDEBAR -->
 <div id="sbOverlay"></div>
 <div id="sb">
-  <div class="sbhead"><h2>⚙️ Menú</h2><button class="sbclose" id="sbclose">✕</button></div>
+  <div class="sbhead"><h2>⚙️ Mercao</h2><button class="sbclose" id="sbclose">✕</button></div>
   <div class="sbsec">
     <div class="sblabel">Info de la sala</div>
     <div class="sbrow"><span style="font-size:20px">🏠</span><div><div class="sbval" id="si-room">-</div><div class="sbsub2">Sala</div></div></div>
@@ -597,7 +597,7 @@
     <button class="sbBtn" id="si-tutorial" style="color:var(--tx3)">❓ Ver tutorial</button>
     <button class="sbBtn" id="si-logout" style="color:var(--tx3)">🔓 Cambiar de sala</button>
   </div>
-  <div style="padding:1rem;font-size:11px;color:var(--tx3);text-align:center;">Lista de la Compra · Datos en Firebase</div>
+  <div style="padding:1rem;font-size:11px;color:var(--tx3);text-align:center;">Mercao · Hecho con ❤️</div>
 </div>
 
 <!-- Modal producto -->
@@ -1771,8 +1771,8 @@ $('si-share').onclick=()=>{
   const s=JSON.parse(localStorage.getItem(SK)||'{}');
   const base=location.origin+location.pathname;
   const url=`${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
-  const text=`🛒 Lista de la compra compartida\nSala: ${room}\n\nEntra directo (el admin tiene que aprobarte):\n${url}`;
-  if(navigator.share)navigator.share({title:'Lista',text,url});
+  const text=`🛒 Mercao — lista compartida\nSala: ${room}\n\nEntra directo (el admin tiene que aprobarte):\n${url}`;
+  if(navigator.share)navigator.share({title:'Mercao',text,url});
   else navigator.clipboard.writeText(text).then(()=>toast('Copiado ✓'));
   closeSidebar();
 };
