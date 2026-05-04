@@ -8,6 +8,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Lista Compra">
   <title>Lista de la Compra</title>
+  <!-- Favicon & PWA icons -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6b4a'/><text y='72' x='50' text-anchor='middle' font-size='62'>🛒</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6b4a'/><text y='72' x='50' text-anchor='middle' font-size='62'>🛒</text></svg>">
+  <meta name="description" content="Lista de la compra compartida en tiempo real">
+  <meta property="og:title" content="Lista de la Compra 🛒">
+  <meta property="og:description" content="Lista compartida en tiempo real con escaneo de códigos de barras">
+  <meta property="og:type" content="website">
+  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Lista%20de%20la%20Compra%22%2C%22short_name%22%3A%22Lista%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Crect%20width%3D'100'%20height%3D'100'%20rx%3D'22'%20fill%3D'%231a6b4a'%2F%3E%3Ctext%20y%3D'72'%20x%3D'50'%20text-anchor%3D'middle'%20font-size%3D'62'%3E%F0%9F%9B%92%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a6b4a%22%2C%22theme_color%22%3A%22%231a6b4a%22%7D">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -398,6 +406,39 @@
     @keyframes celebrate{0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
     .progress-complete{animation:celebrate .6s ease;}
 
+  
+    /* ── DRAG & DROP ── */
+    .item.dragging{opacity:.4;background:var(--acl);}
+    .item.drag-over{border-top:2px solid var(--ac);}
+    .drag-handle{color:var(--tx3);padding:4px 2px;cursor:grab;font-size:16px;flex-shrink:0;touch-action:none;}
+    .drag-handle:active{cursor:grabbing;}
+
+    /* ── DUPLICATE BANNER ── */
+    .dup-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:var(--rs);padding:8px 12px;font-size:13px;color:#856404;margin-bottom:.5rem;display:none;align-items:center;gap:8px;cursor:pointer;}
+    .dup-banner.show{display:flex;}
+
+    /* ── FORGOTTEN PRODUCTS ── */
+    .forgotten-sec{margin-bottom:1rem;}
+    .forgotten-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--sf);border:1px dashed var(--bd2);border-radius:var(--rs);margin-bottom:4px;font-size:13px;}
+    .forgotten-add{padding:5px 10px;border-radius:var(--rs);background:var(--acl);color:var(--ac);border:none;font-size:12px;cursor:pointer;font-weight:500;}
+
+    /* ── STATS MODAL ── */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem;}
+    .stats-card{background:var(--sf2);border-radius:var(--rs);padding:1rem;text-align:center;}
+    .stats-num{font-size:24px;font-weight:500;color:var(--ac);}
+    .stats-lbl{font-size:11px;color:var(--tx3);margin-top:2px;}
+    .stats-bar-wrap{margin-bottom:1rem;}
+    .stats-bar-lbl{font-size:12px;color:var(--tx2);margin-bottom:4px;display:flex;justify-content:space-between;}
+    .stats-bar{height:6px;background:var(--sf3);border-radius:999px;overflow:hidden;margin-bottom:8px;}
+    .stats-bar-fill{height:100%;background:var(--ac);border-radius:999px;}
+    .stats-section-title{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin:.75rem 0 .5rem;}
+
+    /* ── STORE SUGGESTION ── */
+    .store-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;}
+    .store-chip{padding:7px 14px;border-radius:999px;border:1px solid var(--bd2);background:var(--sf);font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;}
+    .store-chip.sel{background:var(--ac);color:#fff;border-color:var(--ac);}
+    .store-chip:active{background:var(--sf2);}
+
   </style>
 </head>
 <body>
@@ -483,6 +524,11 @@
     <div id="pendingBanner" class="pendingbanner" style="display:none">
       ⏳ <span id="pendingText"></span> — <strong style="cursor:pointer" id="pendingAction">Ver en el menú ☰</strong>
     </div>
+    <div class="dup-banner" id="dupBanner">⚠️ <span id="dupText"></span></div>
+    <div id="forgottenSec" class="forgotten-sec" style="display:none">
+      <div class="cathdr" style="cursor:default">💡 ¿Se te olvidó algo? <span class="pill" id="forgottenCount">0</span></div>
+      <div id="forgottenList"></div>
+    </div>
     <button class="scanbtn" id="scanbtn">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
         <rect x="3" y="7" width="4" height="10" rx="1"/><rect x="9" y="7" width="2" height="10" rx="0.5"/>
@@ -547,6 +593,7 @@
     <button class="sbBtn" id="si-theme">🎨 Cambiar tema</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista</button>
+    <button class="sbBtn accent" id="si-stats-btn">📊 Estadísticas mensuales</button>
     <button class="sbBtn" id="si-tutorial" style="color:var(--tx3)">❓ Ver tutorial</button>
     <button class="sbBtn" id="si-logout" style="color:var(--tx3)">🔓 Cambiar de sala</button>
   </div>
@@ -729,6 +776,30 @@
     </div>
     <div class="sactions">
       <button class="scancel" id="reactCancel" style="flex:1">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS MODAL -->
+<div class="overlay" id="statsModal">
+  <div class="sheet" style="max-height:85dvh;overflow-y:auto;">
+    <div class="stitle">📊 Estadísticas mensuales</div>
+    <div class="ssub" id="statsPeriod"></div>
+    <div id="statsContent"></div>
+    <div class="sactions"><button class="scancel" id="statsClose" style="flex:1">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- STORE SUGGESTION MODAL -->
+<div class="overlay" id="storeModal">
+  <div class="sheet">
+    <div class="stitle">🏪 ¿Dónde lo compras?</div>
+    <div class="ssub" id="storeSub">Elige el supermercado para este producto</div>
+    <div class="store-chips" id="storeChips"></div>
+    <input type="text" id="storeCustom" placeholder="Otro supermercado..." style="margin-bottom:10px"/>
+    <div class="sactions">
+      <button class="scancel" id="storeSkip">Sin tienda</button>
+      <button class="sok" id="storeOk">Guardar</button>
     </div>
   </div>
 </div>
@@ -1080,7 +1151,18 @@ function openModal(code,sub,prefill,title,img,cat){
   $('modal').classList.add('on');setTimeout(()=>$('mname').focus(),200);
 }
 function closeModal(){$('modal').classList.remove('on');}
-$('mok').onclick=()=>{const v=$('mname').value.trim();if(!v)return;addItem(v,pBrand,pCode,$('mcat').value,$('munitm').value,pImg);closeModal();};
+$('mok').onclick=()=>{
+  const v=$('mname').value.trim();if(!v)return;
+  checkDuplicates(v);
+  const cat=$('mcat').value,unit=$('munitm').value;
+  closeModal();
+  if(pCode){
+    // Has barcode — ask store
+    askStore(v,pBrand,pCode,cat,unit,pImg);
+  } else {
+    askStore(v,pBrand,'',cat,unit,pImg);
+  }
+};
 $('mname').addEventListener('keydown',e=>{if(e.key==='Enter')$('mok').click();});
 $('mcancel').onclick=closeModal;
 $('modal').onclick=e=>{if(e.target===$('modal'))closeModal();};
@@ -1089,12 +1171,17 @@ $('nlModal').onclick=e=>{if(e.target===$('nlModal'))$('nlModal').classList.remov
 // ── Manual add ───────────────────────────────────────────────
 $('addbtn').onclick=()=>{
   const v=$('minput').value.trim();if(!v)return;
-  addItem(v,'','',guesscat(v),$('munit').value,'');
+  checkDuplicates(v);
+  const cat=guesscat(v);
+  const unit=$('munit').value;
+  askStore(v,'','',cat,unit,'');
   $('minput').value='';$('munit').value='';
 };
 $('minput').addEventListener('keydown',e=>{if(e.key==='Enter')$('addbtn').click();});
 $('minput').addEventListener('input',()=>{
-  const q=$('minput').value.trim().toLowerCase();const al=$('aclist');
+  const raw=$('minput').value.trim();
+  if(raw.length>2)checkDuplicates(raw);
+  const q=raw.toLowerCase();const al=$('aclist');
   if(!q||q.length<2){al.classList.remove('on');return;}
   const m=hist.filter(h=>h.name.toLowerCase().includes(q)).slice(0,6);
   if(!m.length){al.classList.remove('on');return;}
@@ -1110,13 +1197,18 @@ $('minput').addEventListener('input',()=>{
 $('minput').addEventListener('blur',()=>setTimeout(()=>$('aclist').classList.remove('on'),150));
 
 // ── Add item ─────────────────────────────────────────────────
-function addItem(name,brand,barcode,cat,unit,img){
+function addItem(name,brand,barcode,cat,unit,img,store){
   name=name.trim();if(!name)return;
   const ex=Object.entries(items).find(([,v])=>v.name.toLowerCase()===name.toLowerCase());
   if(ex){update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[1].qty||1)+1});toast(`+1 ${name}`);return;}
-  push(ref(db,`listas/${room}/${curList}/items`),{name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',unit:unit||'',img:img||'',qty:1,checked:false,ts:Date.now(),addedBy:user});
-  if(!hist.find(h=>h.name.toLowerCase()===name.toLowerCase())){hist.unshift({name,brand,cat,unit});if(hist.length>100)hist.pop();localStorage.setItem(HK,JSON.stringify(hist));}
-  toast(`Añadido: ${name}`);
+  push(ref(db,`listas/${room}/${curList}/items`),{name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',unit:unit||'',img:img||'',store:store||'',qty:1,checked:false,ts:Date.now(),addedBy:user});
+  // Update history with lastAdded and store
+  const hi=hist.findIndex(h=>h.name.toLowerCase()===name.toLowerCase());
+  if(hi>=0){hist[hi].lastAdded=Date.now();if(store)hist[hi].store=store;}
+  else{hist.unshift({name,brand,cat,unit,store:store||'',lastAdded:Date.now()});if(hist.length>100)hist.pop();}
+  localStorage.setItem(HK,JSON.stringify(hist));
+  recordStat(name,cat,store);
+  toast(`Añadido: ${name}${store?' ('+store+')':''}`);
 }
 
 // ── Item events ──────────────────────────────────────────────
@@ -1337,6 +1429,207 @@ function sendChat(){
 
 // Show chat button when in app
 function showChatBtn(){$('chatBtn').classList.add('show');}
+
+
+// ── STORES ───────────────────────────────────────────────────
+const STORES=['Mercadona','Carrefour','Lidl','Alcampo','Día','El Corte Inglés','Ahorro','Aldi','Eroski','Consum','BonPreu'];
+let pendingStoreItem=null;
+
+function askStore(name,brand,barcode,cat,unit,img){
+  pendingStoreItem={name,brand,barcode,cat,unit,img};
+  $('storeSub').textContent=`¿Dónde compras habitualmente: ${name}?`;
+  // Build chips — suggest from history
+  const hist2=hist.filter(h=>h.store);
+  const usedStores=[...new Set(hist2.map(h=>h.store))];
+  const allStores=[...new Set([...usedStores,...STORES])].slice(0,12);
+  const chips=$('storeChips');chips.innerHTML='';
+  allStores.forEach(s=>{
+    const btn=document.createElement('button');
+    btn.className='store-chip';btn.textContent=s;
+    btn.onclick=()=>{chips.querySelectorAll('.store-chip').forEach(c=>c.classList.remove('sel'));btn.classList.add('sel');$('storeCustom').value='';};
+    chips.appendChild(btn);
+  });
+  $('storeCustom').value='';
+  $('storeModal').classList.add('on');
+}
+$('storeOk').onclick=()=>{
+  if(!pendingStoreItem)return;
+  const sel=$('storeChips').querySelector('.sel');
+  const store=sel?sel.textContent:($('storeCustom').value.trim()||'');
+  const {name,brand,barcode,cat,unit,img}=pendingStoreItem;
+  addItem(name,brand,barcode,cat,unit,img,store);
+  $('storeModal').classList.remove('on');
+  pendingStoreItem=null;
+};
+$('storeSkip').onclick=()=>{
+  if(!pendingStoreItem)return;
+  const {name,brand,barcode,cat,unit,img}=pendingStoreItem;
+  addItem(name,brand,barcode,cat,unit,img,'');
+  $('storeModal').classList.remove('on');
+  pendingStoreItem=null;
+};
+
+// ── DUPLICATE DETECTION ───────────────────────────────────────
+function checkDuplicates(name){
+  if(!name||name.length<3)return;
+  const q=name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g,' ').trim();
+  const words=q.split(' ').filter(w=>w.length>2);
+  const dups=Object.values(items).filter(item=>{
+    if(item.name.toLowerCase()===name.toLowerCase())return false; // exact match handled separately
+    const iname=item.name.toLowerCase();
+    return words.some(w=>iname.includes(w));
+  });
+  const banner=$('dupBanner');
+  if(dups.length>0){
+    $('dupText').textContent=`"${dups[0].name}" ya está en la lista — ¿es el mismo? Pulsa para añadir +1`;
+    banner.classList.add('show');
+    banner.onclick=()=>{
+      const ex=Object.entries(items).find(([,v])=>v.name===dups[0].name);
+      if(ex)update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[0].qty||1)+1});
+      banner.classList.remove('show');
+      toast(`+1 ${dups[0].name}`);
+    };
+    setTimeout(()=>banner.classList.remove('show'),8000);
+  } else {banner.classList.remove('show');}
+}
+
+// ── FORGOTTEN PRODUCTS ────────────────────────────────────────
+function checkForgotten(){
+  if(!hist.length)return;
+  const inList=new Set(Object.values(items).map(i=>i.name.toLowerCase()));
+  const now=Date.now();
+  const forgotten=hist.filter(h=>{
+    if(inList.has(h.name.toLowerCase()))return false;
+    if(!h.lastAdded)return false;
+    const daysSince=(now-h.lastAdded)/(1000*60*60*24);
+    return daysSince>30&&daysSince<365;
+  }).slice(0,5);
+  const sec=$('forgottenSec'),list=$('forgottenList');
+  if(forgotten.length>0){
+    sec.style.display='block';
+    $('forgottenCount').textContent=forgotten.length;
+    list.innerHTML='';
+    forgotten.forEach(h=>{
+      const div=document.createElement('div');div.className='forgotten-item';
+      const daysSince=Math.round((now-h.lastAdded)/(1000*60*60*24));
+      div.innerHTML=`<div><span style="font-size:13px;font-weight:500">${esc(h.name)}</span><br><span style="font-size:11px;color:var(--tx3)">Hace ${daysSince} días${h.store?` · ${h.store}`:''}</span></div><button class="forgotten-add" data-name="${esc(h.name)}">+ Añadir</button>`;
+      div.querySelector('.forgotten-add').onclick=()=>{
+        addItem(h.name,h.brand||'','',h.cat||'otros',h.unit||'',h.img||'',h.store||'');
+        div.remove();
+        if(!list.children.length)sec.style.display='none';
+      };
+      list.appendChild(div);
+    });
+  } else {sec.style.display='none';}
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────
+let dragKey=null,dragEl=null;
+function enableDrag(li,key){
+  li.setAttribute('draggable','true');
+  li.addEventListener('dragstart',e=>{dragKey=key;dragEl=li;li.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+  li.addEventListener('dragend',()=>{li.classList.remove('dragging');document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));dragKey=null;dragEl=null;});
+  li.addEventListener('dragover',e=>{e.preventDefault();if(li.dataset.key!==dragKey)li.classList.add('drag-over');});
+  li.addEventListener('dragleave',()=>li.classList.remove('drag-over'));
+  li.addEventListener('drop',e=>{
+    e.preventDefault();li.classList.remove('drag-over');
+    if(!dragKey||dragKey===key)return;
+    // Swap timestamps to reorder
+    const dragItem=items[dragKey],dropItem=items[key];
+    if(!dragItem||!dropItem)return;
+    const tmpTs=dragItem.ts||0;
+    update(ref(db,`listas/${room}/${curList}/items/${dragKey}`),{ts:(dropItem.ts||0)-1});
+    update(ref(db,`listas/${room}/${curList}/items/${key}`),{ts:tmpTs});
+  });
+  // Touch drag support
+  let touchY=0,touchMoved=false;
+  li.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY;touchMoved=false;},{passive:true});
+  li.addEventListener('touchmove',e=>{
+    if(Math.abs(e.touches[0].clientY-touchY)>5){touchMoved=true;}
+  },{passive:true});
+}
+
+// ── STATS ─────────────────────────────────────────────────────
+function openStats(){
+  const statsRef=ref(db,`listas/${room}/_stats`);
+  onValue(statsRef,snap=>{
+    const stats=snap.val()||{};
+    const now=new Date();
+    const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const thisMonth=stats[monthKey]||{items:[],users:{}};
+    const lastMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const lastMonthKey=`${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth()+1).padStart(2,'0')}`;
+    const lastMonth=stats[lastMonthKey]||{items:[],users:{}};
+
+    const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    $('statsPeriod').textContent=`${months[now.getMonth()]} ${now.getFullYear()} vs ${months[lastMonthDate.getMonth()]} ${lastMonthDate.getFullYear()}`;
+
+    const thisCount=thisMonth.items?.length||0;
+    const lastCount=lastMonth.items?.length||0;
+    const diff=thisCount-lastCount;
+    const diffStr=diff===0?'igual que el mes pasado':(diff>0?`+${diff} más que el mes pasado`:`${diff} menos que el mes pasado`);
+
+    // Cat breakdown this month
+    const catCount={};
+    (thisMonth.items||[]).forEach(i=>{catCount[i.cat||'otros']=(catCount[i.cat||'otros']||0)+1;});
+    const topCats=Object.entries(catCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxCat=topCats[0]?.[1]||1;
+
+    // Top users this month
+    const userCount={};
+    (thisMonth.items||[]).forEach(i=>{if(i.by)userCount[i.by]=(userCount[i.by]||0)+1;});
+    const topUsers=Object.entries(userCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    // Stores this month
+    const storeCount={};
+    (thisMonth.items||[]).forEach(i=>{if(i.store)storeCount[i.store]=(storeCount[i.store]||0)+1;});
+    const topStores=Object.entries(storeCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    let html=`
+      <div class="stats-grid">
+        <div class="stats-card"><div class="stats-num">${thisCount}</div><div class="stats-lbl">este mes</div></div>
+        <div class="stats-card"><div class="stats-num">${lastCount}</div><div class="stats-lbl">mes anterior</div></div>
+      </div>
+      <div style="font-size:13px;color:var(--tx2);text-align:center;margin-bottom:1rem">${diffStr}</div>`;
+
+    if(topCats.length){
+      html+=`<div class="stats-section-title">Por categorías</div><div class="stats-bar-wrap">`;
+      topCats.forEach(([cat,n])=>{
+        const info=CATS[cat]||{l:cat,i:'📦'};
+        const pct=Math.round(n/maxCat*100);
+        html+=`<div class="stats-bar-lbl"><span>${info.i} ${info.l}</span><span>${n}</span></div><div class="stats-bar"><div class="stats-bar-fill" style="width:${pct}%"></div></div>`;
+      });
+      html+=`</div>`;
+    }
+    if(topUsers.length){
+      html+=`<div class="stats-section-title">Más activos</div>`;
+      topUsers.forEach(([u,n])=>{
+        const col=ucolor(u);const ini=u.charAt(0).toUpperCase();
+        html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:28px;height:28px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500">${ini}</div><span style="flex:1;font-size:13px">${esc(u)}</span><span style="font-size:13px;font-weight:500;color:var(--ac)">${n}</span></div>`;
+      });
+    }
+    if(topStores.length){
+      html+=`<div class="stats-section-title">Tiendas más usadas</div>`;
+      topStores.forEach(([s,n])=>{
+        html+=`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>🏪 ${esc(s)}</span><span style="font-weight:500;color:var(--ac)">${n} productos</span></div>`;
+      });
+    }
+
+    $('statsContent').innerHTML=html;
+  },{onlyOnce:true});
+
+  $('statsModal').classList.add('on');closeSidebar();
+}
+$('statsClose').onclick=()=>$('statsModal').classList.remove('on');
+$('si-stats-btn').onclick=openStats;
+
+// Record to stats when item added
+function recordStat(name,cat,store){
+  const now=new Date();
+  const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  push(ref(db,`listas/${room}/_stats/${monthKey}/items`),{name,cat,store:store||'',by:user,ts:Date.now()});
+}
+
 
 // ── Sidebar ──────────────────────────────────────────────────
 function openSidebar(){
@@ -1997,8 +2290,9 @@ function mkItem(item){
   const qty=item.unit?`${item.qty||1} ${item.unit}`:(item.qty||1);
   const col=ucolor(item.addedBy||''),ini=(item.addedBy||'?').charAt(0).toUpperCase();
 
-  // Build extras (note, assigned, reactions)
+  // Build extras (note, assigned, reactions, store)
   let extras='';
+  if(item.store)extras+=`<span style="font-size:11px;color:var(--tx3)">🏪 ${esc(item.store)}</span>`;
   if(item.note)extras+=`<span class="item-note">📝 ${esc(item.note)}</span>`;
   if(item.assignedTo){
     const acol=ucolor(item.assignedTo);
@@ -2040,7 +2334,9 @@ function mkItem(item){
       <span class="qnum" data-id="${item.key}">${qty}</span>
       <button class="qbtn" data-a="+" data-id="${item.key}">+</button>
     </div>
-    <button class="item-menu-btn" data-a="menu" data-id="${item.key}" title="Opciones">⋯</button>`;
+    <button class="item-menu-btn" data-a="menu" data-id="${item.key}" title="Opciones">⋯</button>
+    <span class="drag-handle" title="Arrastrar">⠿</span>`;
+  enableDrag(li,item.key);
   return li;
 }
 </script>
