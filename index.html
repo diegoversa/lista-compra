@@ -921,23 +921,29 @@ function doConnect(p,k,r,u){
 
 // ── Access control ───────────────────────────────────────────
 function checkAccessAndWait(r,u){
-  // Check if banned by UID or name
+  // Check banned first (onlyOnce — avoid false triggers)
   onValue(ref(db,`listas/${r}/_banned`),bsnap=>{
     const banned=bsnap.val()||{};
-    const isBanned=Object.values(banned).some(b=>b.uid===uid||b.name===u);
+    // Only ban if there's actual data and uid/name matches explicitly
+    const isBanned=banned&&Object.keys(banned).length>0&&
+      Object.values(banned).some(b=>(b.uid&&b.uid===uid)||(b.name===u&&b.uid===uid));
     if(isBanned){
-      $('setup').style.display='none';
-      alert('Has sido expulsado de esta sala y no puedes volver a entrar.');
+      alert('Has sido expulsado de esta sala por el administrador.');
+      [SK,'lista_v4','lista_compra_v3','lista_compra_settings_v2'].forEach(k=>localStorage.removeItem(k));
+      location.reload();
       return;
     }
-    // Check if already approved
+    // Check if already approved member
     onValue(ref(db,`listas/${r}/_members`),msnap=>{
       const members=msnap.val()||{};
       const myEntry=Object.values(members).find(m=>m.uid===uid);
       if(myEntry&&myEntry.approved){
         launchApp(r,u);
+      } else if(myEntry&&!myEntry.approved){
+        // Already requested, just wait
+        requestAccess(r,u);
       } else {
-        // Request access
+        // New user — request access
         requestAccess(r,u);
       }
     },{onlyOnce:true});
