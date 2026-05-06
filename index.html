@@ -488,24 +488,6 @@
     .uncertain-note{font-size:11px;color:var(--tx3);font-style:italic;margin-top:2px;padding-left:26px;}
     .pantry-tab.on.uncertain-tab{background:#e8a020;border-color:#e8a020;}
 
-  
-    /* ── PURCHASE HISTORY ── */
-    .history-item{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;}
-    .history-item:last-child{border-bottom:none;}
-    .history-date{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;flex-shrink:0;}
-    .history-name{font-size:14px;color:var(--tx);}
-    .history-meta{font-size:11px;color:var(--tx3);}
-    .history-month{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);padding:8px 14px 4px;background:var(--sf2);}
-    .shop-done-btn{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ac);color:#fff;border:none;border-radius:999px;padding:14px 28px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:none;z-index:90;box-shadow:0 4px 20px rgba(26,107,74,.4);-webkit-tap-highlight-color:transparent;}
-    body.shop .shop-done-btn{display:block;}
-
-  
-    /* ── THEME PICKER ── */
-    .theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:.5rem;}
-    .theme-btn{aspect-ratio:1;border-radius:50%;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .2s;}
-    .theme-btn:active{transform:scale(.9);}
-    .theme-btn.on{border-color:var(--tx);}
-
   </style>
 </head>
 <body>
@@ -578,7 +560,7 @@
     <div style="height:.5rem"></div>
     <div id="forgottenSection" class="forgotten-section" style="display:none">
       <h3>💡 Productos olvidados</h3>
-      <div class="forgotten-list" id="forgottenListOld"></div>
+      <div class="forgotten-list" id="forgottenList"></div>
     </div>
     <div class="pantry-toggle" id="pantryToggle">
       <button class="on" data-view="list">🛒 Lista de la compra</button>
@@ -700,17 +682,12 @@
         <span style="font-size:22px">📸</span>
         <span>Escanear despensa</span>
       </button>
-      <button class="sb-tool-btn" id="si-theme">
-        <span style="font-size:22px">🎨</span>
-        <span>Tema</span>
-      </button>
     </div>
   </div>
 
   <!-- Lista -->
   <div class="sbsec">
     <div class="sblabel">Esta lista</div>
-    <button class="sbBtn" id="si-history">🕐 Ver historial de compras</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista completa</button>
   </div>
@@ -742,23 +719,12 @@
       </select>
     </div>
     <select id="mcat">
-      <option value="frutas">🍎 Frutas y verduras</option>
-      <option value="lacteos">🥛 Lácteos y huevos</option>
-      <option value="carnes">🥩 Carnes y pescados</option>
-      <option value="panaderia">🍞 Panadería y cereales</option>
-      <option value="bebidas">🥤 Bebidas</option>
-      <option value="congelados">🧊 Congelados</option>
-      <option value="conservas">🥫 Conservas y salsas</option>
-      <option value="snacks">🍿 Snacks y dulces</option>
-      <option value="limpieza">🧹 Limpieza y hogar</option>
-      <option value="higiene">🧴 Higiene personal</option>
-      <option value="mascotas">🐾 Mascotas</option>
-      <option value="bebe">🍼 Bebé</option>
-      <option value="farmacia">💊 Farmacia</option>
-      <option value="papeleria">📎 Papelería</option>
-      <option value="ropa">👕 Ropa y textil</option>
-      <option value="electronica">🔌 Electrónica</option>
-      <option value="otros">📦 Otros</option>
+      <option value="otros">📦 Otros</option><option value="frutas">🍎 Frutas y verduras</option>
+      <option value="lacteos">🥛 Lácteos y huevos</option><option value="carnes">🥩 Carnes y pescados</option>
+      <option value="panaderia">🍞 Panadería</option><option value="bebidas">🥤 Bebidas</option>
+      <option value="congelados">🧊 Congelados</option><option value="limpieza">🧹 Limpieza</option>
+      <option value="higiene">🧴 Higiene</option><option value="conservas">🥫 Conservas</option>
+      <option value="snacks">🍿 Snacks</option>
     </select>
     <div class="sactions"><button class="scancel" id="mcancel">Cancelar</button><button class="sok" id="mok">Añadir</button></div>
   </div>
@@ -788,10 +754,29 @@
 </div>
 
 <!-- STATS MODAL -->
-
+<div class="overlay" id="statsModal">
+  <div class="sheet" style="max-height:85dvh;overflow-y:auto;">
+    <div class="stitle">📊 Estadísticas</div>
+    <div class="ssub">Tu actividad en esta sala</div>
+    <div id="statsContent"></div>
+    <div class="sactions"><button class="scancel" id="statsClose" style="flex:1">Cerrar</button></div>
+  </div>
+</div>
 
 <!-- RECIPE MODAL -->
-
+<div class="overlay" id="recipeModal">
+  <div class="sheet">
+    <div class="stitle">🍳 Importar receta</div>
+    <div class="ssub">Pega la URL de una receta y extraeremos los ingredientes</div>
+    <input type="text" id="recipeUrl" placeholder="https://..." autocomplete="off"/>
+    <div id="recipePreview" class="recipe-preview" style="display:none"></div>
+    <div class="sactions">
+      <button class="scancel" id="recipeCancel">Cancelar</button>
+      <button class="sok" id="recipeFetch">Buscar ingredientes</button>
+    </div>
+    <button class="sok" id="recipeAdd" style="width:100%;margin-top:8px;display:none">Añadir seleccionados</button>
+  </div>
+</div>
 
 <!-- PRICE MODAL -->
 <div class="overlay" id="priceModal">
@@ -808,7 +793,14 @@
 </div>
 
 <!-- THEME MODAL -->
-
+<div class="overlay" id="themeModal">
+  <div class="sheet">
+    <div class="stitle">🎨 Tema de color</div>
+    <div class="ssub">Elige tu color preferido</div>
+    <div class="theme-grid" id="themeGrid"></div>
+    <div class="sactions"><button class="scancel" id="themeClose" style="flex:1">Cerrar</button></div>
+  </div>
+</div>
 
 <!-- CHAT -->
 <button id="chatBtn" title="Chat de la sala">
@@ -970,33 +962,6 @@
   </div>
 </div>
 
-<!-- SHOP DONE BUTTON -->
-<button id="shopDoneBtn" class="shop-done-btn">✅ Compra terminada</button>
-
-<!-- HISTORY MODAL -->
-<div class="overlay" id="historyModal">
-  <div class="sheet" style="max-height:85dvh;display:flex;flex-direction:column;">
-    <div class="stitle">🕐 Historial de compras</div>
-    <div class="ssub">Productos comprados ordenados por fecha</div>
-    <div style="flex:1;overflow-y:auto;" id="historyList">
-      <div style="text-align:center;padding:2rem;color:var(--tx3);font-size:13px">Cargando historial...</div>
-    </div>
-    <div class="sactions" style="flex-shrink:0;padding-top:.75rem">
-      <button class="scancel" id="historyClose" style="flex:1">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- THEME MODAL -->
-<div class="overlay" id="themeModal">
-  <div class="sheet">
-    <div class="stitle">🎨 Tema de color</div>
-    <div class="ssub">Elige tu color preferido</div>
-    <div class="theme-grid" id="themeGrid"></div>
-    <div class="sactions"><button class="scancel" id="themeClose" style="flex:1">Cerrar</button></div>
-  </div>
-</div>
-
 <div class="spinwrap" id="spinner"><div class="spinner"></div><p id="spintxt">Buscando...</p></div>
 <div class="toast" id="toast"></div>
 
@@ -1023,30 +988,14 @@ function guesscat(n,oc=''){
   if(/pan|cereal|arroz|pasta|harina|avena|galleta|espagueti/.test(s))return'panaderia';
   if(/agua|zumo|refresco|cola|fanta|cerveza|vino|batido/.test(s))return'bebidas';
   if(/congelad|helado/.test(s))return'congelados';
-  if(/detergente|suavizante|fregasuelos|bayeta|basura|papel cocina|papel higiénico|ambientador/.test(s))return'limpieza';
-  if(/champú|gel|jabón|desodorante|crema|dentífrico|colutorio|afeit/.test(s))return'higiene';
+  if(/detergente|suavizante|fregasuelos|bayeta|basura|papel/.test(s))return'limpieza';
+  if(/champú|gel|jabón|desodorante|crema|dentífrico/.test(s))return'higiene';
   if(/conserva|lata|salsa|tomate frito|mahonesa|aceite|vinagre/.test(s))return'conservas';
-  if(/chips|pringles|snack|chocolate|caramelo|fruto seco|palomita/.test(s))return'snacks';
-  if(/pienso|arena gato|comida perro|comida gato|snack perro|mascota/.test(s))return'mascotas';
-  if(/pañal|toallita bebé|leche infantil|papilla|potito/.test(s))return'bebe';
-  if(/ibuprofeno|paracetamol|pastilla|medicamento|vitamina|tiritas|farmacia/.test(s))return'farmacia';
-  if(/bolígrafo|cuaderno|folios|tinta|impresora|papelería/.test(s))return'papeleria';
-  if(/calcetines|camiseta|ropa interior|toalla|sábana/.test(s))return'ropa';
-  if(/pila|batería|cable|bombilla|enchufe|adaptador/.test(s))return'electronica';
+  if(/chips|pringles|snack|chocolate|caramelo|fruto seco/.test(s))return'snacks';
   return'otros';
 }
-const CATS={
-  frutas:{l:'Frutas y verduras',i:'🍎'},lacteos:{l:'Lácteos y huevos',i:'🥛'},
-  carnes:{l:'Carnes y pescados',i:'🥩'},panaderia:{l:'Panadería y cereales',i:'🍞'},
-  bebidas:{l:'Bebidas',i:'🥤'},congelados:{l:'Congelados',i:'🧊'},
-  conservas:{l:'Conservas y salsas',i:'🥫'},snacks:{l:'Snacks y dulces',i:'🍿'},
-  limpieza:{l:'Limpieza y hogar',i:'🧹'},higiene:{l:'Higiene personal',i:'🧴'},
-  mascotas:{l:'Mascotas',i:'🐾'},bebe:{l:'Bebé',i:'🍼'},
-  farmacia:{l:'Farmacia',i:'💊'},papeleria:{l:'Papelería',i:'📎'},
-  ropa:{l:'Ropa y textil',i:'👕'},electronica:{l:'Electrónica',i:'🔌'},
-  otros:{l:'Otros',i:'📦'}
-};
-const CATORDER=['frutas','lacteos','carnes','panaderia','bebidas','congelados','conservas','snacks','limpieza','higiene','mascotas','bebe','farmacia','papeleria','ropa','electronica','otros'];
+const CATS={frutas:{l:'Frutas y verduras',i:'🍎'},lacteos:{l:'Lácteos y huevos',i:'🥛'},carnes:{l:'Carnes y pescados',i:'🥩'},panaderia:{l:'Panadería',i:'🍞'},bebidas:{l:'Bebidas',i:'🥤'},congelados:{l:'Congelados',i:'🧊'},limpieza:{l:'Limpieza',i:'🧹'},higiene:{l:'Higiene',i:'🧴'},conservas:{l:'Conservas',i:'🥫'},snacks:{l:'Snacks',i:'🍿'},otros:{l:'Otros',i:'📦'}};
+const CATORDER=['frutas','lacteos','carnes','panaderia','bebidas','congelados','conservas','snacks','limpieza','higiene','otros'];
 
 // ── State ────────────────────────────────────────────────────
 const SK='lc_v5',LK='lc_lists',HK='lc_hist',CK='lc_cols',AK='lc_admin',UK='lc_uid',TK='lc_tutorial';
@@ -1348,24 +1297,29 @@ function startScan(){
 async function handleCodeContinuous(code){
   let name='',brand='',img='',oc='';
   try{
-    const csnap=await new Promise(res=>onValue(ref(db,`_barcodeCache/${code}`),res,{onlyOnce:true}));
-    const cached=csnap.val();
-    if(cached&&cached.name){name=cached.name;brand=cached.brand||'';img=cached.img||'';oc=cached.cat||'';}
-    else{
-      const c1=new AbortController();setTimeout(()=>c1.abort(),4000);
-      const r1=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`,{signal:c1.signal});
-      const d1=await r1.json();
-      if(d1.status===1&&d1.product){
-        name=d1.product.product_name_es||d1.product.product_name||'';
-        brand=d1.product.brands?d1.product.brands.split(',')[0].trim():'';
-        img=d1.product.image_front_small_url||'';
-        oc=(d1.product.categories_tags||[]).join(' ');
-        if(name)set(ref(db,`_barcodeCache/${code}`),{name,brand:brand||'',img:img||'',cat:oc||'',savedBy:user,savedAt:Date.now()});
-      }
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),4000);
+    const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`,{signal:ctrl.signal});
+    const d=await res.json();
+    if(d.status===1&&d.product){
+      name=d.product.product_name_es||d.product.product_name||'';
+      brand=d.product.brands?d.product.brands.split(',')[0].trim():'';
+      img=d.product.image_front_small_url||'';
+      oc=(d.product.categories_tags||[]).join(' ');
     }
   }catch{}
-  if(name)addItem(name,brand,code,guesscat(name,oc),'',img);
-  else addItem(`Producto ${code}`,'',code,'otros','','','');
+  if(name){
+    addItem(name,brand,code,guesscat(name,oc),'',img);
+  } else {
+    // Unknown product — add as "Producto [code]" so user can rename later
+    addItem(`Producto ${code}`,'',code,'otros','','');
+  }
+}
+function stopScan(){
+  if(scanning){try{Quagga.stop();}catch{}scanning=false;}
+  $('scanwrap').style.display='none';
+  $('scanCounter').classList.remove('on');
+  if(scanCount>1)toast(`✓ ${scanCount} productos añadidos`);
+  $('scanbtn').innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="4" height="10" rx="1"/><rect x="9" y="7" width="2" height="10" rx="0.5"/><rect x="13" y="7" width="3" height="10" rx="0.5"/><rect x="18" y="7" width="3" height="10" rx="1"/><path d="M1 5h4M1 19h4M19 5h4M19 19h4" stroke-linecap="round"/></svg> Escanear código de barras`;
 }
 $('scanbtn').onclick=startScan;
 $('closeScan').onclick=stopScan;
@@ -1374,64 +1328,23 @@ $('closeScan').onclick=stopScan;
 async function handleCode(code){
   spin('Buscando producto...');
   let name='',brand='',img='',oc='';
-
   try{
-    // 1. Check Firebase cache first
-    const cacheSnap=await new Promise(res=>onValue(ref(db,`_barcodeCache/${code}`),res,{onlyOnce:true}));
-    const cached=cacheSnap.val();
-    if(cached&&cached.name){
-      name=cached.name;brand=cached.brand||'';img=cached.img||'';oc=cached.cat||'';
-      unspin();
-      pBrand=brand;pImg=img;pCode=code;
-      openModal(code,`${brand?brand+' · ':''}guardado por la comunidad`,name,'¿Es este producto?',img,guesscat(name,oc));
-      return;
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),6000);
+    const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`,{signal:ctrl.signal});
+    const d=await res.json();
+    if(d.status===1&&d.product){
+      name=d.product.product_name_es||d.product.product_name||'';
+      brand=d.product.brands?d.product.brands.split(',')[0].trim():'';
+      img=d.product.image_front_small_url||'';
+      oc=(d.product.categories_tags||[]).join(' ');
     }
-
-    // 2. Open Food Facts
-    try{
-      const c1=new AbortController();setTimeout(()=>c1.abort(),5000);
-      const r1=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags`,{signal:c1.signal});
-      const d1=await r1.json();
-      if(d1.status===1&&d1.product){
-        name=d1.product.product_name_es||d1.product.product_name||'';
-        brand=d1.product.brands?d1.product.brands.split(',')[0].trim():'';
-        img=d1.product.image_front_small_url||'';
-        oc=(d1.product.categories_tags||[]).join(' ');
-      }
-    }catch{}
-
-    // 3. UPC Item DB (fallback)
-    if(!name){
-      try{
-        const c2=new AbortController();setTimeout(()=>c2.abort(),5000);
-        const r2=await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${code}`,{signal:c2.signal});
-        const d2=await r2.json();
-        if(d2.code==='OK'&&d2.items&&d2.items.length){
-          name=d2.items[0].title||'';
-          brand=d2.items[0].brand||'';
-          img=d2.items[0].images&&d2.items[0].images[0]||'';
-        }
-      }catch{}
-    }
-
-    // 4. Save to shared Firebase cache if found
-    if(name){
-      set(ref(db,`_barcodeCache/${code}`),{
-        name,brand:brand||'',img:img||'',cat:oc||'',
-        savedBy:user,savedAt:Date.now()
-      });
-    }
-
-  }catch(e){console.error('Lookup error:',e);}
+  }catch{}
   finally{unspin();}
-
   pBrand=brand;pImg=img;pCode=code;
   const cat=guesscat(name,oc);
-  if(name) openModal(code,`${brand?brand+' · ':''}${code}`,name,'¿Es este producto?',img,cat);
-  else openModal(code,`Código: ${code} — no encontrado`,'','Escribe el nombre y lo guardamos para todos','','otros');
+  if(name)openModal(code,`${brand?brand+' · ':''}${code}`,name,'¿Es este producto?',img,cat);
+  else openModal(code,`Código: ${code} — no encontrado`,'','Escribe el nombre','','otros');
 }
-
-
 
 // ── Modal ────────────────────────────────────────────────────
 function openModal(code,sub,prefill,title,img,cat){
@@ -1445,13 +1358,13 @@ $('mok').onclick=()=>{
   const v=$('mname').value.trim();if(!v)return;
   checkDuplicates(v);
   const cat=$('mcat').value,unit=$('munitm').value;
-  if(pCode&&pBrand===''&&pImg===''){
-    set(ref(db,`_barcodeCache/${pCode}`),{name:v,brand:'',img:'',cat,savedBy:user,savedAt:Date.now()});
-    toast('Guardado para todos 👍');
-  }
   closeModal();
-  if(pCode){askStore(v,pBrand,pCode,cat,unit,pImg);}
-  else{askStore(v,pBrand,'',cat,unit,pImg);}
+  if(pCode){
+    // Has barcode — ask store
+    askStore(v,pBrand,pCode,cat,unit,pImg);
+  } else {
+    askStore(v,pBrand,'',cat,unit,pImg);
+  }
 };
 $('mname').addEventListener('keydown',e=>{if(e.key==='Enter')$('mok').click();});
 $('mcancel').onclick=closeModal;
@@ -1490,70 +1403,20 @@ $('minput').addEventListener('blur',()=>setTimeout(()=>$('aclist').classList.rem
 function addItem(name,brand,barcode,cat,unit,img,store){
   name=name.trim();if(!name)return;
   const ex=Object.entries(items).find(([,v])=>v.name.toLowerCase()===name.toLowerCase());
-  if(ex){update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[1].qty||1)+1});toast(`+1 ${name}`);saveActivity('add',name);return;}
-  // Check fuzzy duplicates for manual additions
-  const dups=findDuplicates(name);
-  if(dups.length>0&&!barcode){
-    showDupModal(name,brand,barcode,cat,unit,img,store,dups);
-    return;
-  }
-  pushItem(name,brand,barcode,cat,unit,img,store);
-}
-
-function pushItem(name,brand,barcode,cat,unit,img,store){
-  push(ref(db,`listas/${room}/${curList}/items`),{
-    name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',
-    unit:unit||'',img:img||'',store:store||'',qty:1,checked:false,
-    ts:Date.now(),addedBy:user,inPantry:false
-  });
+  if(ex){update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[1].qty||1)+1});toast(`+1 ${name}`);return;}
+  push(ref(db,`listas/${room}/${curList}/items`),{name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',unit:unit||'',img:img||'',store:store||'',qty:1,checked:false,ts:Date.now(),addedBy:user});
+  // Update history with lastAdded and store
   const hi=hist.findIndex(h=>h.name.toLowerCase()===name.toLowerCase());
   if(hi>=0){hist[hi].lastAdded=Date.now();if(store)hist[hi].store=store;}
-  else{hist.unshift({name,brand,cat,unit,store:store||'',lastAdded:Date.now()});if(hist.length>200)hist.pop();}
+  else{hist.unshift({name,brand,cat,unit,store:store||'',lastAdded:Date.now()});if(hist.length>100)hist.pop();}
   localStorage.setItem(HK,JSON.stringify(hist));
-  // Save to Firebase barcode cache if we have a barcode
-  if(barcode&&name){
-    set(ref(db,`_barcodeCache/${barcode}`),{name,brand:brand||'',img:img||'',cat:cat||'otros',savedBy:user,savedAt:Date.now()});
-  }
   recordStat(name,cat,store);
-  saveActivity('add',name);
   toast(`Añadido: ${name}${store?' ('+store+')':''}`);
 }
 
-function findDuplicates(name){
-  const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').trim();
-  const target=norm(name);
-  if(!target||target.length<3)return[];
-  return Object.entries(items).filter(([,v])=>{
-    const existing=norm(v.name||'');
-    if(!existing||existing===target)return false;
-    const w1=new Set(target.split(/\s+/).filter(w=>w.length>2));
-    const w2=new Set(existing.split(/\s+/).filter(w=>w.length>2));
-    if(!w1.size||!w2.size)return false;
-    let overlap=0;w1.forEach(w=>{if(w2.has(w))overlap++;});
-    return overlap>=Math.min(w1.size,w2.size)*0.6||existing.includes(target)||target.includes(existing);
-  }).map(([k,v])=>({...v,key:k}));
-}
-
-function showDupModal(name,brand,barcode,cat,unit,img,store,dups){
-  $('dupSub').textContent=`Vas a añadir "${name}". Estos productos parecen similares:`;
-  const opts=$('dupOptions');opts.innerHTML='';
-  dups.forEach(d=>{
-    const div=document.createElement('div');div.className='dup-option';
-    div.innerHTML=`<div><div style="font-weight:500">${esc(d.name)}</div>${d.brand?`<div style="font-size:11px;color:var(--tx3)">${esc(d.brand)}</div>`:''}</div><span style="color:var(--ac);font-weight:500">+1 →</span>`;
-    div.onclick=()=>{
-      update(ref(db,`listas/${room}/${curList}/items/${d.key}`),{qty:(d.qty||1)+1});
-      toast(`+1 ${d.name}`);$('dupModal').classList.remove('on');
-    };
-    opts.appendChild(div);
-  });
-  $('dupCancel').onclick=()=>$('dupModal').classList.remove('on');
-  $('dupAddNew').onclick=()=>{pushItem(name,brand,barcode,cat,unit,img,store);$('dupModal').classList.remove('on');};
-  $('dupModal').classList.add('on');
-}
-
 // ── Item events ──────────────────────────────────────────────
- ──────────────────────────────────────────────
 document.addEventListener('click',e=>{
+  // Reaction toggle
   const rxBtn=e.target.closest('[data-rx-toggle]');
   if(rxBtn){
     e.stopPropagation();
@@ -1572,6 +1435,7 @@ document.addEventListener('click',e=>{
   if(a==='-'){if((item.qty||1)>1)update(r2,{qty:item.qty-1});else remove(r2);}
   if(a==='del'){if(confirm('¿Eliminar '+item.name+'?'))remove(r2);}
   if(a==='menu')openItemActions(key);
+  if(a==='price-tag'){actionItemKey=key;$('iaPrice').click();}
 });
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-a]'))return;
@@ -1602,13 +1466,182 @@ document.addEventListener('click',e=>{
   collapsed[cat]=!collapsed[cat];localStorage.setItem(CK,JSON.stringify(collapsed));render();
 });
 
+
+// ── Search ───────────────────────────────────────────────────
+let searchQuery='';
+$('searchBtn').onclick=()=>{
+  const sb=$('searchBox');sb.classList.toggle('show');
+  if(sb.classList.contains('show'))setTimeout(()=>$('searchInput').focus(),100);
+  else{$('searchInput').value='';searchQuery='';render();}
+};
+$('searchInput').addEventListener('input',()=>{searchQuery=$('searchInput').value.trim().toLowerCase();render();});
+$('searchClear').onclick=()=>{$('searchInput').value='';searchQuery='';render();};
+
+// ── Continuous Scan ──────────────────────────────────────────
+let continuousScan=false,scanCount=0;
+function updateScanCounter(){if(continuousScan){$('scanCounter').textContent=`${scanCount} escaneados — pulsa ✕ para parar`;$('scanCounter').classList.add('on');}}
+
+// ── Item action menu ─────────────────────────────────────────
+let actionItemKey=null;
+function openItemActions(key){
+  const item=items[key];if(!item)return;
+  actionItemKey=key;
+  $('iaTitle').textContent=item.name;
+  $('iaSub').textContent=item.brand||'Acciones para este producto';
+  $('itemActionsModal').classList.add('on');
+}
+$('iaCancel').onclick=()=>$('itemActionsModal').classList.remove('on');
+$('itemActionsModal').onclick=e=>{if(e.target===$('itemActionsModal'))$('itemActionsModal').classList.remove('on');};
+
+$('iaAddNote').onclick=()=>{
+  const item=items[actionItemKey];if(!item)return;
+  $('noteSub').textContent=item.name;
+  $('noteInput').value=item.note||'';
+  $('itemActionsModal').classList.remove('on');
+  $('noteModal').classList.add('on');
+  setTimeout(()=>$('noteInput').focus(),200);
+};
+$('noteOk').onclick=()=>{
+  const v=$('noteInput').value.trim();
+  if(actionItemKey)update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{note:v||null});
+  $('noteModal').classList.remove('on');
+};
+$('noteCancel').onclick=()=>$('noteModal').classList.remove('on');
+$('noteInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('noteOk').click();});
+
+$('iaAssign').onclick=()=>{
+  $('itemActionsModal').classList.remove('on');
+  // Build user list from items + admin
+  const users=new Set();
+  Object.values(items).forEach(i=>{if(i.addedBy)users.add(i.addedBy);});
+  users.add(user);
+  const item=items[actionItemKey];
+  const list=$('assignList');list.innerHTML='';
+  users.forEach(u=>{
+    const div=document.createElement('div');
+    div.className='assign-item'+(item.assignedTo===u?' selected':'');
+    const col=ucolor(u);const ini=u.charAt(0).toUpperCase();
+    div.innerHTML=`<div class="userava" style="background:${col};width:32px;height:32px;font-size:14px">${ini}</div><div style="flex:1;font-size:14px">${esc(u)}${u===user?' (tú)':''}</div>${item.assignedTo===u?'<span style="color:var(--ac)">✓</span>':''}`;
+    div.onclick=()=>{
+      update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{assignedTo:u});
+      $('assignModal').classList.remove('on');
+      toast(`Asignado a ${u}`);
+    };
+    list.appendChild(div);
+  });
+  $('assignModal').classList.add('on');
+};
+$('assignCancel').onclick=()=>$('assignModal').classList.remove('on');
+$('assignClear').onclick=()=>{
+  if(actionItemKey)update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{assignedTo:null});
+  $('assignModal').classList.remove('on');
+};
+
+$('iaReact').onclick=()=>{
+  $('itemActionsModal').classList.remove('on');
+  $('reactModal').classList.add('on');
+};
+document.querySelectorAll('[data-rx]').forEach(btn=>{
+  btn.onclick=()=>{
+    const rx=btn.dataset.rx;
+    if(!actionItemKey)return;
+    const item=items[actionItemKey];
+    const reactions=item.reactions||{};
+    // Toggle: if user already reacted with this, remove; else set
+    if(reactions[user]===rx){delete reactions[user];}
+    else{reactions[user]=rx;}
+    update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{reactions});
+    $('reactModal').classList.remove('on');
+  };
+});
+$('reactCancel').onclick=()=>$('reactModal').classList.remove('on');
+
+// ── Chat ─────────────────────────────────────────────────────
+let chatMessages=[];
+let lastReadTs=parseInt(localStorage.getItem('lc_lastread')||'0');
+let unreadCount=0;
+
+function watchChat(){
+  onValue(ref(db,`listas/${room}/_chat`),snap=>{
+    const data=snap.val()||{};
+    chatMessages=Object.entries(data).map(([k,v])=>({...v,key:k})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    renderChat();
+    // Count unread
+    unreadCount=chatMessages.filter(m=>(m.ts||0)>lastReadTs&&m.author!==user).length;
+    const badge=$('chatNotif');
+    if(unreadCount>0){badge.textContent=unreadCount>99?'99+':unreadCount;badge.classList.add('on');}
+    else{badge.classList.remove('on');}
+  });
+}
+
+function renderChat(){
+  const cont=$('chatMsgs');
+  if(!chatMessages.length){
+    cont.innerHTML='<div class="chat-empty">Aún no hay mensajes.<br>¡Empieza la conversación!</div>';
+    return;
+  }
+  cont.innerHTML='';
+  let lastAuthor='',lastDate='';
+  chatMessages.forEach(m=>{
+    if(m.system){
+      const div=document.createElement('div');div.className='chat-msg system';
+      div.textContent=m.text;cont.appendChild(div);
+      return;
+    }
+    const isMine=m.author===user;
+    const showAuthor=!isMine&&m.author!==lastAuthor;
+    const date=new Date(m.ts||0);
+    const time=`${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    const div=document.createElement('div');
+    div.className='chat-msg '+(isMine?'mine':'theirs');
+    let html='';
+    if(showAuthor)html+=`<div class="chat-author" style="color:${ucolor(m.author)}">${esc(m.author)}</div>`;
+    html+=esc(m.text);
+    html+=`<div class="chat-meta">${time}</div>`;
+    div.innerHTML=html;
+    cont.appendChild(div);
+    lastAuthor=m.author;
+  });
+  // Scroll to bottom
+  setTimeout(()=>cont.scrollTop=cont.scrollHeight,50);
+}
+
+function openChat(){
+  $('chatPanel').classList.add('open');
+  setTimeout(()=>{$('chatInput').focus();$('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;},300);
+  // Mark all as read
+  if(chatMessages.length){
+    lastReadTs=chatMessages[chatMessages.length-1].ts||Date.now();
+    localStorage.setItem('lc_lastread',lastReadTs.toString());
+  }
+  unreadCount=0;
+  $('chatNotif').classList.remove('on');
+}
+function closeChat(){$('chatPanel').classList.remove('open');}
+$('chatBtn').onclick=openChat;
+$('chatClose').onclick=closeChat;
+$('chatSend').onclick=sendChat;
+$('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+
+function sendChat(){
+  const v=$('chatInput').value.trim();
+  if(!v)return;
+  push(ref(db,`listas/${room}/_chat`),{text:v,author:user,ts:Date.now()});
+  $('chatInput').value='';
+}
+
+// Show chat button when in app
+function showChatBtn(){$('chatBtn').classList.add('show');}
+
+
 // ── STORES ───────────────────────────────────────────────────
-const STORES=['Mercadona','Carrefour','Lidl','Alcampo','Día','El Corte Inglés','Aldi','Eroski','Consum','BonPreu'];
+const STORES=['Mercadona','Carrefour','Lidl','Alcampo','Día','El Corte Inglés','Ahorro','Aldi','Eroski','Consum','BonPreu'];
 let pendingStoreItem=null;
 
 function askStore(name,brand,barcode,cat,unit,img){
   pendingStoreItem={name,brand,barcode,cat,unit,img};
   $('storeSub').textContent=`¿Dónde compras habitualmente: ${name}?`;
+  // Build chips — suggest from history
   const hist2=hist.filter(h=>h.store);
   const usedStores=[...new Set(hist2.map(h=>h.store))];
   const allStores=[...new Set([...usedStores,...STORES])].slice(0,12);
@@ -1645,7 +1678,7 @@ function checkDuplicates(name){
   const q=name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g,' ').trim();
   const words=q.split(' ').filter(w=>w.length>2);
   const dups=Object.values(items).filter(item=>{
-    if(item.name.toLowerCase()===name.toLowerCase())return false;
+    if(item.name.toLowerCase()===name.toLowerCase())return false; // exact match handled separately
     const iname=item.name.toLowerCase();
     return words.some(w=>iname.includes(w));
   });
@@ -1655,12 +1688,12 @@ function checkDuplicates(name){
     banner.classList.add('show');
     banner.onclick=()=>{
       const ex=Object.entries(items).find(([,v])=>v.name===dups[0].name);
-      if(ex)update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[1].qty||1)+1});
+      if(ex)update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[0].qty||1)+1});
       banner.classList.remove('show');
       toast(`+1 ${dups[0].name}`);
     };
     setTimeout(()=>banner.classList.remove('show'),8000);
-  }else{banner.classList.remove('show');}
+  } else {banner.classList.remove('show');}
 }
 
 // ── FORGOTTEN PRODUCTS ────────────────────────────────────────
@@ -1682,7 +1715,7 @@ function checkForgotten(){
     forgotten.forEach(h=>{
       const div=document.createElement('div');div.className='forgotten-item';
       const daysSince=Math.round((now-h.lastAdded)/(1000*60*60*24));
-      div.innerHTML=`<div><span style="font-size:13px;font-weight:500">${esc(h.name)}</span><br><span style="font-size:11px;color:var(--tx3)">Hace ${daysSince} días${h.store?' · '+h.store:''}</span></div><button class="forgotten-add" data-name="${esc(h.name)}">+ Añadir</button>`;
+      div.innerHTML=`<div><span style="font-size:13px;font-weight:500">${esc(h.name)}</span><br><span style="font-size:11px;color:var(--tx3)">Hace ${daysSince} días${h.store?` · ${h.store}`:''}</span></div><button class="forgotten-add" data-name="${esc(h.name)}">+ Añadir</button>`;
       div.querySelector('.forgotten-add').onclick=()=>{
         addItem(h.name,h.brand||'','',h.cat||'otros',h.unit||'',h.img||'',h.store||'');
         div.remove();
@@ -1690,7 +1723,7 @@ function checkForgotten(){
       };
       list.appendChild(div);
     });
-  }else{sec.style.display='none';}
+  } else {sec.style.display='none';}
 }
 
 // ── DRAG & DROP ───────────────────────────────────────────────
@@ -1704,556 +1737,687 @@ function enableDrag(li,key){
   li.addEventListener('drop',e=>{
     e.preventDefault();li.classList.remove('drag-over');
     if(!dragKey||dragKey===key)return;
+    // Swap timestamps to reorder
     const dragItem=items[dragKey],dropItem=items[key];
     if(!dragItem||!dropItem)return;
     const tmpTs=dragItem.ts||0;
     update(ref(db,`listas/${room}/${curList}/items/${dragKey}`),{ts:(dropItem.ts||0)-1});
     update(ref(db,`listas/${room}/${curList}/items/${key}`),{ts:tmpTs});
   });
+  // Touch drag support
+  let touchY=0,touchMoved=false;
+  li.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY;touchMoved=false;},{passive:true});
+  li.addEventListener('touchmove',e=>{
+    if(Math.abs(e.touches[0].clientY-touchY)>5){touchMoved=true;}
+  },{passive:true});
 }
 
 // ── STATS ─────────────────────────────────────────────────────
 function openStats(){
-  onValue(ref(db,`listas/${room}/_stats`),snap=>{
+  const statsRef=ref(db,`listas/${room}/_stats`);
+  onValue(statsRef,snap=>{
     const stats=snap.val()||{};
     const now=new Date();
     const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-    const thisMonth=stats[monthKey]||{items:[]};
+    const thisMonth=stats[monthKey]||{items:[],users:{}};
     const lastMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
     const lastMonthKey=`${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth()+1).padStart(2,'0')}`;
-    const lastMonth=stats[lastMonthKey]||{items:[]};
+    const lastMonth=stats[lastMonthKey]||{items:[],users:{}};
+
     const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     $('statsPeriod').textContent=`${months[now.getMonth()]} ${now.getFullYear()} vs ${months[lastMonthDate.getMonth()]} ${lastMonthDate.getFullYear()}`;
-    const thisCount=thisMonth.items?.length||0,lastCount=lastMonth.items?.length||0;
+
+    const thisCount=thisMonth.items?.length||0;
+    const lastCount=lastMonth.items?.length||0;
     const diff=thisCount-lastCount;
-    const diffStr=diff===0?'igual que el mes pasado':(diff>0?`+${diff} más`:` ${diff} menos`);
-    const catCount={};(thisMonth.items||[]).forEach(i=>{catCount[i.cat||'otros']=(catCount[i.cat||'otros']||0)+1;});
+    const diffStr=diff===0?'igual que el mes pasado':(diff>0?`+${diff} más que el mes pasado`:`${diff} menos que el mes pasado`);
+
+    // Cat breakdown this month
+    const catCount={};
+    (thisMonth.items||[]).forEach(i=>{catCount[i.cat||'otros']=(catCount[i.cat||'otros']||0)+1;});
     const topCats=Object.entries(catCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
     const maxCat=topCats[0]?.[1]||1;
-    const userCount={};(thisMonth.items||[]).forEach(i=>{if(i.by)userCount[i.by]=(userCount[i.by]||0)+1;});
+
+    // Top users this month
+    const userCount={};
+    (thisMonth.items||[]).forEach(i=>{if(i.by)userCount[i.by]=(userCount[i.by]||0)+1;});
     const topUsers=Object.entries(userCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    const storeCount={};(thisMonth.items||[]).forEach(i=>{if(i.store)storeCount[i.store]=(storeCount[i.store]||0)+1;});
+
+    // Stores this month
+    const storeCount={};
+    (thisMonth.items||[]).forEach(i=>{if(i.store)storeCount[i.store]=(storeCount[i.store]||0)+1;});
     const topStores=Object.entries(storeCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    let html=`<div class="stats-grid"><div class="stats-card"><div class="stats-num">${thisCount}</div><div class="statlbl">este mes</div></div><div class="stats-card"><div class="stats-num">${lastCount}</div><div class="statlbl">mes anterior</div></div></div><div style="font-size:13px;color:var(--tx2);text-align:center;margin-bottom:1rem">${diffStr}</div>`;
-    if(topCats.length){html+=`<div class="stats-section-title">Por categorías</div><div class="stats-bar-wrap">`;topCats.forEach(([cat,n])=>{const info=CATS[cat]||{l:cat,i:'📦'};const pct=Math.round(n/maxCat*100);html+=`<div class="stats-bar-lbl"><span>${info.i} ${info.l}</span><span>${n}</span></div><div class="stats-bar"><div class="stats-bar-fill" style="width:${pct}%"></div></div>`;});html+=`</div>`;}
-    if(topUsers.length){html+=`<div class="stats-section-title">Más activos</div>`;topUsers.forEach(([u,n])=>{const col=ucolor(u);const ini=u.charAt(0).toUpperCase();html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:28px;height:28px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500">${ini}</div><span style="flex:1;font-size:13px">${esc(u)}</span><span style="font-size:13px;font-weight:500;color:var(--ac)">${n}</span></div>`;});}
-    if(topStores.length){html+=`<div class="stats-section-title">Tiendas más usadas</div>`;topStores.forEach(([s,n])=>{html+=`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>🏪 ${esc(s)}</span><span style="font-weight:500;color:var(--ac)">${n}</span></div>`;});}
+
+    let html=`
+      <div class="stats-grid">
+        <div class="stats-card"><div class="stats-num">${thisCount}</div><div class="stats-lbl">este mes</div></div>
+        <div class="stats-card"><div class="stats-num">${lastCount}</div><div class="stats-lbl">mes anterior</div></div>
+      </div>
+      <div style="font-size:13px;color:var(--tx2);text-align:center;margin-bottom:1rem">${diffStr}</div>`;
+
+    if(topCats.length){
+      html+=`<div class="stats-section-title">Por categorías</div><div class="stats-bar-wrap">`;
+      topCats.forEach(([cat,n])=>{
+        const info=CATS[cat]||{l:cat,i:'📦'};
+        const pct=Math.round(n/maxCat*100);
+        html+=`<div class="stats-bar-lbl"><span>${info.i} ${info.l}</span><span>${n}</span></div><div class="stats-bar"><div class="stats-bar-fill" style="width:${pct}%"></div></div>`;
+      });
+      html+=`</div>`;
+    }
+    if(topUsers.length){
+      html+=`<div class="stats-section-title">Más activos</div>`;
+      topUsers.forEach(([u,n])=>{
+        const col=ucolor(u);const ini=u.charAt(0).toUpperCase();
+        html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:28px;height:28px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500">${ini}</div><span style="flex:1;font-size:13px">${esc(u)}</span><span style="font-size:13px;font-weight:500;color:var(--ac)">${n}</span></div>`;
+      });
+    }
+    if(topStores.length){
+      html+=`<div class="stats-section-title">Tiendas más usadas</div>`;
+      topStores.forEach(([s,n])=>{
+        html+=`<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>🏪 ${esc(s)}</span><span style="font-weight:500;color:var(--ac)">${n} productos</span></div>`;
+      });
+    }
+
     $('statsContent').innerHTML=html;
   },{onlyOnce:true});
+
   $('statsModal').classList.add('on');closeSidebar();
 }
 $('statsClose').onclick=()=>$('statsModal').classList.remove('on');
 $('si-stats-btn').onclick=openStats;
 
+// Record to stats when item added
 function recordStat(name,cat,store){
   const now=new Date();
   const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   push(ref(db,`listas/${room}/_stats/${monthKey}/items`),{name,cat,store:store||'',by:user,ts:Date.now()});
 }
 
-// ── SEARCH ───────────────────────────────────────────────────
-let searchQuery='';
-$('searchBtn').onclick=()=>{
-  const sb=$('searchBox');sb.classList.toggle('show');
-  if(sb.classList.contains('show'))setTimeout(()=>$('searchInput').focus(),100);
-  else{$('searchInput').value='';searchQuery='';render();}
-};
-$('searchInput').addEventListener('input',()=>{searchQuery=$('searchInput').value.trim().toLowerCase();render();});
-$('searchClear').onclick=()=>{$('searchInput').value='';searchQuery='';render();};
 
-// ── CONTINUOUS SCAN ──────────────────────────────────────────
-let continuousScan=false,scanCount=0;
-function updateScanCounter(){if(continuousScan){$('scanCounter').textContent=`${scanCount} escaneados — pulsa ✕ para parar`;$('scanCounter').classList.add('on');}}
-
-// ── ITEM ACTIONS ─────────────────────────────────────────────
-let actionItemKey=null;
-function openItemActions(key){
-  const item=items[key];if(!item)return;
-  actionItemKey=key;
-  $('iaTitle').textContent=item.name;
-  $('iaSub').textContent=item.brand||'Acciones para este producto';
-  $('itemActionsModal').classList.add('on');
-}
-$('iaCancel').onclick=()=>$('itemActionsModal').classList.remove('on');
-$('itemActionsModal').onclick=e=>{if(e.target===$('itemActionsModal'))$('itemActionsModal').classList.remove('on');};
-
-$('iaAddNote').onclick=()=>{
-  const item=items[actionItemKey];if(!item)return;
-  $('noteSub').textContent=item.name;
-  $('noteInput').value=item.note||'';
-  $('itemActionsModal').classList.remove('on');
-  $('noteModal').classList.add('on');
-  setTimeout(()=>$('noteInput').focus(),200);
-};
-$('noteOk').onclick=()=>{
-  const v=$('noteInput').value.trim();
-  if(actionItemKey)update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{note:v||null});
-  $('noteModal').classList.remove('on');
-};
-$('noteCancel').onclick=()=>$('noteModal').classList.remove('on');
-$('noteInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('noteOk').click();});
-
-$('iaAssign').onclick=()=>{
-  $('itemActionsModal').classList.remove('on');
-  const users=new Set();Object.values(items).forEach(i=>{if(i.addedBy)users.add(i.addedBy);});users.add(user);
-  const item=items[actionItemKey];
-  const list=$('assignList');list.innerHTML='';
-  users.forEach(u=>{
-    const div=document.createElement('div');div.className='assign-item'+(item.assignedTo===u?' selected':'');
-    const col=ucolor(u);const ini=u.charAt(0).toUpperCase();
-    div.innerHTML=`<div class="userava" style="background:${col};width:32px;height:32px;font-size:14px">${ini}</div><div style="flex:1;font-size:14px">${esc(u)}${u===user?' (tú)':''}</div>${item.assignedTo===u?'<span style="color:var(--ac)">✓</span>':''}`;
-    div.onclick=()=>{update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{assignedTo:u});$('assignModal').classList.remove('on');toast(`Asignado a ${u}`);};
-    list.appendChild(div);
-  });
-  $('assignModal').classList.add('on');
-};
-$('assignCancel').onclick=()=>$('assignModal').classList.remove('on');
-$('assignClear').onclick=()=>{if(actionItemKey)update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{assignedTo:null});$('assignModal').classList.remove('on');};
-
-$('iaReact').onclick=()=>{$('itemActionsModal').classList.remove('on');$('reactModal').classList.add('on');};
-document.querySelectorAll('[data-rx]').forEach(btn=>{
-  btn.onclick=()=>{
-    const rx=btn.dataset.rx;if(!actionItemKey)return;
-    const item=items[actionItemKey];const reactions=item.reactions||{};
-    if(reactions[user]===rx)delete reactions[user];else reactions[user]=rx;
-    update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{reactions});
-    $('reactModal').classList.remove('on');
-  };
-});
-$('reactCancel').onclick=()=>$('reactModal').classList.remove('on');
-
-// ── CHAT ─────────────────────────────────────────────────────
-let chatMessages=[];
-let lastReadTs=parseInt(localStorage.getItem('lc_lastread')||'0');
-let unreadCount=0;
-
-function watchChat(){
-  onValue(ref(db,`listas/${room}/_chat`),snap=>{
-    const data=snap.val()||{};
-    chatMessages=Object.entries(data).map(([k,v])=>({...v,key:k})).sort((a,b)=>(a.ts||0)-(b.ts||0));
-    renderChat();
-    unreadCount=chatMessages.filter(m=>(m.ts||0)>lastReadTs&&m.author!==user).length;
-    const badge=$('chatNotif');
-    if(unreadCount>0){badge.textContent=unreadCount>99?'99+':unreadCount;badge.classList.add('on');}
-    else badge.classList.remove('on');
-  });
-}
-
-function renderChat(){
-  const cont=$('chatMsgs');
-  if(!chatMessages.length){cont.innerHTML='<div class="chat-empty">Aún no hay mensajes.<br>¡Empieza la conversación!</div>';return;}
-  cont.innerHTML='';
-  let lastAuthor='';
-  chatMessages.forEach(m=>{
-    if(m.system){const div=document.createElement('div');div.className='chat-msg system';div.textContent=m.text;cont.appendChild(div);return;}
-    const isMine=m.author===user;
-    const showAuthor=!isMine&&m.author!==lastAuthor;
-    const date=new Date(m.ts||0);
-    const time=`${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
-    const div=document.createElement('div');div.className='chat-msg '+(isMine?'mine':'theirs');
-    let html='';
-    if(showAuthor)html+=`<div class="chat-author" style="color:${ucolor(m.author)}">${esc(m.author)}</div>`;
-    html+=esc(m.text)+`<div class="chat-meta">${time}</div>`;
-    div.innerHTML=html;cont.appendChild(div);lastAuthor=m.author;
-  });
-  setTimeout(()=>cont.scrollTop=cont.scrollHeight,50);
-}
-
-function openChat(){
-  $('chatPanel').classList.add('open');
-  setTimeout(()=>{$('chatInput').focus();$('chatMsgs').scrollTop=$('chatMsgs').scrollHeight;},300);
-  if(chatMessages.length){lastReadTs=chatMessages[chatMessages.length-1].ts||Date.now();localStorage.setItem('lc_lastread',lastReadTs.toString());}
-  unreadCount=0;$('chatNotif').classList.remove('on');
-}
-function closeChat(){$('chatPanel').classList.remove('open');}
-$('chatBtn').onclick=openChat;$('chatClose').onclick=closeChat;
-$('chatSend').onclick=sendChat;
-$('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
-function sendChat(){const v=$('chatInput').value.trim();if(!v)return;push(ref(db,`listas/${room}/_chat`),{text:v,author:user,ts:Date.now()});$('chatInput').value='';}
-function showChatBtn(){$('chatBtn').classList.add('show');}
-
-// ── PURCHASE HISTORY ─────────────────────────────────────────
-$('shopDoneBtn').onclick=()=>{
-  const checked=Object.entries(items).filter(([,v])=>v.checked);
-  if(!checked.length){toast('No hay productos tachados');return;}
-  if(!confirm(`¿Terminar compra? Se guardarán ${checked.length} productos en el historial.`))return;
-  const now=Date.now();
-  checked.forEach(([k,item])=>{
-    set(ref(db,`listas/${room}/_purchaseHistory/${now}_${k}`),{
-      name:item.name,brand:item.brand||'',cat:item.cat||'otros',
-      unit:item.unit||'',qty:item.qty||1,store:item.store||'',
-      img:item.img||'',purchasedAt:now,purchasedBy:item.addedBy||user,list:curList
-    });
-  });
-  checked.forEach(([k])=>remove(ref(db,`listas/${room}/${curList}/items/${k}`)));
-  document.body.classList.remove('shop');$('medit').classList.add('on');$('mshop').classList.remove('on');
-  toast(`✓ ${checked.length} productos guardados en el historial`);
-};
-$('historyClose').onclick=()=>$('historyModal').classList.remove('on');
-$('historyModal').onclick=e=>{if(e.target===$('historyModal'))$('historyModal').classList.remove('on');};
-$('si-history').onclick=()=>{closeSidebar();openHistory();};
-
-function openHistory(){
-  $('historyModal').classList.add('on');
-  $('historyList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--tx3);font-size:13px">Cargando...</div>';
-  onValue(ref(db,`listas/${room}/_purchaseHistory`),snap=>{
-    const data=snap.val()||{};
-    const all=Object.values(data).sort((a,b)=>(b.purchasedAt||0)-(a.purchasedAt||0));
-    if(!all.length){$('historyList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--tx3);font-size:13px">🧺 Aún no hay compras registradas.</div>';return;}
-    const byMonth={};
-    all.forEach(item=>{
-      const d=new Date(item.purchasedAt||0);
-      const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-      const key=`${months[d.getMonth()]} ${d.getFullYear()}`;
-      if(!byMonth[key])byMonth[key]=[];byMonth[key].push(item);
-    });
-    let html='';
-    Object.entries(byMonth).forEach(([month,items2])=>{
-      html+=`<div class="history-month">${month} · ${items2.length} productos</div>`;
-      items2.forEach(item=>{
-        const d=new Date(item.purchasedAt||0);
-        const day=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-        const catInfo=CATS[item.cat||'otros']||CATS.otros;
-        const col=ucolor(item.purchasedBy||'');const ini=(item.purchasedBy||'?').charAt(0).toUpperCase();
-        html+=`<div class="history-item"><span style="font-size:18px">${catInfo.i}</span><div style="flex:1;min-width:0"><div class="history-name">${esc(item.name)}${item.qty>1?` ×${item.qty}`:''}</div><div class="history-meta">${item.store?'🏪 '+esc(item.store)+' · ':''}${esc(item.list||curList)}</div></div><div style="text-align:right;flex-shrink:0"><div class="history-date">${day}</div><div style="width:20px;height:20px;border-radius:50%;background:${col};color:#fff;font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;margin-top:3px">${ini}</div></div></div>`;
-      });
-    });
-    $('historyList').innerHTML=html;
-  },{onlyOnce:true});
-}
-
-// ── PANTRY SCAN ──────────────────────────────────────────────
-let pantryMode='have';
-let pantryData={have:[],uncertain:[],missing:[]};
-
-$('si-pantry').onclick=()=>{closeSidebar();openPantryModal();};
-
-function openPantryModal(){
-  $('pantryPreview').style.display='none';
-  $('pantryStatus').style.display='none';
-  $('pantryResultsWrap').style.display='none';
-  $('pantryAddBtn').style.display='none';
-  $('pantryPhotoBtn').style.display='flex';
-  pantryData={have:[],uncertain:[],missing:[]};
-  $('pantryModal').classList.add('on');
-}
-$('pantryCancel').onclick=()=>$('pantryModal').classList.remove('on');
-$('pantryModal').onclick=e=>{if(e.target===$('pantryModal'))$('pantryModal').classList.remove('on');};
-
-$('pantryInput').addEventListener('change',async e=>{
-  const file=e.target.files[0];e.target.value='';if(!file)return;
-  const previewUrl=URL.createObjectURL(file);
-  $('pantryPreview').src=previewUrl;$('pantryPreview').style.display='block';
-  $('pantryPhotoBtn').style.display='none';
-  const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-  const status=$('pantryStatus');status.textContent='🔍 Analizando imagen con IA...';status.style.display='block';
-  spin('Analizando despensa...');
-  try{
-    const pantryCtrl=new AbortController();const pantryTimeout=setTimeout(()=>pantryCtrl.abort(),30000);
-    const response=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',signal:pantryCtrl.signal,
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:1500,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:base64}},
-          {type:'text',text:`Analiza esta imagen de una despensa, nevera o armario.
-Identifica todos los productos que ves con claridad, los que ves pero tienes dudas, y sugiere lo que podría faltar.
-
-Responde SOLO con JSON válido sin texto extra:
-{"have":[{"name":"leche","quantity":"casi llena","cat":"lacteos"}],"uncertain":[{"name":"yogur","doubt":"no leo la etiqueta bien","cat":"lacteos"}],"missing":[{"name":"aceite","cat":"conservas"}]}
-
-Reglas: have=ves claramente, uncertain=dudas sobre marca o variedad, missing=no ves y podría faltar.
-Categorías: frutas, lacteos, carnes, panaderia, bebidas, congelados, limpieza, higiene, conservas, snacks, mascotas, farmacia, otros.
-Lista 5-10 en have, todos los dudosos en uncertain, 3-5 en missing.`}
-        ]}]
-      })
-    });
-    clearTimeout(pantryTimeout);
-    const data=await response.json();
-    if(data.error)throw new Error(data.error.message||'API error');
-    const text=data.content?.[0]?.text||'';
-    let parsed;
-    try{const clean=text.replace(/```json|```/g,'').trim();parsed=JSON.parse(clean);}
-    catch{status.textContent='No se pudo analizar. Intenta con una foto más clara.';$('pantryPhotoBtn').style.display='flex';unspin();return;}
-    pantryData={have:parsed.have||[],uncertain:parsed.uncertain||[],missing:parsed.missing||[]};
-    status.style.display='none';
-    $('pantryHaveCount').textContent=pantryData.have.length;
-    $('pantryUncertainCount').textContent=pantryData.uncertain.length;
-    $('pantryMissingCount').textContent=pantryData.missing.length;
-    const uncTab=$('pantryTabUncertain');
-    if(pantryData.uncertain.length>0){uncTab.style.display='block';}else{uncTab.style.display='none';}
-    $('pantryResultsWrap').style.display='flex';
-    renderPantryTab(pantryData.uncertain.length>0?'uncertain':'have');
-  }catch(err){
-    unspin();
-    const msg=err.name==='AbortError'?'Tiempo agotado.':err.message.includes('Failed to fetch')?'Error de red.':'Error: '+err.message;
-    status.textContent='❌ '+msg;status.style.display='block';$('pantryPhotoBtn').style.display='flex';
-  }
-  unspin();
-});
-
-function renderPantryTab(tab){
-  pantryMode=tab;
-  $('pantryTabHave').classList.toggle('on',tab==='have');
-  $('pantryTabMissing').classList.toggle('on',tab==='missing');
-  if($('pantryTabUncertain'))$('pantryTabUncertain').classList.toggle('on',tab==='uncertain');
-  $('pantryAddBtn').style.display=(tab==='missing'||tab==='uncertain')?'block':'none';
-  $('pantryAddBtn').textContent=tab==='uncertain'?'✓ Confirmar seleccionados':'+ Añadir seleccionados';
-  const list=$('pantryResults');list.innerHTML='';
-  const items2=pantryData[tab]||[];
-  if(!items2.length){const msgs={have:'No se detectaron productos',uncertain:'Sin dudas',missing:'No hay sugerencias'};list.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--tx3);font-size:13px">${msgs[tab]||''}</div>`;return;}
-  items2.forEach(item=>{
-    const div=document.createElement('div');const catInfo=CATS[item.cat||'otros']||CATS.otros;
-    if(tab==='uncertain'){
-      div.className='pantry-item uncertain';
-      div.innerHTML=`<label><input type="checkbox" checked data-name="${esc(item.name)}" data-cat="${esc(item.cat||'otros')}"/><span>${catInfo.i} ${esc(item.name)}</span></label><span class="uncertain-badge">🤔</span><div class="uncertain-note" style="width:100%">❓ ${esc(item.doubt||'¿Es correcto?')}</div>`;
-    }else if(tab==='missing'){
-      div.className='pantry-item';
-      div.innerHTML=`<label><input type="checkbox" checked data-name="${esc(item.name)}" data-cat="${esc(item.cat||'otros')}"/><span>${catInfo.i} ${esc(item.name)}</span></label><span class="pantry-badge missing">falta</span>`;
-    }else{
-      div.className='pantry-item';
-      div.innerHTML=`<span style="font-size:18px">${catInfo.i}</span><div style="flex:1"><div style="font-size:14px">${esc(item.name)}</div>${item.quantity?`<div style="font-size:11px;color:var(--tx3)">${esc(item.quantity)}</div>`:''}</div><span class="pantry-badge have">✓</span>`;
-    }
-    list.appendChild(div);
-  });
-}
-$('pantryTabHave').onclick=()=>renderPantryTab('have');
-$('pantryTabMissing').onclick=()=>renderPantryTab('missing');
-if($('pantryTabUncertain'))$('pantryTabUncertain').onclick=()=>renderPantryTab('uncertain');
-
-$('pantryAddBtn').onclick=()=>{
-  const checked=$('pantryResults').querySelectorAll('input[type=checkbox]:checked');
-  if(!checked.length){toast('Selecciona al menos un producto');return;}
-  if(pantryMode==='uncertain'){
-    const checkedNames=new Set([...checked].map(cb=>cb.dataset.name));
-    const confirmed=pantryData.uncertain.filter(i=>checkedNames.has(i.name));
-    pantryData.have=[...pantryData.have,...confirmed];
-    pantryData.uncertain=pantryData.uncertain.filter(i=>!checkedNames.has(i.name));
-    $('pantryHaveCount').textContent=pantryData.have.length;
-    $('pantryUncertainCount').textContent=pantryData.uncertain.length;
-    toast(`✓ ${confirmed.length} confirmados`);
-    renderPantryTab(pantryData.uncertain.length>0?'uncertain':'missing');
-  }else{
-    checked.forEach(cb=>{addItem(cb.dataset.name,'','',cb.dataset.cat||'otros','','','');});
-    toast(`✓ ${checked.length} añadidos a la lista`);
-    $('pantryModal').classList.remove('on');
-  }
-};
-
-// ── RECIPE IMPORTER ──────────────────────────────────────────
-$('si-recipe').onclick=()=>{closeSidebar();openRecipeModal();};
-function openRecipeModal(){
-  $('recipeUrl').value='';$('recipeStatus').style.display='none';
-  $('recipeResults').style.display='none';$('recipeAdd').style.display='none';
-  $('recipeIngredients').innerHTML='';
-  $('recipeModal').classList.add('on');setTimeout(()=>$('recipeUrl').focus(),200);
-}
-$('recipeCancel').onclick=()=>$('recipeModal').classList.remove('on');
-$('recipeModal').onclick=e=>{if(e.target===$('recipeModal'))$('recipeModal').classList.remove('on');};
-$('recipeFetch').onclick=fetchRecipe;
-$('recipeUrl').addEventListener('keydown',e=>{if(e.key==='Enter')fetchRecipe();});
-
-async function fetchRecipe(){
-  const url=$('recipeUrl').value.trim();if(!url)return;
-  const status=$('recipeStatus');status.textContent='Buscando ingredientes...';status.style.display='block';
-  $('recipeResults').style.display='none';$('recipeAdd').style.display='none';
-  try{
-    spin('Analizando receta...');
-    const response=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`Visita esta URL de receta y extrae la lista de ingredientes: ${url}
-
-Responde SOLO con JSON: {"title":"nombre","ingredients":[{"name":"harina","quantity":"200","unit":"g"}]}
-
-Si no puedes, responde: {"title":"","ingredients":[]}`}]})
-    });
-    unspin();
-    const data=await response.json();
-    const text=data.content?.[0]?.text||'';
-    let parsed;try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch{status.textContent='No se pudieron extraer ingredientes.';return;}
-    if(!parsed.ingredients?.length){status.textContent='No se encontraron ingredientes.';return;}
-    $('recipeTitle').textContent=parsed.title||'Receta';status.style.display='none';
-    const list=$('recipeIngredients');list.innerHTML='';
-    parsed.ingredients.forEach(ing=>{
-      const div=document.createElement('div');div.className='recipe-ingredient';
-      const qty=ing.quantity?`${ing.quantity}${ing.unit?' '+ing.unit:''}`:'';
-      div.innerHTML=`<label><input type="checkbox" checked data-name="${esc(ing.name)}" data-qty="${esc(ing.quantity||'')}" data-unit="${esc(ing.unit||'')}" data-cat="${guesscat(ing.name)}"/>${esc(ing.name)}</label>${qty?`<span class="ri-qty">${esc(qty)}</span>`:''}`;
-      list.appendChild(div);
-    });
-    $('recipeResults').style.display='block';$('recipeAdd').style.display='block';
-  }catch(e){unspin();status.textContent='Error: '+e.message;}
-}
-$('recipeSelectAll').onclick=()=>{const boxes=$('recipeIngredients').querySelectorAll('input[type=checkbox]');const allChecked=[...boxes].every(b=>b.checked);boxes.forEach(b=>b.checked=!allChecked);};
-$('recipeAdd').onclick=()=>{
-  const checked=$('recipeIngredients').querySelectorAll('input[type=checkbox]:checked');
-  if(!checked.length){toast('Selecciona al menos un ingrediente');return;}
-  checked.forEach(cb=>{if(cb.dataset.name)addItem(cb.dataset.name,'','',cb.dataset.cat,cb.dataset.unit,'','');});
-  toast(`✓ ${checked.length} ingredientes añadidos`);$('recipeModal').classList.remove('on');
-};
-
-// ── SIDEBAR ──────────────────────────────────────────────────
+// ── Sidebar ──────────────────────────────────────────────────
 function openSidebar(){
   $('si-room').textContent=room||'-';
   $('si-user').textContent=(user||'-')+(amAdmin?' 👑 admin':'');
   $('si-list').textContent=curList||'-';
   $('si-version').textContent='v'+new Date().toISOString().slice(0,10);
   const all=Object.values(items),done=all.filter(i=>i.checked),total=all.reduce((s,i)=>s+(i.qty||1),0),cats=new Set(all.map(i=>i.cat||'otros')).size;
-  $('si-stats').innerHTML=`<div class="statbox"><div class="statnum">${all.length-done.length}</div><div class="statlbl">pendientes</div></div><div class="statbox"><div class="statnum">${done.length}</div><div class="statlbl">en el carro</div></div><div class="statbox"><div class="statnum">${total}</div><div class="statlbl">unidades</div></div><div class="statbox"><div class="statnum">${cats}</div><div class="statlbl">categorías</div></div>`;
+  $('si-stats').innerHTML=`
+    <div class="statbox"><div class="statnum">${all.length-done.length}</div><div class="statlbl">pendientes</div></div>
+    <div class="statbox"><div class="statnum">${done.length}</div><div class="statlbl">en el carro</div></div>
+    <div class="statbox"><div class="statnum">${total}</div><div class="statlbl">unidades</div></div>
+    <div class="statbox"><div class="statnum">${cats}</div><div class="statlbl">categorías</div></div>`;
 
-  // Pending approvals
+  // Pending approvals (admin only)
   if(amAdmin){
     onValue(ref(db,`listas/${room}/_members`),snap=>{
       const members=snap.val()||{};
       const pending=Object.entries(members).filter(([,v])=>!v.approved);
       const sec=$('si-pending-sec'),list=$('si-pending-list');
       if(pending.length>0){
-        sec.style.display='block';$('si-pending-count').textContent=pending.length;list.innerHTML='';
+        sec.style.display='block';
+        $('si-pending-count').textContent=pending.length;
+        list.innerHTML='';
         pending.forEach(([memberUid,m])=>{
           const div=document.createElement('div');div.className='userrow';
           const col=ucolor(m.name);const ini=m.name.charAt(0).toUpperCase();
-          div.innerHTML=`<div class="userava" style="background:${col}">${ini}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${esc(m.name)}</div><div style="font-size:11px;color:var(--tx3)">Quiere unirse</div></div><button class="kickbtn approve" data-uid="${memberUid}" data-name="${esc(m.name)}">✓</button><button class="kickbtn kick" data-uid="${memberUid}" data-name="${esc(m.name)}" data-reject="1" style="margin-left:4px">✕</button>`;
-          div.querySelector('.approve').onclick=()=>{update(ref(db,`listas/${room}/_members/${memberUid}`),{approved:true});toast(`${m.name} aprobado`);setTimeout(openSidebar,300);};
-          div.querySelector('[data-reject]').onclick=()=>{if(confirm(`¿Rechazar a ${m.name}?`)){remove(ref(db,`listas/${room}/_members/${memberUid}`));toast(`${m.name} rechazado`);setTimeout(openSidebar,300);}};
+          div.innerHTML=`
+            <div class="userava" style="background:${col}">${ini}</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:500">${esc(m.name)}</div><div style="font-size:11px;color:var(--tx3)">Quiere unirse</div></div>
+            <button class="kickbtn approve" data-uid="${memberUid}" data-name="${esc(m.name)}">✓ Aprobar</button>
+            <button class="kickbtn kick" data-uid="${memberUid}" data-name="${esc(m.name)}" data-reject="1" style="margin-left:4px">✕</button>`;
+          div.querySelector('.approve').onclick=()=>{
+            update(ref(db,`listas/${room}/_members/${memberUid}`),{approved:true});
+            toast(`${m.name} aprobado ✓`);setTimeout(openSidebar,300);
+          };
+          div.querySelector('[data-reject]').onclick=()=>{
+            if(confirm(`¿Rechazar a ${m.name}?`)){
+              remove(ref(db,`listas/${room}/_members/${memberUid}`));
+              toast(`${m.name} rechazado`);setTimeout(openSidebar,300);
+            }
+          };
           list.appendChild(div);
         });
-      }else{sec.style.display='none';}
+      } else {sec.style.display='none';}
     },{onlyOnce:true});
   }
 
-  // Members
+  // Members list
   onValue(ref(db,`listas/${room}/_members`),msnap=>{
     const members=msnap.val()||{};
     onValue(ref(db,`listas/${room}/_banned`),bsnap=>{
       const banned=bsnap.val()||{};
       const usersEl=$('si-users');usersEl.innerHTML='';
+
+      // Build user map from items + members
       const userMap={};
-      Object.values(items).forEach(item=>{const u=item.addedBy||'?';if(!userMap[u])userMap[u]={count:0,checked:0,uid:null};userMap[u].count++;if(item.checked)userMap[u].checked++;});
-      Object.values(members).filter(m=>m.approved).forEach(m=>{if(!userMap[m.name])userMap[m.name]={count:0,checked:0,uid:m.uid};else userMap[m.name].uid=m.uid;});
+      Object.values(items).forEach(item=>{
+        const u=item.addedBy||'?';if(!userMap[u])userMap[u]={count:0,checked:0,uid:null};
+        userMap[u].count++;if(item.checked)userMap[u].checked++;
+      });
+      // Add members who haven't added items
+      Object.values(members).filter(m=>m.approved).forEach(m=>{
+        if(!userMap[m.name])userMap[m.name]={count:0,checked:0,uid:m.uid};
+        else userMap[m.name].uid=m.uid;
+      });
+
+      // Admin entry
       onValue(ref(db,`listas/${room}/_admin`),asnap=>{
-        const adminData=asnap.val()||{};const adminName=adminData.name||'';
+        const adminData=asnap.val()||{};
+        const adminName=adminData.name||'';
         if(adminName&&!userMap[adminName])userMap[adminName]={count:0,checked:0,uid:adminData.uid};
+
         if(!Object.keys(userMap).length){usersEl.innerHTML='<div style="font-size:13px;color:var(--tx3)">Nadie ha participado aún</div>';return;}
+
         Object.entries(userMap).sort((a,b)=>b[1].count-a[1].count).forEach(([u,d])=>{
           const col=ucolor(u),ini=u.charAt(0).toUpperCase();
           const isMe=u===user,isAdm=u===adminName;
-          const isBanned=Object.values(banned).some(b=>(b.uid&&b.uid===d.uid)||(b.name===u&&!b.uid));
+          const isBanned=Object.values(banned).some(b=>b.uid===d.uid||b.name===u);
           const div=document.createElement('div');div.className='userrow';
-          div.innerHTML=`<div class="userava" style="background:${col}">${ini}</div><div style="flex:1;min-width:0"><div class="usernamerow">${esc(u)}${isMe?'<span class="badge me">tú</span>':''}${isAdm?'<span class="badge admin">👑</span>':''}${isBanned?'<span class="badge banned">expulsado</span>':''}</div><div style="font-size:11px;color:var(--tx3)">${d.count} producto${d.count!==1?'s':''}</div></div>${amAdmin&&!isMe&&!isAdm?`<button class="kickbtn ${isBanned?'unkick':'kick'}" data-name="${esc(u)}" data-muid="${d.uid||''}" data-banned="${isBanned}">${isBanned?'Readmitir':'Echar'}</button>`:''}`;
-          div.appendChild;usersEl.appendChild(div);
+          div.innerHTML=`
+            <div class="userava" style="background:${col}">${ini}</div>
+            <div style="flex:1;min-width:0">
+              <div class="usernamerow">
+                ${esc(u)}
+                ${isMe?'<span class="badge me">tú</span>':''}
+                ${isAdm?'<span class="badge admin">👑 admin</span>':''}
+                ${isBanned?'<span class="badge banned">expulsado</span>':''}
+              </div>
+              <div style="font-size:11px;color:var(--tx3)">${d.count} producto${d.count!==1?'s':''} añadido${d.count!==1?'s':''}</div>
+            </div>
+            ${amAdmin&&!isMe&&!isAdm?`<button class="kickbtn ${isBanned?'unkick':'kick'}" data-name="${esc(u)}" data-muid="${d.uid||''}" data-banned="${isBanned}">${isBanned?'Readmitir':'Echar'}</button>`:''}`;
+          usersEl.appendChild(div);
         });
+
+        // Ban/unban handlers
         usersEl.querySelectorAll('.kickbtn[data-banned]').forEach(btn=>{
           btn.onclick=()=>{
-            const tname=btn.dataset.name,tuid=btn.dataset.muid,wasBanned=btn.dataset.banned==='true';
-            if(wasBanned){onValue(ref(db,`listas/${room}/_banned`),s=>{const b=s.val()||{};Object.entries(b).forEach(([k,v])=>{if(v.name===tname||v.uid===tuid)remove(ref(db,`listas/${room}/_banned/${k}`));});toast(`${tname} readmitido`);setTimeout(openSidebar,300);},{onlyOnce:true});}
-            else if(confirm(`¿Echar a ${tname}?`)){const bk=(tuid||tname).replace(/[^a-zA-Z0-9]/g,'_')+'_'+Date.now();set(ref(db,`listas/${room}/_banned/${bk}`),{name:tname,uid:tuid||null,at:Date.now(),by:user});onValue(ref(db,`listas/${room}/_members`),s=>{const m=s.val()||{};Object.entries(m).forEach(([k,v])=>{if(v.name===tname||v.uid===tuid)remove(ref(db,`listas/${room}/_members/${k}`));});},{onlyOnce:true});toast(`${tname} expulsado`);setTimeout(openSidebar,300);}
+            const targetName=btn.dataset.name,targetUid=btn.dataset.muid,isBanned2=btn.dataset.banned==='true';
+            if(isBanned2){
+              // Unban: find by name or uid
+              onValue(ref(db,`listas/${room}/_banned`),s=>{
+                const b=s.val()||{};
+                Object.entries(b).forEach(([k,v])=>{if(v.name===targetName||v.uid===targetUid)remove(ref(db,`listas/${room}/_banned/${k}`));});
+                toast(`${targetName} readmitido`);setTimeout(openSidebar,300);
+              },{onlyOnce:true});
+            } else {
+              if(confirm(`¿Echar a ${targetName}? No podrá volver a entrar aunque use el mismo link.`)){
+                const banKey=(targetUid||targetName).replace(/[^a-zA-Z0-9]/g,'_')+'_'+Date.now();
+                set(ref(db,`listas/${room}/_banned/${banKey}`),{name:targetName,uid:targetUid||null,at:Date.now(),by:user});
+                // Also remove from members
+                onValue(ref(db,`listas/${room}/_members`),s=>{
+                  const m=s.val()||{};
+                  Object.entries(m).forEach(([k,v])=>{if(v.name===targetName||v.uid===targetUid)remove(ref(db,`listas/${room}/_members/${k}`));});
+                },{onlyOnce:true});
+                toast(`${targetName} expulsado`);setTimeout(openSidebar,300);
+              }
+            }
           };
         });
       },{onlyOnce:true});
     },{onlyOnce:true});
   },{onlyOnce:true});
 
-  $('sb').classList.add('open');$('sbOverlay').style.display='block';document.body.style.overflow='hidden';
+  $('sb').classList.add('open');
+  $('sbOverlay').style.display='block';
+  document.body.style.overflow='hidden';
 }
 
-function closeSidebar(){$('sb').classList.remove('open');$('sbOverlay').style.display='none';document.body.style.overflow='';}
-$('menubtn').onclick=openSidebar;$('sbclose').onclick=closeSidebar;$('sbOverlay').onclick=closeSidebar;
+function closeSidebar(){
+  $('sb').classList.remove('open');
+  $('sbOverlay').style.display='none';
+  document.body.style.overflow='';
+}
+
+$('menubtn').onclick=openSidebar;
+$('sbclose').onclick=closeSidebar;
+$('sbOverlay').onclick=closeSidebar;
 $('si-share').onclick=()=>{
   const s=JSON.parse(localStorage.getItem(SK)||'{}');
   const base=location.origin+location.pathname;
   const url=`${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
-  const text=`🛒 Mercao — lista compartida
-Sala: ${room}
-
-Entra directo:
-${url}`;
+  const text=`🛒 Mercao — lista compartida\nSala: ${room}\n\nEntra directo (el admin tiene que aprobarte):\n${url}`;
   if(navigator.share)navigator.share({title:'Mercao',text,url});
   else navigator.clipboard.writeText(text).then(()=>toast('Copiado ✓'));
   closeSidebar();
 };
-$('si-clearchecked').onclick=()=>{const d=Object.entries(items).filter(([,v])=>v.checked);d.forEach(([k])=>remove(ref(db,`listas/${room}/${curList}/items/${k}`)));toast(`${d.length} eliminados`);closeSidebar();};
+$('si-clearchecked').onclick=()=>{
+  const d=Object.entries(items).filter(([,v])=>v.checked);
+  d.forEach(([k])=>remove(ref(db,`listas/${room}/${curList}/items/${k}`)));
+  toast(`${d.length} eliminados`);closeSidebar();
+};
 $('si-clearall').onclick=()=>{if(confirm('¿Vaciar la lista?')){set(ref(db,`listas/${room}/${curList}/items`),null);closeSidebar();}};
 $('si-tutorial').onclick=()=>{closeSidebar();showTutorial();};
 $('si-logout').onclick=()=>{if(confirm('¿Cambiar de sala?')){[SK,'lista_v4','lista_compra_v3'].forEach(k=>localStorage.removeItem(k));location.reload();}};
+$('si-recipe').onclick=()=>{closeSidebar();openRecipeModal();};
 
-// ── RENDER ───────────────────────────────────────────────────
-// ── Completion celebration ───────────────────────────────────
-let lastCompleted=false;
-function checkCompletion(allLen,doneLen){
-  if(allLen>0&&doneLen===allLen&&!lastCompleted){
-    lastCompleted=true;
-    $('progfill').parentElement.classList.add('progress-complete');
-    setTimeout(()=>$('progfill').parentElement.classList.remove('progress-complete'),600);
-    const colors=['#1a6b4a','#5ad4a0','#ffc107','#e67e22','#9b59b6'];
-    for(let i=0;i<30;i++){
-      const c=document.createElement('div');c.className='confetti-piece';
-      c.style.cssText=`position:fixed;width:10px;height:10px;pointer-events:none;z-index:999;left:${Math.random()*100}%;bottom:0;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:50%;animation:confetti 1.5s ease-out ${Math.random()*0.3}s forwards;`;
-      document.body.appendChild(c);setTimeout(()=>c.remove(),1800);
-    }
-    toast('🎉 ¡Lista completa!');
-  }else if(doneLen<allLen){lastCompleted=false;}
+// ── RECIPE IMPORTER ──────────────────────────────────────────
+function openRecipeModal(){
+  $('recipeUrl').value='';
+  $('recipeStatus').style.display='none';
+  $('recipeResults').style.display='none';
+  $('recipeAdd').style.display='none';
+  $('recipeIngredients').innerHTML='';
+  $('recipeModal').classList.add('on');
+  setTimeout(()=>$('recipeUrl').focus(),200);
+}
+$('recipeCancel').onclick=()=>$('recipeModal').classList.remove('on');
+$('recipeModal').onclick=e=>{if(e.target===$('recipeModal'))$('recipeModal').classList.remove('on');};
+
+$('recipeFetch').onclick=fetchRecipe;
+$('recipeUrl').addEventListener('keydown',e=>{if(e.key==='Enter')fetchRecipe();});
+
+async function fetchRecipe(){
+  const url=$('recipeUrl').value.trim();
+  if(!url)return;
+  const status=$('recipeStatus');
+  status.textContent='Buscando ingredientes...';status.style.display='block';
+  $('recipeResults').style.display='none';$('recipeAdd').style.display='none';
+
+  try{
+    // Use Claude API to extract ingredients from the URL
+    spin('Analizando receta...');
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{
+          role:'user',
+          content:`Visita esta URL de receta y extrae la lista de ingredientes: ${url}
+
+Si no puedes acceder a la URL, intenta deducir los ingredientes del nombre/dominio si es una receta conocida.
+
+Responde SOLO con JSON válido, sin texto extra:
+{
+  "title": "Nombre de la receta",
+  "ingredients": [
+    {"name": "harina", "quantity": "200", "unit": "g"},
+    {"name": "huevos", "quantity": "2", "unit": ""},
+    {"name": "leche", "quantity": "1", "unit": "vaso"}
+  ]
 }
 
+Si no puedes extraer ingredientes, responde: {"title":"","ingredients":[]}`
+        }]
+      })
+    });
+    unspin();
+    const data=await response.json();
+    const text=data.content?.[0]?.text||'';
 
-function render(){
-  let allEntries=Object.entries(items).map(([k,v])=>({...v,key:k}));
-  if(searchQuery){allEntries=allEntries.filter(i=>{const hay=(i.name||'')+' '+(i.brand||'')+' '+(i.note||'')+' '+(i.assignedTo||'');return hay.toLowerCase().includes(searchQuery);});}
-  const all=allEntries.sort((a,b)=>(a.ts||0)-(b.ts||0));
-  const pending2=all.filter(i=>!i.checked),done=all.filter(i=>i.checked),total=all.reduce((s,i)=>s+(i.qty||1),0);
-  $('emptyMsg').style.display=all.length?'none':'block';
-  $('sub').textContent=all.length?`${all.length} producto${all.length>1?'s':''} · ${total} unidad${total>1?'es':''}`:'sin productos';
-  if(all.length){$('progwrap').style.display='block';const pct=Math.round(done.length/all.length*100);$('proglbl').textContent=`${done.length} de ${all.length}`;$('progpct').textContent=pct+'%';$('progfill').style.width=pct+'%';}else{$('progwrap').style.display='none';}
-  const c=$('container');c.innerHTML='';
-  if(pending2.length){
-    const byCat={};pending2.forEach(i=>{const cat=i.cat||'otros';if(!byCat[cat])byCat[cat]=[];byCat[cat].push(i);});
-    CATORDER.forEach(cat=>{
-      if(!byCat[cat]?.length)return;
-      const info=CATS[cat],col=collapsed[cat];
-      const sec=document.createElement('div');sec.className='catsec'+(byCat[cat].every(i=>i.checked)?' allchecked':'');
-      sec.innerHTML=`<div class="cathdr${col?' collapsed':''}" data-cat="${cat}"><span>${info.i}</span>${info.l}<span class="pill">${byCat[cat].length}</span><span class="chevron">▾</span></div><div class="catbody" style="${col?'max-height:0':'max-height:9999px'}"><ul class="items"></ul></div>`;
-      byCat[cat].forEach(item=>sec.querySelector('ul').appendChild(mkItem(item)));
-      c.appendChild(sec);
+    let parsed;
+    try{
+      const clean=text.replace(/```json|```/g,'').trim();
+      parsed=JSON.parse(clean);
+    }catch{
+      status.textContent='No se pudieron extraer ingredientes. Prueba con otra URL.';
+      return;
+    }
+
+    if(!parsed.ingredients?.length){
+      status.textContent='No se encontraron ingredientes en esta receta.';
+      return;
+    }
+
+    // Show results
+    $('recipeTitle').textContent=parsed.title||'Receta';
+    status.style.display='none';
+    const list=$('recipeIngredients');list.innerHTML='';
+    parsed.ingredients.forEach((ing,i)=>{
+      const div=document.createElement('div');div.className='recipe-ingredient';
+      const qty=ing.quantity?`${ing.quantity}${ing.unit?' '+ing.unit:''}`:'';
+      div.innerHTML=`
+        <label>
+          <input type="checkbox" checked data-name="${esc(ing.name)}" data-qty="${esc(ing.quantity||'')}" data-unit="${esc(ing.unit||'')}" data-cat="${guesscat(ing.name)}"/>
+          ${esc(ing.name)}
+        </label>
+        ${qty?`<span class="ri-qty">${esc(qty)}</span>`:''}`;
+      list.appendChild(div);
+    });
+    $('recipeResults').style.display='block';
+    $('recipeAdd').style.display='block';
+  }catch(e){
+    unspin();
+    status.textContent='Error al analizar la receta: '+e.message;
+  }
+}
+
+$('recipeSelectAll').onclick=()=>{
+  const boxes=$('recipeIngredients').querySelectorAll('input[type=checkbox]');
+  const allChecked=[...boxes].every(b=>b.checked);
+  boxes.forEach(b=>b.checked=!allChecked);
+};
+
+$('recipeAdd').onclick=()=>{
+  const checked=$('recipeIngredients').querySelectorAll('input[type=checkbox]:checked');
+  if(!checked.length){toast('Selecciona al menos un ingrediente');return;}
+  checked.forEach(cb=>{
+    const name=cb.dataset.name;
+    const unit=cb.dataset.unit;
+    const cat=cb.dataset.cat;
+    if(name) addItem(name,'','',cat,unit,'','');
+  });
+  toast(`✓ ${checked.length} ingrediente${checked.length>1?'s':''} añadidos`);
+  $('recipeModal').classList.remove('on');
+};
+
+// ── Render ───────────────────────────────────────────────────
+
+// ── View toggle (list / pantry) ──────────────────────────────
+let currentView='list';
+$('pantryToggle').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-view]');if(!btn)return;
+  currentView=btn.dataset.view;
+  $('pantryToggle').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.view===currentView));
+  render();
+});
+
+// ── Duplicate detection ──────────────────────────────────────
+function findDuplicates(name){
+  const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').trim();
+  const target=norm(name);
+  if(!target||target.length<3)return [];
+  return Object.entries(items).filter(([,v])=>{
+    const existing=norm(v.name||'');
+    if(!existing)return false;
+    if(existing===target)return false; // exact match handled separately
+    // Word overlap
+    const w1=new Set(target.split(/\s+/).filter(w=>w.length>2));
+    const w2=new Set(existing.split(/\s+/).filter(w=>w.length>2));
+    if(!w1.size||!w2.size)return false;
+    let overlap=0;w1.forEach(w=>{if(w2.has(w))overlap++;});
+    return overlap>=Math.min(w1.size,w2.size)*0.6 || existing.includes(target) || target.includes(existing);
+  }).map(([k,v])=>({...v,key:k}));
+}
+
+// Override addItem to check duplicates
+const origAddItem=addItem;
+window.addItem=function(name,brand,barcode,cat,unit,img){
+  name=name.trim();if(!name)return;
+  // Exact match → increment qty (existing behavior)
+  const exact=Object.entries(items).find(([,v])=>v.name.toLowerCase()===name.toLowerCase());
+  if(exact){
+    update(ref(db,`listas/${room}/${curList}/items/${exact[0]}`),{qty:(exact[1].qty||1)+1});
+    toast(`+1 ${name}`);
+    saveActivity('add',name);
+    return;
+  }
+  // Check fuzzy duplicates
+  const dups=findDuplicates(name);
+  if(dups.length>0&&!barcode){ // only warn for manual additions, not scanned
+    showDupModal(name,brand,barcode,cat,unit,img,dups);
+    return;
+  }
+  pushItem(name,brand,barcode,cat,unit,img);
+};
+
+function pushItem(name,brand,barcode,cat,unit,img){
+  push(ref(db,`listas/${room}/${curList}/items`),{
+    name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',
+    unit:unit||'',img:img||'',qty:1,checked:false,
+    ts:Date.now(),addedBy:user,inPantry:false
+  });
+  if(!hist.find(h=>h.name.toLowerCase()===name.toLowerCase())){
+    hist.unshift({name,brand,cat,unit,lastAdded:Date.now()});
+    if(hist.length>200)hist.pop();
+  } else {
+    const h=hist.find(h=>h.name.toLowerCase()===name.toLowerCase());
+    h.lastAdded=Date.now();
+  }
+  localStorage.setItem(HK,JSON.stringify(hist));
+  toast(`Añadido: ${name}`);
+  saveActivity('add',name);
+}
+
+function showDupModal(name,brand,barcode,cat,unit,img,dups){
+  $('dupSub').textContent=`Vas a añadir "${name}". Estos productos parecen similares:`;
+  const opts=$('dupOptions');opts.innerHTML='';
+  dups.forEach(d=>{
+    const div=document.createElement('div');div.className='dup-option';
+    div.innerHTML=`<div><div style="font-weight:500">${esc(d.name)}</div>${d.brand?`<div style="font-size:11px;color:var(--tx3)">${esc(d.brand)}</div>`:''}</div><span style="color:var(--ac);font-weight:500">+1 →</span>`;
+    div.onclick=()=>{
+      update(ref(db,`listas/${room}/${curList}/items/${d.key}`),{qty:(d.qty||1)+1});
+      toast(`+1 ${d.name}`);
+      $('dupModal').classList.remove('on');
+    };
+    opts.appendChild(div);
+  });
+  $('dupCancel').onclick=()=>$('dupModal').classList.remove('on');
+  $('dupAddNew').onclick=()=>{
+    pushItem(name,brand,barcode,cat,unit,img);
+    $('dupModal').classList.remove('on');
+  };
+  $('dupModal').classList.add('on');
+}
+
+// ── Activity tracking (for stats) ─────────────────────────────
+function saveActivity(type,name){
+  try{
+    const acts=JSON.parse(localStorage.getItem('lc_activity')||'[]');
+    acts.push({type,name,ts:Date.now(),user});
+    if(acts.length>500)acts.splice(0,acts.length-500);
+    localStorage.setItem('lc_activity',JSON.stringify(acts));
+  }catch{}
+}
+
+// ── Forgotten products ───────────────────────────────────────
+
+
+// ── Stats modal ──────────────────────────────────────────────
+$('si-stats').onclick=()=>{closeSidebar();showStats();};
+$('statsClose').onclick=()=>$('statsModal').classList.remove('on');
+$('statsModal').onclick=e=>{if(e.target===$('statsModal'))$('statsModal').classList.remove('on');};
+
+function showStats(){
+  const acts=JSON.parse(localStorage.getItem('lc_activity')||'[]');
+  const now=Date.now();
+  const monthAgo=now-30*86400000;
+  const thisMonth=acts.filter(a=>a.ts>monthAgo);
+  const totalAdded=acts.filter(a=>a.type==='add').length;
+  const monthAdded=thisMonth.filter(a=>a.type==='add').length;
+  
+  // Top products
+  const productCount={};
+  acts.filter(a=>a.type==='add').forEach(a=>{
+    productCount[a.name]=(productCount[a.name]||0)+1;
+  });
+  const topProducts=Object.entries(productCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  
+  // Activity by user
+  const byUser={};
+  thisMonth.filter(a=>a.type==='add').forEach(a=>{
+    byUser[a.user||'?']=(byUser[a.user||'?']||0)+1;
+  });
+  const userMax=Math.max(1,...Object.values(byUser));
+  
+  // Last 28 days grid
+  const days=[];
+  for(let i=27;i>=0;i--){
+    const d=new Date(now-i*86400000);d.setHours(0,0,0,0);
+    const start=d.getTime(),end=start+86400000;
+    const count=acts.filter(a=>a.ts>=start&&a.ts<end).length;
+    days.push({date:d,count});
+  }
+  const dayMax=Math.max(1,...days.map(d=>d.count));
+  
+  let html=`
+    <div class="stats-card">
+      <h4>Este mes</h4>
+      <div class="stats-bignum">${monthAdded}</div>
+      <div style="font-size:13px;color:var(--tx2);margin-top:2px;">productos añadidos</div>
+    </div>
+    <div class="stats-card">
+      <h4>Total histórico</h4>
+      <div style="font-size:13px;">${totalAdded} productos añadidos en total</div>
+    </div>
+    <div class="stats-card">
+      <h4>Actividad últimas 4 semanas</h4>
+      <div class="month-grid">
+        ${days.map(d=>{
+          const intensity=d.count/dayMax;
+          const cls=intensity===0?'':(intensity>0.5?'high':'has-activity');
+          return `<div class="month-cell ${cls}" title="${d.date.toLocaleDateString()} - ${d.count}">${d.date.getDate()}</div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  
+  if(topProducts.length){
+    html+='<div class="stats-card"><h4>Tus productos más añadidos</h4>';
+    topProducts.forEach(([n,c])=>{
+      const pct=Math.round(c/topProducts[0][1]*100);
+      html+=`<div class="stats-row"><span>${esc(n)}</span><span style="color:var(--ac);font-weight:500">${c}×</span></div><div class="stats-bar"><div class="stats-bar-fill" style="width:${pct}%"></div></div>`;
+    });
+    html+='</div>';
+  }
+  
+  if(Object.keys(byUser).length){
+    html+='<div class="stats-card"><h4>Quién añade más (este mes)</h4>';
+    Object.entries(byUser).sort((a,b)=>b[1]-a[1]).forEach(([u,c])=>{
+      const pct=Math.round(c/userMax*100);
+      const col=ucolor(u);
+      html+=`<div class="stats-row"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${col}"></span>${esc(u)}</span><span style="font-weight:500">${c}</span></div><div class="stats-bar"><div class="stats-bar-fill" style="width:${pct}%;background:${col}"></div></div>`;
+    });
+    html+='</div>';
+  }
+  
+  $('statsContent').innerHTML=html;
+  $('statsModal').classList.add('on');
+}
+
+// ── Recipe import ────────────────────────────────────────────
+$('si-recipe').onclick=()=>{
+  closeSidebar();
+  $('recipeUrl').value='';$('recipePreview').style.display='none';$('recipeAdd').style.display='none';
+  $('recipeModal').classList.add('on');
+};
+$('recipeCancel').onclick=()=>$('recipeModal').classList.remove('on');
+$('recipeModal').onclick=e=>{if(e.target===$('recipeModal'))$('recipeModal').classList.remove('on');};
+
+let parsedIngredients=[];
+$('recipeFetch').onclick=async()=>{
+  const url=$('recipeUrl').value.trim();
+  if(!url)return;
+  spin('Buscando ingredientes...');
+  try{
+    // Use a CORS proxy + try to extract structured data
+    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res=await fetch(proxy);
+    const d=await res.json();
+    const html=d.contents||'';
+    parsedIngredients=extractIngredients(html);
+    if(parsedIngredients.length===0){
+      toast('No se encontraron ingredientes en esa página');
+      $('recipePreview').style.display='none';
+      $('recipeAdd').style.display='none';
+    } else {
+      $('recipePreview').innerHTML=parsedIngredients.map((ing,i)=>
+        `<div class="recipe-ing"><input type="checkbox" id="ing${i}" checked/><label for="ing${i}" style="flex:1;cursor:pointer">${esc(ing)}</label></div>`
+      ).join('');
+      $('recipePreview').style.display='block';
+      $('recipeAdd').style.display='block';
+      toast(`${parsedIngredients.length} ingredientes encontrados`);
+    }
+  }catch(e){
+    toast('No se pudo abrir esa URL');
+  }finally{unspin();}
+};
+$('recipeAdd').onclick=()=>{
+  let count=0;
+  parsedIngredients.forEach((ing,i)=>{
+    if($('ing'+i)?.checked){addItem(ing,'','',guesscat(ing),'','');count++;}
+  });
+  toast(`${count} productos añadidos a la lista`);
+  $('recipeModal').classList.remove('on');
+};
+
+function extractIngredients(html){
+  const found=[];
+  // Try JSON-LD recipe schema
+  const jsonLdMatches=html.match(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)||[];
+  for(const m of jsonLdMatches){
+    try{
+      const json=m.replace(/<script[^>]*>/,'').replace(/<\/script>/,'');
+      const data=JSON.parse(json);
+      const items=Array.isArray(data)?data:[data];
+      for(const item of items){
+        const recipe=findRecipe(item);
+        if(recipe?.recipeIngredient){
+          recipe.recipeIngredient.forEach(i=>found.push(cleanIngredient(i)));
+          if(found.length)return found;
+        }
+      }
+    }catch{}
+  }
+  // Fallback: look for ul/li under "ingredient" headings
+  const ingSection=html.match(/<[^>]*(?:class|id)=["'][^"']*ingredient[^"']*["'][^>]*>([\s\S]*?)<\/(?:ul|ol|div|section)>/i);
+  if(ingSection){
+    const liMatches=ingSection[0].match(/<li[^>]*>([\s\S]*?)<\/li>/gi)||[];
+    liMatches.slice(0,30).forEach(li=>{
+      const text=li.replace(/<[^>]+>/g,'').trim();
+      if(text&&text.length<150)found.push(cleanIngredient(text));
     });
   }
-  if(done.length){
-    const sec=document.createElement('div');sec.className='checksec';
-    sec.innerHTML=`<div class="cathdr">✅ En el carro<span class="pill">${done.length}</span></div>`;
-    const ul=document.createElement('ul');ul.className='items';
-    done.forEach(item=>ul.appendChild(mkItem(item)));
-    sec.appendChild(ul);c.appendChild(sec);
-  }
-  checkCompletion(all.length,done.length);
-  checkForgotten();
+  return found;
+}
+function findRecipe(obj){
+  if(!obj||typeof obj!=='object')return null;
+  if(obj['@type']==='Recipe'||(Array.isArray(obj['@type'])&&obj['@type'].includes('Recipe')))return obj;
+  if(obj['@graph']){for(const g of obj['@graph']){const r=findRecipe(g);if(r)return r;}}
+  return null;
+}
+function cleanIngredient(s){
+  return s.replace(/\s+/g,' ').trim().replace(/^[\d\/.,\s]*(g|kg|ml|l|gr|cups?|tsp|tbsp|cucharada|cucharadita|taza|cda|cdita)?s?\s*/i,'').trim()||s;
 }
 
-function mkItem(item){
-  const li=document.createElement('li');li.className='item'+(item.checked?' done':'');li.dataset.key=item.key;
-  const qty=item.unit?`${item.qty||1} ${item.unit}`:(item.qty||1);
-  const col=ucolor(item.addedBy||''),ini=(item.addedBy||'?').charAt(0).toUpperCase();
-  let extras='';
-  if(item.store)extras+=`<span style="font-size:11px;color:var(--tx3)">🏪 ${esc(item.store)}</span>`;
-  if(item.note)extras+=`<span class="item-note">📝 ${esc(item.note)}</span>`;
-  if(item.assignedTo){const acol=ucolor(item.assignedTo);extras+=`<span class="item-assigned"><span style="width:10px;height:10px;border-radius:50%;background:${acol};display:inline-block"></span>${esc(item.assignedTo)}</span>`;}
-  if(item.reactions&&Object.keys(item.reactions).length){const counts={};Object.entries(item.reactions).forEach(([u,r])=>{counts[r]=(counts[r]||0)+1;});let rxHtml='<span class="item-reactions">';Object.entries(counts).forEach(([rx,n])=>{const mine=item.reactions[user]===rx?' mine':'';rxHtml+=`<span class="reaction-pill${mine}" data-rx-toggle="${rx}" data-id="${item.key}">${rx} ${n}</span>`;});rxHtml+='</span>';extras+=rxHtml;}
-  li.innerHTML=`
-    ${item.img?`<img class="iimg" src="${esc(item.img)}" loading="lazy"/>`:`<div class="iemoji">${CATS[item.cat||'otros']?.i||'📦'}</div>`}
-    <div class="chk${item.checked?' on':''}" data-a="chk" data-id="${item.key}">${item.checked?`<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}</div>
-    <div class="iinfo">
-      <div class="iname">${esc(item.name)}</div>
-      <div class="imeta">${item.brand?`<span>${esc(item.brand)}</span>`:''}<span class="ubadge" style="background:${col};color:#fff">${ini}</span></div>
-      ${extras?`<div class="item-extras">${extras}</div>`:''}
-    </div>
-    <div class="qty">
-      <button class="qbtn" data-a="-" data-id="${item.key}">−</button>
-      <span class="qnum" data-id="${item.key}">${qty}</span>
-      <button class="qbtn" data-a="+" data-id="${item.key}">+</button>
-    </div>
-    <button class="item-menu-btn" data-a="menu" data-id="${item.key}">⋯</button>
-    <span class="drag-handle">⠿</span>`;
-  enableDrag(li,item.key);
-  return li;
-}
-// ── THEME PICKER ─────────────────────────────────────────────
+// ── Price tracking ───────────────────────────────────────────
+$('iaPrice').onclick=()=>{
+  const item=items[actionItemKey];if(!item)return;
+  $('itemActionsModal').classList.remove('on');
+  $('priceSub').textContent=item.name;
+  $('priceInput').value=item.price||'';
+  // Show history
+  const history=JSON.parse(localStorage.getItem('lc_prices_'+(item.barcode||item.name.toLowerCase()))||'[]');
+  if(history.length){
+    const last=history[history.length-1];
+    const prev=history.length>1?history[history.length-2]:null;
+    let h=`Último precio: <strong>${last.price.toFixed(2)}€</strong> (${new Date(last.ts).toLocaleDateString()})`;
+    if(prev){
+      const diff=last.price-prev.price;
+      const cls=diff>0?'price-up':(diff<0?'price-down':'');
+      h+=` <span class="${cls}">${diff>0?'↑':'↓'} ${Math.abs(diff).toFixed(2)}€</span>`;
+    }
+    $('priceHistory').innerHTML=h;
+  } else {$('priceHistory').textContent='Sin historial todavía';}
+  $('priceModal').classList.add('on');
+  setTimeout(()=>$('priceInput').focus(),200);
+};
+$('priceOk').onclick=()=>{
+  const p=parseFloat($('priceInput').value);
+  if(isNaN(p)||p<0){$('priceModal').classList.remove('on');return;}
+  const item=items[actionItemKey];if(!item)return;
+  update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{price:p});
+  // Save to local history
+  const key='lc_prices_'+(item.barcode||item.name.toLowerCase());
+  const h=JSON.parse(localStorage.getItem(key)||'[]');
+  h.push({price:p,ts:Date.now()});
+  if(h.length>20)h.shift();
+  localStorage.setItem(key,JSON.stringify(h));
+  $('priceModal').classList.remove('on');
+  toast(`Precio guardado: ${p.toFixed(2)}€`);
+};
+$('priceCancel').onclick=()=>$('priceModal').classList.remove('on');
+$('priceModal').onclick=e=>{if(e.target===$('priceModal'))$('priceModal').classList.remove('on');};
+
+// ── Pantry toggle for individual item ────────────────────────
+$('iaPantry').onclick=()=>{
+  const item=items[actionItemKey];if(!item)return;
+  update(ref(db,`listas/${room}/${curList}/items/${actionItemKey}`),{inPantry:!item.inPantry});
+  toast(item.inPantry?'Movido a la lista':'Movido a la despensa');
+  $('itemActionsModal').classList.remove('on');
+};
+
+// ── Theme picker ─────────────────────────────────────────────
 const THEMES=[
   {n:'Verde',ac:'#1a6b4a',acl:'#d4ede3',acd:'#0e4a32'},
   {n:'Azul',ac:'#1e6091',acl:'#d4e3ed',acd:'#0e4570'},
@@ -2280,7 +2444,8 @@ $('si-theme').onclick=()=>{
   THEMES.forEach((t,i)=>{
     const b=document.createElement('button');
     b.className='theme-btn'+(i===cur?' on':'');
-    b.style.background=t.ac;b.title=t.n;
+    b.style.background=t.ac;
+    b.title=t.n;
     b.onclick=()=>{
       applyTheme(i);
       grid.querySelectorAll('.theme-btn').forEach(x=>x.classList.remove('on'));
@@ -2294,15 +2459,367 @@ $('si-theme').onclick=()=>{
 $('themeClose').onclick=()=>$('themeModal').classList.remove('on');
 $('themeModal').onclick=e=>{if(e.target===$('themeModal'))$('themeModal').classList.remove('on');};
 
-// ── ACTIVITY TRACKING ─────────────────────────────────────────
-function saveActivity(type,name){
-  try{
-    const acts=JSON.parse(localStorage.getItem('lc_activity')||'[]');
-    acts.push({type,name,ts:Date.now(),user});
-    if(acts.length>500)acts.splice(0,acts.length-500);
-    localStorage.setItem('lc_activity',JSON.stringify(acts));
-  }catch{}
+// ── Drag & drop reorder ──────────────────────────────────────
+document.addEventListener('touchstart',e=>{
+  const handle=e.target.closest('.drag-handle');if(!handle)return;
+  const item=handle.closest('.item');if(!item)return;
+  dragKey=item.dataset.key;
+  item.classList.add('dragging');
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!dragKey)return;
+  const t=e.touches[0];
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const target=el?.closest('.item');
+  document.querySelectorAll('.item.dragover').forEach(x=>x.classList.remove('dragover'));
+  if(target&&target.dataset.key!==dragKey)target.classList.add('dragover');
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!dragKey)return;
+  const target=document.querySelector('.item.dragover');
+  document.querySelectorAll('.dragging,.dragover').forEach(x=>{x.classList.remove('dragging');x.classList.remove('dragover');});
+  if(target){
+    const targetKey=target.dataset.key;
+    const sourceItem=items[dragKey],targetItem=items[targetKey];
+    if(sourceItem&&targetItem){
+      // Swap timestamps to reorder
+      const newSourceTs=targetItem.ts-1;
+      update(ref(db,`listas/${room}/${curList}/items/${dragKey}`),{ts:newSourceTs});
+    }
+  }
+  dragKey=null;
+});
+
+// ── Completion celebration ───────────────────────────────────
+let lastCompleted=false;
+function checkCompletion(allLen,doneLen){
+  if(allLen>0&&doneLen===allLen&&!lastCompleted){
+    lastCompleted=true;
+    $('progfill').parentElement.classList.add('progress-complete');
+    setTimeout(()=>$('progfill').parentElement.classList.remove('progress-complete'),600);
+    // Confetti
+    const colors=['#1a6b4a','#5ad4a0','#ffc107','#e67e22','#9b59b6'];
+    for(let i=0;i<30;i++){
+      const c=document.createElement('div');c.className='confetti-piece';
+      c.style.left=Math.random()*100+'%';
+      c.style.bottom='0';
+      c.style.background=colors[Math.floor(Math.random()*colors.length)];
+      c.style.animationDelay=(Math.random()*0.3)+'s';
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(),1500);
+    }
+    toast('🎉 ¡Lista completa!');
+  } else if(doneLen<allLen){lastCompleted=false;}
 }
+
+function render(){
+  let allEntries=Object.entries(items).map(([k,v])=>({...v,key:k}));
+  // Filter by view
+  if(currentView==='pantry'){
+    allEntries=allEntries.filter(i=>i.inPantry);
+  } else {
+    allEntries=allEntries.filter(i=>!i.inPantry);
+  }
+  // Apply search filter
+  if(searchQuery){
+    allEntries=allEntries.filter(i=>{
+      const hay=(i.name||'')+' '+(i.brand||'')+' '+(i.note||'')+' '+(i.assignedTo||'');
+      return hay.toLowerCase().includes(searchQuery);
+    });
+  }
+  const all=allEntries.sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const pending2=all.filter(i=>!i.checked),done=all.filter(i=>i.checked),total=all.reduce((s,i)=>s+(i.qty||1),0);
+  $('emptyMsg').style.display=all.length?'none':'block';
+  $('sub').textContent=all.length?`${all.length} producto${all.length>1?'s':''} · ${total} unidad${total>1?'es':''}`:'sin productos';
+  if(all.length){
+    $('progwrap').style.display='block';
+    const pct=Math.round(done.length/all.length*100);
+    $('proglbl').textContent=`${done.length} de ${all.length}`;$('progpct').textContent=pct+'%';$('progfill').style.width=pct+'%';
+  }else{$('progwrap').style.display='none';}
+  const c=$('container');c.innerHTML='';
+  if(pending2.length){
+    const byCat={};pending2.forEach(i=>{const cat=i.cat||'otros';if(!byCat[cat])byCat[cat]=[];byCat[cat].push(i);});
+    CATORDER.forEach(cat=>{
+      if(!byCat[cat]?.length)return;
+      const info=CATS[cat],col=collapsed[cat];
+      const sec=document.createElement('div');sec.className='catsec'+(byCat[cat].every(i=>i.checked)?' allchecked':'');
+      sec.innerHTML=`<div class="cathdr${col?' collapsed':''}" data-cat="${cat}"><span>${info.i}</span>${info.l}<span class="pill">${byCat[cat].length}</span><span class="chevron">▾</span></div><div class="catbody" style="${col?'max-height:0':'max-height:9999px'}"><ul class="items"></ul></div>`;
+      byCat[cat].forEach(item=>sec.querySelector('ul').appendChild(mkItem(item)));
+      c.appendChild(sec);
+    });
+  }
+  if(done.length){
+    const sec=document.createElement('div');sec.className='checksec';
+    sec.innerHTML=`<div class="cathdr">✅ En el carro<span class="pill">${done.length}</span></div>`;
+    const ul=document.createElement('ul');ul.className='items';
+    done.forEach(item=>ul.appendChild(mkItem(item)));
+    sec.appendChild(ul);c.appendChild(sec);
+  }
+  checkCompletion(all.length,done.length);
+  checkForgotten();
+}
+function mkItem(item){
+  const li=document.createElement('li');li.className='item'+(item.checked?' done':'');li.dataset.key=item.key;
+  const qty=item.unit?`${item.qty||1} ${item.unit}`:(item.qty||1);
+  const col=ucolor(item.addedBy||''),ini=(item.addedBy||'?').charAt(0).toUpperCase();
+
+  // Build extras (note, assigned, reactions, store)
+  let extras='';
+  if(item.store)extras+=`<span style="font-size:11px;color:var(--tx3)">🏪 ${esc(item.store)}</span>`;
+  if(item.note)extras+=`<span class="item-note">📝 ${esc(item.note)}</span>`;
+  if(item.assignedTo){
+    const acol=ucolor(item.assignedTo);
+    extras+=`<span class="item-assigned"><span style="width:10px;height:10px;border-radius:50%;background:${acol};display:inline-block"></span>${esc(item.assignedTo)}</span>`;
+  }
+  if(item.reactions&&Object.keys(item.reactions).length){
+    const counts={};
+    Object.entries(item.reactions).forEach(([u,r])=>{counts[r]=(counts[r]||0)+1;});
+    let rxHtml='<span class="item-reactions">';
+    Object.entries(counts).forEach(([rx,n])=>{
+      const mine=item.reactions[user]===rx?' mine':'';
+      rxHtml+=`<span class="reaction-pill${mine}" data-rx-toggle="${rx}" data-id="${item.key}">${rx} ${n}</span>`;
+    });
+    rxHtml+='</span>';
+    extras+=rxHtml;
+  }
+
+  // Add price tag to extras
+  if(item.price){
+    extras+=`<span class="price-tag" data-a="price-tag" data-id="${item.key}">💰 ${item.price.toFixed(2)}€</span>`;
+  }
+
+  // Pantry indicator
+  if(item.inPantry)li.classList.add('in-pantry');
+
+  li.innerHTML=`
+    <span class="drag-handle">⋮⋮</span>
+    ${item.img?`<img class="iimg" src="${esc(item.img)}" loading="lazy"/>`:`<div class="iemoji">${CATS[item.cat||'otros']?.i||'📦'}</div>`}
+    <div class="chk${item.checked?' on':''}" data-a="chk" data-id="${item.key}">
+      ${item.checked?`<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+    </div>
+    <div class="iinfo">
+      <div class="iname">${esc(item.name)}</div>
+      <div class="imeta">${item.brand?`<span>${esc(item.brand)}</span>`:''}<span class="ubadge" style="background:${col};color:#fff">${ini}</span></div>
+      ${extras?`<div class="item-extras">${extras}</div>`:''}
+    </div>
+    <div class="qty">
+      <button class="qbtn" data-a="-" data-id="${item.key}">−</button>
+      <span class="qnum" data-id="${item.key}">${qty}</span>
+      <button class="qbtn" data-a="+" data-id="${item.key}">+</button>
+    </div>
+    <button class="item-menu-btn" data-a="menu" data-id="${item.key}" title="Opciones">⋯</button>
+    <span class="drag-handle" title="Arrastrar">⠿</span>`;
+  enableDrag(li,item.key);
+  return li;
+}
+// ── PANTRY SCAN ──────────────────────────────────────────────
+let pantryMode='have'; // 'have' or 'missing'
+let pantryData={have:[],missing:[]};
+
+$('si-pantry').onclick=()=>{closeSidebar();openPantryModal();};
+
+function openPantryModal(){
+  $('pantryPreview').style.display='none';
+  $('pantryStatus').style.display='none';
+  $('pantryResultsWrap').style.display='none';
+  $('pantryAddBtn').style.display='none';
+  $('pantryPhotoBtn').style.display='flex';
+  pantryData={have:[],uncertain:[],missing:[]};
+  $('pantryModal').classList.add('on');
+}
+$('pantryCancel').onclick=()=>$('pantryModal').classList.remove('on');
+$('pantryModal').onclick=e=>{if(e.target===$('pantryModal'))$('pantryModal').classList.remove('on');};
+
+$('pantryPhotoBtn').onclick=()=>$('pantryInput').click();
+
+$('pantryInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  e.target.value='';
+  if(!file)return;
+
+  // Show preview
+  const previewUrl=URL.createObjectURL(file);
+  $('pantryPreview').src=previewUrl;
+  $('pantryPreview').style.display='block';
+  $('pantryPhotoBtn').style.display='none';
+
+  // Convert to base64
+  const base64=await new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+
+  const status=$('pantryStatus');
+  status.textContent='🔍 Analizando imagen con IA...';
+  status.style.display='block';
+  spin('Analizando despensa...');
+
+  try{
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        messages:[{
+          role:'user',
+          content:[
+            {
+              type:'image',
+              source:{type:'base64',media_type:file.type||'image/jpeg',data:base64}
+            },
+            {
+              type:'text',
+              text:`Analiza esta imagen de una despensa, nevera o armario.
+Identifica todos los productos que ves con claridad, los que ves pero tienes dudas, y sugiere lo que podría faltar.
+
+Responde SOLO con JSON válido sin texto extra:
+{
+  "have": [
+    {"name": "leche", "quantity": "casi llena", "cat": "lacteos"},
+    {"name": "arroz", "quantity": "medio paquete", "cat": "panaderia"}
+  ],
+  "uncertain": [
+    {"name": "yogur de fresa", "doubt": "no leo bien la etiqueta, puede ser natural", "cat": "lacteos"},
+    {"name": "aceite", "doubt": "parece oliva pero podria ser girasol", "cat": "conservas"}
+  ],
+  "missing": [
+    {"name": "aceite de oliva", "cat": "conservas"},
+    {"name": "sal", "cat": "conservas"}
+  ]
+}
+
+Reglas: "have"=ves claramente, "uncertain"=ves pero tienes dudas (marca/variedad/si está vacío), "missing"=no ves y podría faltar.
+Categorías: frutas, lacteos, carnes, panaderia, bebidas, congelados, limpieza, higiene, conservas, snacks, otros.
+Lista 5-10 en have, todos los dudosos en uncertain, 3-5 en missing.`
+            }
+          ]
+        }]
+      })
+    });
+
+    unspin();
+    const data=await response.json();
+    const text=data.content?.[0]?.text||'';
+
+    let parsed;
+    try{
+      const clean=text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+      parsed=JSON.parse(clean);
+    }catch{
+      status.textContent='No se pudo analizar la imagen. Intenta con una foto más clara.';
+      $('pantryPhotoBtn').style.display='flex';
+      return;
+    }
+
+    pantryData={
+      have:parsed.have||[],
+      uncertain:parsed.uncertain||[],
+      missing:parsed.missing||[]
+    };
+
+    status.style.display='none';
+    $('pantryHaveCount').textContent=pantryData.have.length;
+    $('pantryUncertainCount').textContent=pantryData.uncertain.length;
+    $('pantryMissingCount').textContent=pantryData.missing.length;
+    // Show uncertain tab if there are any
+    const uncTab=$('pantryTabUncertain');
+    if(pantryData.uncertain.length>0){
+      uncTab.style.display='block';
+      uncTab.classList.add('uncertain-tab');
+    } else {
+      uncTab.style.display='none';
+    }
+    $('pantryResultsWrap').style.display='flex';
+    // Start on uncertain tab if there are doubts, else on have
+    renderPantryTab(pantryData.uncertain.length>0?'uncertain':'have');
+  }catch(err){
+    unspin();
+    status.textContent='Error al analizar: '+err.message;
+    $('pantryPhotoBtn').style.display='flex';
+  }
+});
+
+function renderPantryTab(tab){
+  pantryMode=tab;
+  $('pantryTabHave').classList.toggle('on',tab==='have');
+  $('pantryTabMissing').classList.toggle('on',tab==='missing');
+  if($('pantryTabUncertain'))$('pantryTabUncertain').classList.toggle('on',tab==='uncertain');
+  $('pantryAddBtn').style.display=(tab==='missing'||tab==='uncertain')?'block':'none';
+  $('pantryAddBtn').textContent=tab==='uncertain'?'✓ Confirmar seleccionados':'+ Añadir seleccionados';
+
+  const list=$('pantryResults');list.innerHTML='';
+  const items2=pantryData[tab]||[];
+
+  if(!items2.length){
+    const msgs={have:'No se detectaron productos con claridad',uncertain:'Sin dudas — todo claro',missing:'No hay sugerencias'};
+    list.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--tx3);font-size:13px">${msgs[tab]||''}</div>`;
+    return;
+  }
+
+  items2.forEach(item=>{
+    const div=document.createElement('div');
+    const catInfo=CATS[item.cat||'otros']||CATS.otros;
+
+    if(tab==='uncertain'){
+      div.className='pantry-item uncertain';
+      div.innerHTML=`
+        <label>
+          <input type="checkbox" checked data-name="${esc(item.name)}" data-cat="${esc(item.cat||'otros')}"/>
+          <span>${catInfo.i} ${esc(item.name)}</span>
+        </label>
+        <span class="uncertain-badge">🤔 duda</span>
+        <div class="uncertain-note" style="width:100%">❓ ${esc(item.doubt||'¿Es correcto?')}</div>`;
+    } else if(tab==='missing'){
+      div.className='pantry-item';
+      div.innerHTML=`
+        <label>
+          <input type="checkbox" checked data-name="${esc(item.name)}" data-cat="${esc(item.cat||'otros')}"/>
+          <span>${catInfo.i} ${esc(item.name)}</span>
+        </label>
+        <span class="pantry-badge missing">falta</span>`;
+    } else {
+      div.className='pantry-item';
+      div.innerHTML=`
+        <span style="font-size:18px">${catInfo.i}</span>
+        <div style="flex:1">
+          <div style="font-size:14px">${esc(item.name)}</div>
+          ${item.quantity?`<div style="font-size:11px;color:var(--tx3)">${esc(item.quantity)}</div>`:''}
+        </div>
+        <span class="pantry-badge have">✓ tienes</span>`;
+    }
+    list.appendChild(div);
+  });
+}
+
+$('pantryTabHave').onclick=()=>renderPantryTab('have');
+$('pantryTabMissing').onclick=()=>renderPantryTab('missing');
+if($('pantryTabUncertain'))$('pantryTabUncertain').onclick=()=>renderPantryTab('uncertain');
+
+$('pantryAddBtn').onclick=()=>{
+  const checked=$('pantryResults').querySelectorAll('input[type=checkbox]:checked');
+  if(!checked.length){toast('Selecciona al menos un producto');return;}
+  if(pantryMode==='uncertain'){
+    // Move confirmed items to 'have', remove unchecked
+    const checkedNames=new Set([...checked].map(cb=>cb.dataset.name));
+    const confirmed=pantryData.uncertain.filter(i=>checkedNames.has(i.name));
+    pantryData.have=[...pantryData.have,...confirmed];
+    pantryData.uncertain=pantryData.uncertain.filter(i=>!checkedNames.has(i.name));
+    $('pantryHaveCount').textContent=pantryData.have.length;
+    $('pantryUncertainCount').textContent=pantryData.uncertain.length;
+    toast(`✓ ${confirmed.length} producto${confirmed.length>1?'s':''} confirmado${confirmed.length>1?'s':''}`);
+    // Move to missing tab automatically
+    renderPantryTab(pantryData.uncertain.length>0?'uncertain':'missing');
+  } else {
+    checked.forEach(cb=>{
+      addItem(cb.dataset.name,'','',cb.dataset.cat||'otros','','','');
+    });
+    toast(`✓ ${checked.length} producto${checked.length>1?'s':''} añadido${checked.length>1?'s':''} a la lista`);
+    $('pantryModal').classList.remove('on');
+  }
+};
 
 </script>
 </body>
