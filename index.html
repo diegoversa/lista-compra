@@ -578,7 +578,7 @@
     <div style="height:.5rem"></div>
     <div id="forgottenSection" class="forgotten-section" style="display:none">
       <h3>💡 Productos olvidados</h3>
-      <div class="forgotten-list" id="forgottenList"></div>
+      <div class="forgotten-list" id="forgottenListOld"></div>
     </div>
     <div class="pantry-toggle" id="pantryToggle">
       <button class="on" data-view="list">🛒 Lista de la compra</button>
@@ -788,29 +788,10 @@
 </div>
 
 <!-- STATS MODAL -->
-<div class="overlay" id="statsModal">
-  <div class="sheet" style="max-height:85dvh;overflow-y:auto;">
-    <div class="stitle">📊 Estadísticas</div>
-    <div class="ssub">Tu actividad en esta sala</div>
-    <div id="statsContent"></div>
-    <div class="sactions"><button class="scancel" id="statsClose" style="flex:1">Cerrar</button></div>
-  </div>
-</div>
+
 
 <!-- RECIPE MODAL -->
-<div class="overlay" id="recipeModal">
-  <div class="sheet">
-    <div class="stitle">🍳 Importar receta</div>
-    <div class="ssub">Pega la URL de una receta y extraeremos los ingredientes</div>
-    <input type="text" id="recipeUrl" placeholder="https://..." autocomplete="off"/>
-    <div id="recipePreview" class="recipe-preview" style="display:none"></div>
-    <div class="sactions">
-      <button class="scancel" id="recipeCancel">Cancelar</button>
-      <button class="sok" id="recipeFetch">Buscar ingredientes</button>
-    </div>
-    <button class="sok" id="recipeAdd" style="width:100%;margin-top:8px;display:none">Añadir seleccionados</button>
-  </div>
-</div>
+
 
 <!-- PRICE MODAL -->
 <div class="overlay" id="priceModal">
@@ -827,14 +808,7 @@
 </div>
 
 <!-- THEME MODAL -->
-<div class="overlay" id="themeModal">
-  <div class="sheet">
-    <div class="stitle">🎨 Tema de color</div>
-    <div class="ssub">Elige tu color preferido</div>
-    <div class="theme-grid" id="themeGrid"></div>
-    <div class="sactions"><button class="scancel" id="themeClose" style="flex:1">Cerrar</button></div>
-  </div>
-</div>
+
 
 <!-- CHAT -->
 <button id="chatBtn" title="Chat de la sala">
