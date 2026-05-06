@@ -128,6 +128,19 @@
     .delbtn{background:none;border:none;cursor:pointer;color:var(--tx3);padding:4px;display:flex;align-items:center}
     .nameinput{font-size:14px;font-family:'DM Sans',sans-serif;border:none;border-bottom:1.5px solid var(--ac);background:transparent;color:var(--tx);outline:none;width:100%;padding:1px 0}
 
+
+    .finishShopBtn{display:none;width:100%;padding:14px;background:var(--tx);color:var(--bg);border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;align-items:center;justify-content:center;gap:8px;margin-bottom:.75rem}
+    .finishShopBtn:active{opacity:.85}
+    body.shop .finishShopBtn{display:flex}
+    .history-list{display:flex;flex-direction:column;gap:.75rem;max-height:62dvh;overflow-y:auto;padding-right:2px;margin-bottom:1rem}
+    .history-card{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:.85rem}
+    .history-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:.5rem}
+    .history-date{font-size:13px;font-weight:700;color:var(--tx)}
+    .history-meta{font-size:11px;color:var(--tx3);line-height:1.5}
+    .history-total{font-size:12px;font-weight:700;color:var(--ac);background:var(--acl);padding:3px 8px;border-radius:999px;white-space:nowrap}
+    .history-items{font-size:13px;color:var(--tx2);line-height:1.55;margin-top:.5rem}
+    .history-item{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--bd);padding-top:5px;margin-top:5px}
+
     body.shop .scanbtn,body.shop .inputwrap{display:none}
     body.shop .item{padding:14px 12px}
     body.shop .iname{font-size:17px}
@@ -275,6 +288,8 @@
       </div>
     </div>
 
+    <button class="finishShopBtn" id="finishShopBtn">✅ Finalizar compra y guardar historial</button>
+
     <div id="emptyMsg" class="empty" style="display:none"><span class="emptyico">🧺</span>La lista está vacía.<br />Escanea o escribe un producto.</div>
     <div id="container"></div>
   </div>
@@ -317,6 +332,7 @@
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
+    <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista completa</button>
     <button class="sbBtn" id="si-logout">🔓 Salir / cambiar cuenta Firebase</button>
@@ -400,6 +416,17 @@
     <div class="sactions">
       <button class="scancel" id="roomCancel">Cancelar</button>
       <button class="sok" id="roomOk">Crear y entrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="historyModal">
+  <div class="sheet" style="max-height:86dvh;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="stitle">🧾 Historial de compras</div>
+    <div class="ssub">Aquí se guarda cuándo se finalizó cada compra y qué productos se compraron.</div>
+    <div id="historyContent" class="history-list"></div>
+    <div class="sactions" style="flex-shrink:0">
+      <button class="scancel" id="historyClose" style="flex:1">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1207,7 +1234,18 @@ document.addEventListener('click', e => {
 
   const r2 = ref(db,`listas/${room}/${curList}/items/${key}`);
 
-  if(a === 'chk') update(r2, { checked:!item.checked });
+  if(a === 'chk') {
+    const nextChecked = !item.checked;
+    const patch = { checked: nextChecked };
+    if(nextChecked && document.body.classList.contains('shop')){
+      patch.checkedAt = Date.now();
+      patch.boughtBy = user;
+    }else if(!nextChecked){
+      patch.checkedAt = null;
+      patch.boughtBy = null;
+    }
+    update(r2, patch);
+  }
   if(a === '+') update(r2, { qty:(item.qty || 1) + 1 });
   if(a === '-'){
     if((item.qty || 1) > 1) update(r2, { qty:(item.qty || 1) - 1 });
@@ -1219,6 +1257,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('click', e => {
+  if(document.body.classList.contains('shop')) return;
   if(e.target.closest('[data-a]')) return;
 
   const info = e.target.closest('.iinfo');
@@ -1267,6 +1306,31 @@ document.addEventListener('click', e => {
   });
 });
 
+
+// En modo comprar, tocar una fila completa también la tacha o destacha.
+document.addEventListener('click', e => {
+  if(!document.body.classList.contains('shop')) return;
+  if(e.target.closest('[data-a], button, .qbtn, .qty, .delbtn')) return;
+
+  const li = e.target.closest('.item');
+  if(!li) return;
+
+  const key = li.dataset.key;
+  const item = items[key];
+  if(!key || !item) return;
+
+  const nextChecked = !item.checked;
+  const patch = { checked: nextChecked };
+  if(nextChecked){
+    patch.checkedAt = Date.now();
+    patch.boughtBy = user;
+  }else{
+    patch.checkedAt = null;
+    patch.boughtBy = null;
+  }
+  update(ref(db,`listas/${room}/${curList}/items/${key}`), patch);
+});
+
 document.addEventListener('click', e => {
   const hdr = e.target.closest('.cathdr[data-cat]');
   if(!hdr) return;
@@ -1276,6 +1340,113 @@ document.addEventListener('click', e => {
   localStorage.setItem(CK, JSON.stringify(collapsed));
   render();
 });
+
+
+// ─────────────────────────────────────────────────────────────
+// FINALIZAR COMPRA + HISTORIAL
+// ─────────────────────────────────────────────────────────────
+function formatDateTime(ts){
+  const d = new Date(ts || Date.now());
+  return d.toLocaleString('es-ES', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+}
+
+function getCheckedItems(){
+  return Object.entries(items).filter(([,v]) => v.checked);
+}
+
+async function finishShopping(){
+  const checked = getCheckedItems();
+
+  if(!checked.length){
+    toast('No hay productos tachados para finalizar');
+    return;
+  }
+
+  const totalUnits = checked.reduce((s,[,v]) => s + (v.qty || 1), 0);
+  const ok = confirm(`¿Finalizar compra?\n\nSe guardarán ${checked.length} producto${checked.length>1?'s':''} en el historial y desaparecerán de la lista actual.`);
+  if(!ok) return;
+
+  const now = Date.now();
+  const purchase = {
+    room,
+    list: curList,
+    finishedAt: now,
+    finishedBy: user,
+    totalProducts: checked.length,
+    totalUnits,
+    items: checked.map(([key,v]) => ({
+      key,
+      name: v.name || '',
+      brand: v.brand || '',
+      barcode: v.barcode || '',
+      cat: v.cat || 'otros',
+      unit: v.unit || '',
+      qty: v.qty || 1,
+      source: v.source || '',
+      img: v.img || '',
+      addedBy: v.addedBy || '',
+      boughtBy: v.boughtBy || user,
+      checkedAt: v.checkedAt || now
+    }))
+  };
+
+  spin('Guardando compra...');
+  try{
+    await set(push(ref(db,`listas/${room}/_purchaseHistory`)), purchase);
+    await Promise.all(checked.map(([key]) => remove(ref(db,`listas/${room}/${curList}/items/${key}`))));
+    toast(`Compra finalizada: ${checked.length} producto${checked.length>1?'s':''}`);
+  }catch(e){
+    toast('Error al guardar historial: ' + e.message);
+  }finally{
+    unspin();
+  }
+}
+
+function openPurchaseHistory(){
+  closeSidebar();
+  const cont = $('historyContent');
+  cont.innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Cargando historial...</div>';
+  $('historyModal').classList.add('on');
+
+  onValue(ref(db,`listas/${room}/_purchaseHistory`), snap => {
+    const data = snap.val() || {};
+    const purchases = Object.entries(data)
+      .map(([id,v]) => ({...v,id}))
+      .sort((a,b) => (b.finishedAt || 0) - (a.finishedAt || 0));
+
+    if(!purchases.length){
+      cont.innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:2rem 1rem">Todavía no hay compras finalizadas.</div>';
+      return;
+    }
+
+    cont.innerHTML = purchases.slice(0,50).map(p => {
+      const items2 = Array.isArray(p.items) ? p.items : Object.values(p.items || {});
+      const shown = items2.slice(0,8).map(it => {
+        const qty = it.unit ? `${it.qty || 1} ${esc(it.unit)}` : `${it.qty || 1}`;
+        return `<div class="history-item"><span>${esc(it.name || 'Producto')}</span><span>${qty}</span></div>`;
+      }).join('');
+      const more = items2.length > 8 ? `<div style="font-size:12px;color:var(--tx3);margin-top:6px">+${items2.length - 8} producto${items2.length-8>1?'s':''} más</div>` : '';
+
+      return `
+        <div class="history-card">
+          <div class="history-head">
+            <div>
+              <div class="history-date">${formatDateTime(p.finishedAt)}</div>
+              <div class="history-meta">Lista: ${esc(p.list || 'Principal')} · Finalizada por ${esc(p.finishedBy || 'alguien')}</div>
+            </div>
+            <div class="history-total">${p.totalProducts || items2.length} prod.</div>
+          </div>
+          <div class="history-items">${shown}${more}</div>
+        </div>
+      `;
+    }).join('');
+  }, { onlyOnce:true });
+}
+
+if($('finishShopBtn')) $('finishShopBtn').onclick = finishShopping;
 
 // ─────────────────────────────────────────────────────────────
 // SIDEBAR
@@ -1495,6 +1666,10 @@ $('roomOk').onclick = () => {
   closeRoomModal();
   switchRoomTo(newRoom);
 };
+
+$('si-history').onclick = openPurchaseHistory;
+$('historyClose').onclick = () => $('historyModal').classList.remove('on');
+$('historyModal').onclick = e => { if(e.target === $('historyModal')) $('historyModal').classList.remove('on'); };
 
 $('si-share').onclick = () => {
   const s = JSON.parse(localStorage.getItem(SK) || '{}');
