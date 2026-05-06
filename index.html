@@ -309,11 +309,17 @@
   </div>
 
   <div class="sbsec">
+    <div class="sblabel">Salas</div>
+    <div id="si-rooms" style="display:flex;flex-direction:column;gap:6px;margin-bottom:.75rem"></div>
+    <button class="sbBtn accent" id="si-newroom">➕ Crear nueva sala</button>
+  </div>
+
+  <div class="sbsec">
     <div class="sblabel">Acciones</div>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista completa</button>
-    <button class="sbBtn" id="si-logout">🔓 Cambiar de sala</button>
+    <button class="sbBtn" id="si-logout">🔓 Salir / cambiar cuenta Firebase</button>
   </div>
 
   <div class="sbsec">
@@ -383,6 +389,18 @@
     <div class="ssub">Elige un nombre</div>
     <input type="text" id="nlinput" placeholder="Mercadona, Farmacia, Ikea..." />
     <div class="sactions"><button class="scancel" id="nlcancel">Cancelar</button><button class="sok" id="nlok">Crear</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="roomModal">
+  <div class="sheet">
+    <div class="stitle">Crear nueva sala</div>
+    <div class="ssub">Pon un nombre corto. Ejemplo: familia, piso, trabajo, casa_pueblo...</div>
+    <input type="text" id="roomInput" placeholder="Nombre de la sala" autocomplete="off" spellcheck="false" />
+    <div class="sactions">
+      <button class="scancel" id="roomCancel">Cancelar</button>
+      <button class="sok" id="roomOk">Crear y entrar</button>
+    </div>
   </div>
 </div>
 
@@ -618,6 +636,7 @@ const LK='lc_v6_lists';
 const HK='lc_v6_hist';
 const CK='lc_v6_collapsed';
 const UK='lc_v6_uid';
+const RK='lc_v6_rooms';
 
 let db, room, user, uid, curList='Principal';
 let lists = [];
@@ -635,6 +654,33 @@ let searchQuery = '';
 try{ lists = JSON.parse(localStorage.getItem(LK)) || ['Principal']; }catch{ lists = ['Principal']; }
 try{ hist = JSON.parse(localStorage.getItem(HK)) || []; }catch{ hist = []; }
 try{ collapsed = JSON.parse(localStorage.getItem(CK)) || {}; }catch{ collapsed = {}; }
+
+function normalizeRoomName(value){
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g,'_')
+    .replace(/[^a-zA-Z0-9_-]/g,'')
+    .slice(0,40) || 'familia';
+}
+
+function getSavedRooms(){
+  try{return JSON.parse(localStorage.getItem(RK)) || [];}catch{return [];}
+}
+
+function setSavedRooms(rooms){
+  localStorage.setItem(RK, JSON.stringify(rooms));
+}
+
+function saveRoomLocal(roomId, label){
+  roomId = normalizeRoomName(roomId);
+  const rooms = getSavedRooms();
+  const idx = rooms.findIndex(r => r.id === roomId);
+  const entry = { id:roomId, label:label || roomId, lastUsed:Date.now() };
+  if(idx >= 0) rooms[idx] = { ...rooms[idx], ...entry };
+  else rooms.unshift(entry);
+  rooms.sort((a,b) => (b.lastUsed || 0) - (a.lastUsed || 0));
+  setSavedRooms(rooms.slice(0,30));
+}
 
 uid = (() => {
   let u = localStorage.getItem(UK);
@@ -677,7 +723,7 @@ if(saved){
 $('gobtn').addEventListener('click', () => {
   const p = $('spid').value.trim();
   const k = $('skey').value.trim();
-  const r = ($('sroom').value.trim().replace(/[^a-zA-Z0-9_-]/g,'')) || 'familia';
+  const r = normalizeRoomName($('sroom').value);
   const u = $('sname').value.trim() || 'Yo';
 
   $('serr').style.display = 'none';
@@ -700,13 +746,14 @@ function doConnect(p,k,r,u){
     }, 'lc');
 
     db = getDatabase(app);
-    room = r;
+    room = normalizeRoomName(r);
     user = u || 'Yo';
+    saveRoomLocal(room, room);
 
     localStorage.setItem(SK, JSON.stringify({
       projectId:p,
       apiKey:k,
-      roomId:r,
+      roomId:room,
       userName:user
     }));
 
@@ -1250,6 +1297,7 @@ function openSidebar(){
 
   renderPendingInSidebar();
   renderUsersInSidebar();
+  renderRoomsInSidebar();
 
   $('sb').classList.add('open');
   $('sbOverlay').style.display = 'block';
@@ -1356,6 +1404,98 @@ function renderUsersInSidebar(){
   }, { onlyOnce:true });
 }
 
+
+function renderRoomsInSidebar(){
+  const el = $('si-rooms');
+  if(!el) return;
+
+  const rooms = getSavedRooms();
+  if(!rooms.find(r => r.id === room)) saveRoomLocal(room, room);
+
+  const freshRooms = getSavedRooms();
+  el.innerHTML = '';
+
+  freshRooms.forEach(r => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:8px 10px';
+    row.innerHTML = `
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.label || r.id)}</div>
+        <div style="font-size:11px;color:var(--tx3);font-family:DM Mono,monospace">${esc(r.id)}</div>
+      </div>
+      ${r.id === room ? '<span class="badge me">actual</span>' : `<button class="kickbtn approve" data-room="${esc(r.id)}">Entrar</button>`}
+      ${r.id !== room ? `<button class="kickbtn kick" data-remove-room="${esc(r.id)}">✕</button>` : ''}
+    `;
+
+    const enterBtn = row.querySelector('[data-room]');
+    if(enterBtn){
+      enterBtn.onclick = () => switchRoomTo(r.id);
+    }
+
+    const removeBtn = row.querySelector('[data-remove-room]');
+    if(removeBtn){
+      removeBtn.onclick = () => {
+        if(confirm(`¿Quitar la sala "${r.label || r.id}" de este móvil? No borra la sala de Firebase.`)){
+          setSavedRooms(getSavedRooms().filter(x => x.id !== r.id));
+          renderRoomsInSidebar();
+        }
+      };
+    }
+
+    el.appendChild(row);
+  });
+}
+
+function switchRoomTo(roomId){
+  const s = JSON.parse(localStorage.getItem(SK) || '{}');
+  const nextRoom = normalizeRoomName(roomId);
+
+  if(!s.projectId || !s.apiKey){
+    toast('Faltan credenciales de Firebase');
+    return;
+  }
+
+  saveRoomLocal(nextRoom, nextRoom);
+  localStorage.setItem(SK, JSON.stringify({
+    ...s,
+    roomId:nextRoom,
+    userName:user || s.userName || 'Yo'
+  }));
+
+  const params = `?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(nextRoom)}&u=${encodeURIComponent(user || s.userName || 'Yo')}`;
+  location.href = location.pathname + params;
+}
+
+function openRoomModal(){
+  $('roomInput').value = '';
+  $('roomModal').classList.add('on');
+  setTimeout(() => $('roomInput').focus(), 150);
+}
+
+function closeRoomModal(){
+  $('roomModal').classList.remove('on');
+}
+
+$('si-newroom').onclick = () => {
+  closeSidebar();
+  openRoomModal();
+};
+
+$('roomCancel').onclick = closeRoomModal;
+$('roomModal').onclick = e => { if(e.target === $('roomModal')) closeRoomModal(); };
+$('roomInput').addEventListener('keydown', e => { if(e.key === 'Enter') $('roomOk').click(); });
+
+$('roomOk').onclick = () => {
+  const newRoom = normalizeRoomName($('roomInput').value);
+  if(!newRoom){
+    toast('Pon un nombre de sala');
+    return;
+  }
+
+  closeRoomModal();
+  switchRoomTo(newRoom);
+};
+
 $('si-share').onclick = () => {
   const s = JSON.parse(localStorage.getItem(SK) || '{}');
   const base = location.origin + location.pathname;
@@ -1384,7 +1524,7 @@ $('si-clearall').onclick = () => {
 };
 
 $('si-logout').onclick = () => {
-  if(confirm('¿Cambiar de sala?')){
+  if(confirm('¿Salir y borrar credenciales guardadas de este dispositivo?')){
     localStorage.removeItem(SK);
     location.reload();
   }
