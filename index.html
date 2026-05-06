@@ -1490,18 +1490,69 @@ $('minput').addEventListener('blur',()=>setTimeout(()=>$('aclist').classList.rem
 function addItem(name,brand,barcode,cat,unit,img,store){
   name=name.trim();if(!name)return;
   const ex=Object.entries(items).find(([,v])=>v.name.toLowerCase()===name.toLowerCase());
-  if(ex){update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[1].qty||1)+1});toast(`+1 ${name}`);return;}
-  push(ref(db,`listas/${room}/${curList}/items`),{name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',unit:unit||'',img:img||'',store:store||'',qty:1,checked:false,ts:Date.now(),addedBy:user});
+  if(ex){update(ref(db,`listas/${room}/${curList}/items/${ex[0]}`),{qty:(ex[1].qty||1)+1});toast(`+1 ${name}`);saveActivity('add',name);return;}
+  // Check fuzzy duplicates for manual additions
+  const dups=findDuplicates(name);
+  if(dups.length>0&&!barcode){
+    showDupModal(name,brand,barcode,cat,unit,img,store,dups);
+    return;
+  }
+  pushItem(name,brand,barcode,cat,unit,img,store);
+}
+
+function pushItem(name,brand,barcode,cat,unit,img,store){
+  push(ref(db,`listas/${room}/${curList}/items`),{
+    name,brand:brand||'',barcode:barcode||'',cat:cat||'otros',
+    unit:unit||'',img:img||'',store:store||'',qty:1,checked:false,
+    ts:Date.now(),addedBy:user,inPantry:false
+  });
   const hi=hist.findIndex(h=>h.name.toLowerCase()===name.toLowerCase());
   if(hi>=0){hist[hi].lastAdded=Date.now();if(store)hist[hi].store=store;}
-  else{hist.unshift({name,brand,cat,unit,store:store||'',lastAdded:Date.now()});if(hist.length>100)hist.pop();}
+  else{hist.unshift({name,brand,cat,unit,store:store||'',lastAdded:Date.now()});if(hist.length>200)hist.pop();}
   localStorage.setItem(HK,JSON.stringify(hist));
+  // Save to Firebase barcode cache if we have a barcode
+  if(barcode&&name){
+    set(ref(db,`_barcodeCache/${barcode}`),{name,brand:brand||'',img:img||'',cat:cat||'otros',savedBy:user,savedAt:Date.now()});
+  }
   recordStat(name,cat,store);
   saveActivity('add',name);
   toast(`Añadido: ${name}${store?' ('+store+')':''}`);
 }
 
+function findDuplicates(name){
+  const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').trim();
+  const target=norm(name);
+  if(!target||target.length<3)return[];
+  return Object.entries(items).filter(([,v])=>{
+    const existing=norm(v.name||'');
+    if(!existing||existing===target)return false;
+    const w1=new Set(target.split(/\s+/).filter(w=>w.length>2));
+    const w2=new Set(existing.split(/\s+/).filter(w=>w.length>2));
+    if(!w1.size||!w2.size)return false;
+    let overlap=0;w1.forEach(w=>{if(w2.has(w))overlap++;});
+    return overlap>=Math.min(w1.size,w2.size)*0.6||existing.includes(target)||target.includes(existing);
+  }).map(([k,v])=>({...v,key:k}));
+}
+
+function showDupModal(name,brand,barcode,cat,unit,img,store,dups){
+  $('dupSub').textContent=`Vas a añadir "${name}". Estos productos parecen similares:`;
+  const opts=$('dupOptions');opts.innerHTML='';
+  dups.forEach(d=>{
+    const div=document.createElement('div');div.className='dup-option';
+    div.innerHTML=`<div><div style="font-weight:500">${esc(d.name)}</div>${d.brand?`<div style="font-size:11px;color:var(--tx3)">${esc(d.brand)}</div>`:''}</div><span style="color:var(--ac);font-weight:500">+1 →</span>`;
+    div.onclick=()=>{
+      update(ref(db,`listas/${room}/${curList}/items/${d.key}`),{qty:(d.qty||1)+1});
+      toast(`+1 ${d.name}`);$('dupModal').classList.remove('on');
+    };
+    opts.appendChild(div);
+  });
+  $('dupCancel').onclick=()=>$('dupModal').classList.remove('on');
+  $('dupAddNew').onclick=()=>{pushItem(name,brand,barcode,cat,unit,img,store);$('dupModal').classList.remove('on');};
+  $('dupModal').classList.add('on');
+}
+
 // ── Item events ──────────────────────────────────────────────
+ ──────────────────────────────────────────────
 document.addEventListener('click',e=>{
   const rxBtn=e.target.closest('[data-rx-toggle]');
   if(rxBtn){
@@ -2126,6 +2177,24 @@ $('si-tutorial').onclick=()=>{closeSidebar();showTutorial();};
 $('si-logout').onclick=()=>{if(confirm('¿Cambiar de sala?')){[SK,'lista_v4','lista_compra_v3'].forEach(k=>localStorage.removeItem(k));location.reload();}};
 
 // ── RENDER ───────────────────────────────────────────────────
+// ── Completion celebration ───────────────────────────────────
+let lastCompleted=false;
+function checkCompletion(allLen,doneLen){
+  if(allLen>0&&doneLen===allLen&&!lastCompleted){
+    lastCompleted=true;
+    $('progfill').parentElement.classList.add('progress-complete');
+    setTimeout(()=>$('progfill').parentElement.classList.remove('progress-complete'),600);
+    const colors=['#1a6b4a','#5ad4a0','#ffc107','#e67e22','#9b59b6'];
+    for(let i=0;i<30;i++){
+      const c=document.createElement('div');c.className='confetti-piece';
+      c.style.cssText=`position:fixed;width:10px;height:10px;pointer-events:none;z-index:999;left:${Math.random()*100}%;bottom:0;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:50%;animation:confetti 1.5s ease-out ${Math.random()*0.3}s forwards;`;
+      document.body.appendChild(c);setTimeout(()=>c.remove(),1800);
+    }
+    toast('🎉 ¡Lista completa!');
+  }else if(doneLen<allLen){lastCompleted=false;}
+}
+
+
 function render(){
   let allEntries=Object.entries(items).map(([k,v])=>({...v,key:k}));
   if(searchQuery){allEntries=allEntries.filter(i=>{const hay=(i.name||'')+' '+(i.brand||'')+' '+(i.note||'')+' '+(i.assignedTo||'');return hay.toLowerCase().includes(searchQuery);});}
@@ -2153,6 +2222,7 @@ function render(){
     done.forEach(item=>ul.appendChild(mkItem(item)));
     sec.appendChild(ul);c.appendChild(sec);
   }
+  checkCompletion(all.length,done.length);
   checkForgotten();
 }
 
