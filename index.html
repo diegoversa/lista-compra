@@ -594,7 +594,7 @@ const PRODUCT_DBS = [
     label: 'Open Food Facts',
     short: 'Food',
     url: code => `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: q => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'conservas'
   },
   {
@@ -602,7 +602,7 @@ const PRODUCT_DBS = [
     label: 'Open Beauty Facts',
     short: 'Beauty',
     url: code => `https://world.openbeautyfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: q => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'higiene'
   },
   {
@@ -610,7 +610,7 @@ const PRODUCT_DBS = [
     label: 'Open Products Facts',
     short: 'Products',
     url: code => `https://world.openproductsfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: q => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'hogar'
   },
   {
@@ -618,7 +618,7 @@ const PRODUCT_DBS = [
     label: 'Open Pet Food Facts',
     short: 'Pet',
     url: code => `https://world.openpetfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: q => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'mascotas'
   }
 ];
@@ -739,7 +739,7 @@ async function searchProductsByText(query){
     return (b.brand ? 1 : 0) - (a.brand ? 1 : 0);
   });
 
-  return all.slice(0, 18);
+  return all.slice(0, 40);
 }
 
 // ─────────────────────────────────────────────────────────────
