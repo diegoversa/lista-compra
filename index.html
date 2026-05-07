@@ -594,7 +594,7 @@ const PRODUCT_DBS = [
     label: 'Open Food Facts',
     short: 'Food',
     url: code => `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: (q, page = 1) => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'conservas'
   },
   {
@@ -602,7 +602,7 @@ const PRODUCT_DBS = [
     label: 'Open Beauty Facts',
     short: 'Beauty',
     url: code => `https://world.openbeautyfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: (q, page = 1) => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'higiene'
   },
   {
@@ -610,7 +610,7 @@ const PRODUCT_DBS = [
     label: 'Open Products Facts',
     short: 'Products',
     url: code => `https://world.openproductsfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: (q, page = 1) => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'hogar'
   },
   {
@@ -618,7 +618,7 @@ const PRODUCT_DBS = [
     label: 'Open Pet Food Facts',
     short: 'Pet',
     url: code => `https://world.openpetfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    searchUrl: (q, page = 1) => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'mascotas'
   }
 ];
@@ -690,43 +690,53 @@ async function searchProductsByText(query){
   const all = [];
   const seen = new Set();
 
+  const pagesPerSource = 2;
+  const jobs = [];
   for(const source of PRODUCT_DBS){
     if(!source.searchUrl) continue;
+    for(let page = 1; page <= pagesPerSource; page++){
+      jobs.push({ source, page });
+    }
+  }
+
+  const responses = await Promise.all(jobs.map(async ({ source, page }) => {
     try{
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 5000);
-      const res = await fetch(source.searchUrl(q), { signal: ctrl.signal });
+      const res = await fetch(source.searchUrl(q, page), { signal: ctrl.signal });
       clearTimeout(timer);
-      if(!res.ok) continue;
+      if(!res.ok) return [];
       const data = await res.json();
-      const products = Array.isArray(data.products) ? data.products : [];
-
-      for(const p of products){
-        const name = (p.product_name_es || p.product_name || p.generic_name || '').trim();
-        if(!name) continue;
-        const barcode = p.code || '';
-        const key = barcode || `${source.id}:${name.toLowerCase()}`;
-        if(seen.has(key)) continue;
-        seen.add(key);
-
-        const brand = p.brands ? p.brands.split(',')[0].trim() : '';
-        const img = p.image_front_small_url || '';
-        const rawCategories = (p.categories_tags || []).join(' ');
-        all.push({
-          found:true,
-          source:source.id,
-          sourceLabel:source.label,
-          sourceShort:source.short,
-          name,
-          brand,
-          img,
-          barcode,
-          rawCategories,
-          cat:guesscatExtended(name, rawCategories, source.defaultCat)
-        });
-      }
+      return Array.isArray(data.products) ? data.products.map(p => ({ source, p })) : [];
     }catch(e){
-      continue;
+      return [];
+    }
+  }));
+
+  for(const items of responses){
+    for(const { source, p } of items){
+      const name = (p.product_name_es || p.product_name || p.generic_name || '').trim();
+      if(!name) continue;
+      const barcode = p.code || '';
+      const key = barcode || `${source.id}:${name.toLowerCase()}`;
+      if(seen.has(key)) continue;
+      seen.add(key);
+
+      const brand = p.brands ? p.brands.split(',')[0].trim() : '';
+      const img = p.image_front_small_url || '';
+      const rawCategories = (p.categories_tags || []).join(' ');
+      all.push({
+        found:true,
+        source:source.id,
+        sourceLabel:source.label,
+        sourceShort:source.short,
+        name,
+        brand,
+        img,
+        barcode,
+        rawCategories,
+        cat:guesscatExtended(name, rawCategories, source.defaultCat)
+      });
     }
   }
 
@@ -739,7 +749,7 @@ async function searchProductsByText(query){
     return (b.brand ? 1 : 0) - (a.brand ? 1 : 0);
   });
 
-  return all.slice(0, 18);
+  return all.slice(0, 60);
 }
 
 // ─────────────────────────────────────────────────────────────
