@@ -342,6 +342,7 @@
 
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
+    <button class="sbBtn" id="si-rename">✏️ Cambiar mi nombre</button>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
     <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
@@ -595,7 +596,6 @@ const PRODUCT_DBS = [
     short: 'Food',
     url: code => `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     searchUrl: (q, page = 1) => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'conservas'
   },
   {
@@ -604,7 +604,6 @@ const PRODUCT_DBS = [
     short: 'Beauty',
     url: code => `https://world.openbeautyfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     searchUrl: (q, page = 1) => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'higiene'
   },
   {
@@ -613,7 +612,6 @@ const PRODUCT_DBS = [
     short: 'Products',
     url: code => `https://world.openproductsfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     searchUrl: (q, page = 1) => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'hogar'
   },
   {
@@ -622,7 +620,6 @@ const PRODUCT_DBS = [
     short: 'Pet',
     url: code => `https://world.openpetfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     searchUrl: (q, page = 1) => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: q => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=16&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
     defaultCat: 'mascotas'
   }
 ];
@@ -754,7 +751,6 @@ async function searchProductsByText(query){
   });
 
   return all.slice(0, 60);
-  return all.slice(0, 40);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -822,7 +818,16 @@ function saveRoomLocal(roomId, label){
   setSavedRooms(rooms.slice(0,30));
 }
 
+// Invitaciones por URL
+const up = new URLSearchParams(location.search);
+const ip = up.get('p'), ik = up.get('k'), ir = up.get('r'), il = up.get('l'), iu = up.get('u'), iid = up.get('id');
+
 uid = (() => {
+  const invitedUid = String(iid || '').trim();
+  if(invitedUid){
+    localStorage.setItem(UK, invitedUid);
+    return invitedUid;
+  }
   let u = localStorage.getItem(UK);
   if(!u){
     u = genUID();
@@ -830,10 +835,6 @@ uid = (() => {
   }
   return u;
 })();
-
-// Invitaciones por URL
-const up = new URLSearchParams(location.search);
-const ip = up.get('p'), ik = up.get('k'), ir = up.get('r'), il = up.get('l'), iu = up.get('u');
 
 if(ip && ik && ir){
   $('spid').value = ip;
@@ -855,6 +856,8 @@ const saved = (() => {
 
 if(saved){
   doConnect(saved.projectId, saved.apiKey, saved.roomId, saved.userName || 'Yo');
+}else if(ip && ik && ir){
+  doConnect(ip, ik, ir, iu || $('sname').value.trim() || 'Yo');
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -969,7 +972,7 @@ function embedParamsInUrl(){
     const s = JSON.parse(localStorage.getItem(SK) || '{}');
     if(!s.projectId || !s.apiKey || !s.roomId) return;
 
-    const params = `?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(s.roomId)}&u=${encodeURIComponent(s.userName || '')}`;
+    const params = `?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(s.roomId)}&u=${encodeURIComponent(s.userName || '')}&id=${encodeURIComponent(uid)}`;
     history.replaceState(null,'',location.pathname + params);
   }catch{}
 }
@@ -1806,6 +1809,7 @@ function renderUsersInSidebar(){
       const ini = (m.name || '?').charAt(0).toUpperCase();
       const isMe = m.uid === uid;
       const isAdmin = amAdmin && m.uid === uid;
+      const canKick = amAdmin && m.uid !== uid;
 
       div.innerHTML = `
         <div class="userava" style="background:${col}">${ini}</div>
@@ -1816,12 +1820,43 @@ function renderUsersInSidebar(){
             ${isAdmin ? '<span class="badge admin">admin</span>' : ''}
           </div>
         </div>
+        ${canKick ? '<button class="kickbtn kick">Echar</button>' : ''}
       `;
+
+      if(canKick){
+        div.querySelector('.kick').onclick = () => {
+          if(!confirm(`¿Echar a ${m.name} de la sala?`)) return;
+          remove(ref(db,`listas/${room}/_members/${m.uid}`));
+          toast(`${m.name} expulsado`);
+        };
+      }
 
       usersEl.appendChild(div);
     });
   }, { onlyOnce:true });
 }
+
+$('si-rename').onclick = async () => {
+  const current = user || 'Yo';
+  const next = (prompt('Nuevo nombre', current) || '').trim();
+  if(!next || next === current) return;
+
+  user = next;
+  update(ref(db,`listas/${room}/_members/${uid}`), { name:user, updatedAt:Date.now() });
+  if(amAdmin){
+    update(ref(db,`listas/${room}/_admin`), { name:user, uid });
+  }
+
+  try{
+    const s = JSON.parse(localStorage.getItem(SK) || '{}');
+    localStorage.setItem(SK, JSON.stringify({ ...s, userName:user }));
+  }catch{}
+
+  $('si-user').textContent = `${user} · sala "${room}"`;
+  renderUsersInSidebar();
+  embedParamsInUrl();
+  toast('Nombre actualizado');
+};
 
 
 function renderRoomsInSidebar(){
@@ -1881,7 +1916,7 @@ function switchRoomTo(roomId){
     userName:user || s.userName || 'Yo'
   }));
 
-  const params = `?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(nextRoom)}&u=${encodeURIComponent(user || s.userName || 'Yo')}`;
+  const params = `?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(nextRoom)}&u=${encodeURIComponent(user || s.userName || 'Yo')}&id=${encodeURIComponent(uid)}`;
   location.href = location.pathname + params;
 }
 
@@ -1922,7 +1957,7 @@ $('historyModal').onclick = e => { if(e.target === $('historyModal')) $('history
 $('si-share').onclick = () => {
   const s = JSON.parse(localStorage.getItem(SK) || '{}');
   const base = location.origin + location.pathname;
-  const url = `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
+  const url = `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}&u=${encodeURIComponent(user || s.userName || 'Yo')}&id=${encodeURIComponent(uid)}`;
 
   const text = `🛒 Mercao — lista compartida\nSala: ${room}\n\nEntra aquí:\n${url}`;
 
