@@ -121,6 +121,7 @@
     #imgzoom-close{background:var(--sf);border:1px solid var(--bd2);color:var(--tx2);border-radius:999px;padding:8px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
     .chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .chk.on{background:var(--ac);border-color:var(--ac)}
+    body:not(.shop) .chk{display:none}
     .iinfo{flex:1;min-width:0}
     .iname{font-size:14px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .imeta{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:5px;margin-top:1px;flex-wrap:wrap}
@@ -391,10 +392,13 @@
       <option value="lacteos">🥛 Lácteos y huevos</option>
       <option value="carnes">🥩 Carnes y pescados</option>
       <option value="panaderia">🍞 Panadería y cereales</option>
+      <option value="desayuno">🥐 Desayuno y café</option>
       <option value="bebidas">🥤 Bebidas</option>
+      <option value="vinos">🍷 Vinos y licores</option>
       <option value="congelados">🧊 Congelados</option>
       <option value="conservas">🥫 Conservas y despensa</option>
       <option value="snacks">🍿 Snacks y dulces</option>
+      <option value="vegano">🥗 Vegano y bio</option>
       <option value="limpieza">🧹 Limpieza del hogar</option>
       <option value="higiene">🧴 Higiene y cosmética</option>
       <option value="hogar">🏠 Hogar y menaje</option>
@@ -405,6 +409,11 @@
       <option value="tecnologia">🔌 Tecnología</option>
       <option value="ropa">👕 Ropa y accesorios</option>
       <option value="herramientas">🛠️ Herramientas</option>
+      <option value="coche">🚗 Coche y garaje</option>
+      <option value="jardin">🌱 Jardín y plantas</option>
+      <option value="deporte">⚽ Deporte y fitness</option>
+      <option value="juguetes">🧸 Juguetes y ocio</option>
+      <option value="fiesta">🎉 Fiesta y decoración</option>
       <option value="otros">📦 Otros</option>
     </select>
 
@@ -537,10 +546,13 @@ const CATS = {
   lacteos:{l:'Lácteos y huevos',i:'🥛'},
   carnes:{l:'Carnes y pescados',i:'🥩'},
   panaderia:{l:'Panadería y cereales',i:'🍞'},
+  desayuno:{l:'Desayuno y café',i:'🥐'},
   bebidas:{l:'Bebidas',i:'🥤'},
+  vinos:{l:'Vinos y licores',i:'🍷'},
   congelados:{l:'Congelados',i:'🧊'},
   conservas:{l:'Conservas y despensa',i:'🥫'},
   snacks:{l:'Snacks y dulces',i:'🍿'},
+  vegano:{l:'Vegano y bio',i:'🥗'},
   limpieza:{l:'Limpieza del hogar',i:'🧹'},
   higiene:{l:'Higiene y cosmética',i:'🧴'},
   hogar:{l:'Hogar y menaje',i:'🏠'},
@@ -551,13 +563,18 @@ const CATS = {
   tecnologia:{l:'Tecnología',i:'🔌'},
   ropa:{l:'Ropa y accesorios',i:'👕'},
   herramientas:{l:'Herramientas',i:'🛠️'},
+  coche:{l:'Coche y garaje',i:'🚗'},
+  jardin:{l:'Jardín y plantas',i:'🌱'},
+  deporte:{l:'Deporte y fitness',i:'⚽'},
+  juguetes:{l:'Juguetes y ocio',i:'🧸'},
+  fiesta:{l:'Fiesta y decoración',i:'🎉'},
   otros:{l:'Otros',i:'📦'}
 };
 
 const CATORDER = [
-  'frutas','lacteos','carnes','panaderia','bebidas','congelados','conservas','snacks',
-  'limpieza','higiene','hogar','mascotas','bebe','farmacia','papeleria','tecnologia',
-  'ropa','herramientas','otros'
+  'frutas','lacteos','carnes','panaderia','desayuno','bebidas','vinos','congelados','conservas','snacks',
+  'vegano','limpieza','higiene','hogar','mascotas','bebe','farmacia','papeleria','tecnologia',
+  'ropa','herramientas','coche','jardin','deporte','juguetes','fiesta','otros'
 ];
 
 function guesscatExtended(n, oc = '', fallback = 'otros'){
@@ -567,10 +584,13 @@ function guesscatExtended(n, oc = '', fallback = 'otros'){
   if(/pollo|carne|cerdo|ternera|pescado|atún|atun|salmón|salmon|jamón|jamon|chorizo|salchicha/.test(s)) return 'carnes';
   if(/fruta|manzana|naranja|plátano|platano|verdura|tomate|lechuga|zanahoria|cebolla|ajo|patata|pepino|calabacín|calabacin/.test(s)) return 'frutas';
   if(/pan|cereal|arroz|pasta|harina|avena|galleta|espagueti|macarrones|fideos|tortilla|wrap/.test(s)) return 'panaderia';
-  if(/agua|zumo|refresco|cola|fanta|cerveza|vino|batido|bebida|isotónica|isotonica/.test(s)) return 'bebidas';
+  if(/café|cafe|nescafé|nescafe|colacao|nesquik|mermelada|nocilla|nutella|croissant|donut|magdalena|bizcocho|tostada|napolitana|churros|manzanilla|poleo|rooibos|infusión|infusion|desayuno/.test(s)) return 'desayuno';
+  if(/vino|licor|whisky|whiskey|ron|ginebra|vodka|tequila|champagne|cava|sidra|vermut|coñac|conac|orujo|espumoso|aguardiente/.test(s)) return 'vinos';
+  if(/agua|zumo|refresco|cola|fanta|cerveza|batido|bebida|isotónica|isotonica/.test(s)) return 'bebidas';
   if(/congelad|helado|hielo/.test(s)) return 'congelados';
   if(/conserva|lata|salsa|tomate frito|mahonesa|mayonesa|aceite|vinagre|sal|azúcar|azucar|especia/.test(s)) return 'conservas';
   if(/chips|pringles|snack|chocolate|caramelo|fruto seco|palomitas|gominola|dulce/.test(s)) return 'snacks';
+  if(/vegano|vegana|vegetariano|vegetariana|tofu|seitán|seitan|tempeh|leche vegetal|leche de soja|leche de avena|leche de almendra|bebida vegetal|hummus|falafel|sin gluten|glutenfree|bio |ecológico|ecologico/.test(s)) return 'vegano';
 
   if(/detergente|suavizante|fregasuelos|lejía|lejia|lavavajillas|limpiador|bayeta|estropajo|bolsa basura|basura|desinfectante|multiusos|limpieza/.test(s)) return 'limpieza';
   if(/champú|champu|gel|jabón|jabon|desodorante|crema|dentífrico|dentifrico|pasta de dientes|colonia|perfume|maquillaje|afeitar|cuchilla|compresa|tampón|tampon|cosmetic|beauty/.test(s)) return 'higiene';
@@ -581,6 +601,11 @@ function guesscatExtended(n, oc = '', fallback = 'otros'){
   if(/pila|batería|bateria|cable|usb|cargador|bombilla|enchufe|adaptador|auricular|electrónica|electronica/.test(s)) return 'tecnologia';
   if(/camiseta|pantalón|pantalon|calcetín|calcetin|ropa|zapatilla|zapato|chaqueta|textil/.test(s)) return 'ropa';
   if(/destornillador|martillo|tornillo|taladro|llave inglesa|cinta aislante|brida|herramienta/.test(s)) return 'herramientas';
+  if(/aceite motor|anticongelante|limpiaparabrisas|neumático|neumatico|batería coche|frenos coche|escobillas|líquido de frenos|liquido de frenos|coche|automóvil|automovil|garaje/.test(s)) return 'coche';
+  if(/planta|maceta|abono|semilla|jardín|jardin|regadera|manguera|césped|cesped|invernadero|orquídea|orquidea|cactus|geranio|petunia|rosal|tijera de podar/.test(s)) return 'jardin';
+  if(/proteína|proteina|creatina|barrita energética|whey|preworkout|pre-workout|bcaa|mancuerna|mancuernas|pesa|pesas|yoga|pilates|fitness|gimnasio|deportiva|deporte|maratón|maraton|running/.test(s)) return 'deporte';
+  if(/juguete|muñeca|muñeco|puzzle|puzle|lego|peluche|balón|balon|pelota|infantil/.test(s)) return 'juguetes';
+  if(/globo|guirnalda|confeti|vela cumpleaños|cumpleaños|cumpleanos|fiesta|piñata|pinata|serpentina|matasuegras|banderín|banderin|decoración|decoracion/.test(s)) return 'fiesta';
   if(/plato|vaso|taza|sartén|sarten|olla|cuchillo|tenedor|cuchara|servilleta|mantel|percha|menaje|hogar/.test(s)) return 'hogar';
 
   return fallback || 'otros';
