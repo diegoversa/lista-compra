@@ -577,12 +577,124 @@ const CATORDER = [
   'ropa','herramientas','coche','jardin','deporte','juguetes','fiesta','otros'
 ];
 
+// Emojis específicos por producto: si el nombre coincide, sobrescribe el emoji de la categoría.
+const PRODUCT_EMOJIS = [
+  [/pimient[oa]/, '🫑'],
+  [/tomate/, '🍅'],
+  [/manzana/, '🍎'],
+  [/pl[aá]tano|banana/, '🍌'],
+  [/naranja/, '🍊'],
+  [/lim[oó]n/, '🍋'],
+  [/uva/, '🍇'],
+  [/fresa|frutilla/, '🍓'],
+  [/sand[ií]a/, '🍉'],
+  [/mel[oó]n/, '🍈'],
+  [/pi[ñn]a|anan[aá]/, '🍍'],
+  [/kiwi/, '🥝'],
+  [/cereza/, '🍒'],
+  [/melocot[oó]n|durazno|nectarina|albaricoque/, '🍑'],
+  [/coco/, '🥥'],
+  [/pera/, '🍐'],
+  [/aguacate|palta/, '🥑'],
+  [/aceituna/, '🫒'],
+  [/berenjena/, '🍆'],
+  [/pepino|calabac[ií]n/, '🥒'],
+  [/zanahoria/, '🥕'],
+  [/ma[ií]z|choclo/, '🌽'],
+  [/chile|guindilla|jalape[ñn]o/, '🌶️'],
+  [/brocoli|br[oó]coli|coliflor/, '🥦'],
+  [/lechuga|ensalada|espinaca|acelga|r[uú]cula|escarola|endibia|can[oó]nigo|verduras|hoja/, '🥬'],
+  [/ajo/, '🧄'],
+  [/cebolla|puerro/, '🧅'],
+  [/patata|papa|boniato|batata|yuca/, '🥔'],
+  [/champi[ñn][oó]n|seta|hongo/, '🍄'],
+  [/cacahuete|man[ií]|fruto seco|almendra|nuez|avellana|pistacho/, '🥜'],
+  [/casta[ñn]a/, '🌰'],
+  [/pan|baguette|barra de pan/, '🥖'],
+  [/croissant|napolitana/, '🥐'],
+  [/bagel/, '🥯'],
+  [/tortilla mexicana|wrap|tortita/, '🫓'],
+  [/pretzel/, '🥨'],
+  [/queso/, '🧀'],
+  [/huevo/, '🥚'],
+  [/leche|yogur|kefir|k[eé]fir|batido/, '🥛'],
+  [/mantequilla|nata/, '🧈'],
+  [/carne|filete|solomillo|entrecot|ternera|cerdo/, '🥩'],
+  [/pollo|pavo/, '🍗'],
+  [/jam[oó]n|beicon|bacon|chorizo|salchich[oó]n|lomo/, '🥓'],
+  [/salchicha|hot ?dog|frankfurt/, '🌭'],
+  [/hamburguesa/, '🍔'],
+  [/at[uú]n|salm[oó]n|sardina|merluza|bacalao|dorada|lubina|trucha|pescado/, '🐟'],
+  [/gamba|langostino|cigala|marisco|camar[oó]n/, '🍤'],
+  [/pulpo|calamar|sepia|chipir[oó]n/, '🐙'],
+  [/pizza/, '🍕'],
+  [/taco/, '🌮'],
+  [/burrito/, '🌯'],
+  [/sushi/, '🍣'],
+  [/arroz/, '🍚'],
+  [/pasta|espagueti|macarrones|fideos|tallarines|lasa[ñn]a/, '🍝'],
+  [/sopa|caldo/, '🍜'],
+  [/helado/, '🍦'],
+  [/tarta|pastel|bizcocho|magdalena/, '🍰'],
+  [/galleta/, '🍪'],
+  [/chocolate|nocilla|nutella|cacao|colacao|nesquik/, '🍫'],
+  [/caramelo|chuche|gominola|dulce/, '🍬'],
+  [/piruleta/, '🍭'],
+  [/donut|d[oó]nut|rosquilla/, '🍩'],
+  [/miel|mermelada/, '🍯'],
+  [/agua/, '💧'],
+  [/caf[eé]/, '☕'],
+  [/t[eé] verde|t[eé] negro|infusi[oó]n|manzanilla|poleo|rooibos/, '🍵'],
+  [/zumo|jugo/, '🧃'],
+  [/refresco|cola|fanta|sprite|pepsi|nestea|aquarius/, '🥤'],
+  [/cerveza/, '🍺'],
+  [/vino/, '🍷'],
+  [/cava|champagne|champ[aá]n|espumoso/, '🍾'],
+  [/whisky|whiskey|ron|ginebra|vodka|tequila|licor|vermut|co[ñn]ac|orujo/, '🥃'],
+  [/sal |azucar|az[uú]car|especia|pimienta/, '🧂'],
+  [/aceite/, '🫗'],
+  [/palomitas/, '🍿'],
+  [/perro|pienso perro/, '🐶'],
+  [/gato|pienso gato/, '🐱'],
+  [/pa[ñn]al|biber[oó]n|chupete|potito/, '🍼'],
+  [/papel higi[eé]nico|papel higienico|higi[eé]nico|servilleta|kleenex|pa[ñn]uelo/, '🧻'],
+  [/jab[oó]n/, '🧼'],
+  [/esponja|estropajo|bayeta/, '🧽'],
+  [/detergente|suavizante|lej[ií]a|limpiador|desinfectante|multiusos|lavavajillas/, '🧴'],
+  [/champ[uú]/, '🧴'],
+  [/escoba|fregona/, '🧹'],
+  [/planta|maceta|flor|semilla|jardin|jard[ií]n|abono/, '🪴'],
+  [/bombilla|luz/, '💡'],
+  [/pila|bater[ií]a/, '🔋'],
+  [/cable|usb|cargador|adaptador/, '🔌'],
+  [/destornillador/, '🪛'],
+  [/martillo/, '🔨'],
+  [/tornillo|tuerca|clavo/, '🔩'],
+  [/llave inglesa|llave allen/, '🔧'],
+  [/medicamento|paracetamol|ibuprofeno|pastilla|aspirina|tiritas|venda/, '💊'],
+  [/globo/, '🎈'],
+  [/regalo/, '🎁'],
+  [/vela/, '🕯️'],
+  [/juguete|peluche|mu[ñn]eco|mu[ñn]eca|lego|puzzle|puzle/, '🧸'],
+  [/bal[oó]n|pelota|f[uú]tbol|baloncesto/, '⚽'],
+  [/libro/, '📚'],
+  [/coche/, '🚗']
+];
+
+function productEmoji(name){
+  const n = String(name || '').toLowerCase();
+  for(const [rx, e] of PRODUCT_EMOJIS){
+    if(rx.test(n)) return e;
+  }
+  return null;
+}
+
 function guesscatExtended(n, oc = '', fallback = 'otros'){
   const s = (n + ' ' + oc).toLowerCase();
 
   if(/leche|yogur|queso|mantequilla|nata|huevo|kéfir|kefir/.test(s)) return 'lacteos';
   if(/pollo|carne|cerdo|ternera|pescado|atún|atun|salmón|salmon|jamón|jamon|chorizo|salchicha/.test(s)) return 'carnes';
-  if(/fruta|manzana|naranja|plátano|platano|verdura|tomate|lechuga|zanahoria|cebolla|ajo|patata|pepino|calabacín|calabacin/.test(s)) return 'frutas';
+  if(/fruta|manzana|naranja|plátano|platano|verdura|tomate|lechuga|zanahoria|cebolla|ajo|patata|papa|pepino|calabacín|calabacin|pimiento|berenjena|calabaza|brócoli|brocoli|coliflor|espinaca|acelga|apio|puerro|rábano|rabano|remolacha|nabo|guisante|judía|judia|habichuela|maíz|maiz|choclo|champiñón|champinon|seta|hongo|fresa|frutilla|uva|pera|piña|melón|melon|sandía|sandia|kiwi|mango|papaya|cereza|melocotón|melocoton|albaricoque|ciruela|nectarina|limón|limon|pomelo|frambuesa|arándano|arandano|mora|coco|aguacate|palta|aceituna|dátil|datil|higo|granada|caqui|chirimoya|maracuyá|maracuya|guayaba|jengibre|rúcula|rucula|canónigo|canonigo|escarola|endibia|hinojo|alcachofa|espárrago|esparrago|boniato|batata|yuca/.test(s)) return 'frutas';
   if(/pan|cereal|arroz|pasta|harina|avena|galleta|espagueti|macarrones|fideos|tortilla|wrap/.test(s)) return 'panaderia';
   if(/café|cafe|nescafé|nescafe|colacao|nesquik|mermelada|nocilla|nutella|croissant|donut|magdalena|bizcocho|tostada|napolitana|churros|manzanilla|poleo|rooibos|infusión|infusion|desayuno/.test(s)) return 'desayuno';
   if(/vino|licor|whisky|whiskey|ron|ginebra|vodka|tequila|champagne|cava|sidra|vermut|coñac|conac|orujo|espumoso|aguardiente/.test(s)) return 'vinos';
@@ -852,16 +964,20 @@ const up = new URLSearchParams(location.search);
 const ip = up.get('p'), ik = up.get('k'), ir = up.get('r'), il = up.get('l'), iu = up.get('u'), iid = up.get('id');
 
 uid = (() => {
+  // La UID local siempre gana: evita que una URL compartida sobrescriba la identidad
+  // de este dispositivo y convierta a dos personas en el mismo usuario.
+  let u = localStorage.getItem(UK);
+  if(u) return u;
+
+  // Solo un dispositivo sin UID previa puede adoptar la de la URL (restaurar bookmark propio).
   const invitedUid = String(iid || '').trim();
   if(invitedUid){
     localStorage.setItem(UK, invitedUid);
     return invitedUid;
   }
-  let u = localStorage.getItem(UK);
-  if(!u){
-    u = genUID();
-    localStorage.setItem(UK,u);
-  }
+
+  u = genUID();
+  localStorage.setItem(UK, u);
   return u;
 })();
 
@@ -885,8 +1001,10 @@ const saved = (() => {
 
 if(saved){
   doConnect(saved.projectId, saved.apiKey, saved.roomId, saved.userName || 'Yo');
-}else if(ip && ik && ir){
-  doConnect(ip, ik, ir, iu || $('sname').value.trim() || 'Yo');
+}else if(ip && ik && ir && iu){
+  // Solo autoconecta si el enlace ya trae nombre (bookmark propio del usuario).
+  // Un enlace compartido no lleva "u", así el invitado ve el formulario y escribe el suyo.
+  doConnect(ip, ik, ir, iu);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -929,12 +1047,12 @@ function doConnect(p,k,r,u){
       userName:user
     }));
 
-    onValue(ref(db,`listas/${r}/_admin`), snap => {
+    onValue(ref(db,`listas/${room}/_admin`), snap => {
       const adminData = snap.val();
 
       if(!adminData){
-        set(ref(db,`listas/${r}/_admin`), { name:user, uid });
-        set(ref(db,`listas/${r}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now() });
+        set(ref(db,`listas/${room}/_admin`), { name:user, uid });
+        set(ref(db,`listas/${room}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now() });
         amAdmin = true;
         launchApp();
       }else{
@@ -1418,11 +1536,12 @@ function showManualResults(query, results){
 
   results.forEach(p => {
     const catInfo = CATS[p.cat || 'otros'] || CATS.otros;
+    const emoji = productEmoji(p.name) || catInfo.i;
     const btn = document.createElement('button');
     btn.className = 'manual-result';
     btn.type = 'button';
     btn.innerHTML = `
-      ${p.img ? `<img src="${esc(p.img)}" loading="lazy" />` : `<div class="mr-emoji">${catInfo.i}</div>`}
+      ${p.img ? `<img src="${esc(p.img)}" loading="lazy" />` : `<div class="mr-emoji">${emoji}</div>`}
       <div style="flex:1;min-width:0">
         <div class="mr-title">${esc(p.name)}</div>
         <div class="mr-meta">
@@ -1986,7 +2105,9 @@ $('historyModal').onclick = e => { if(e.target === $('historyModal')) $('history
 $('si-share').onclick = () => {
   const s = JSON.parse(localStorage.getItem(SK) || '{}');
   const base = location.origin + location.pathname;
-  const url = `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}&u=${encodeURIComponent(user || s.userName || 'Yo')}&id=${encodeURIComponent(uid)}`;
+  // No incluimos ni id ni u: el enlace es para invitar a otra persona,
+  // no debe transferirle la identidad ni el nombre del que comparte.
+  const url = `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
 
   const text = `🛒 Mercao — lista compartida\nSala: ${room}\n\nEntra aquí:\n${url}`;
 
@@ -2120,9 +2241,10 @@ function mkItem(item){
   const col = ucolor(item.addedBy || '');
   const ini = (item.addedBy || '?').charAt(0).toUpperCase();
   const info = CATS[item.cat || 'otros'] || CATS.otros;
+  const emoji = productEmoji(item.name) || info.i;
 
   li.innerHTML = `
-    ${item.img ? `<img class="iimg" src="${esc(item.img)}" loading="lazy" />` : `<div class="iemoji">${info.i}</div>`}
+    ${item.img ? `<img class="iimg" src="${esc(item.img)}" loading="lazy" />` : `<div class="iemoji">${emoji}</div>`}
     <div class="chk${item.checked ? ' on' : ''}" data-a="chk" data-id="${item.key}">
       ${item.checked ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
     </div>
