@@ -11,6 +11,7 @@
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6b4a'/><text y='72' x='50' text-anchor='middle' font-size='62'>🛒</text></svg>" />
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6b4a'/><text y='72' x='50' text-anchor='middle' font-size='62'>🛒</text></svg>" />
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Mercao","short_name":"Mercao","description":"Lista de la compra compartida en tiempo real","start_url":"./","scope":"./","display":"standalone","orientation":"portrait","background_color":"%23f5f3ef","theme_color":"%231a6b4a","icons":[{"src":"data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><rect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%231a6b4a%27/><text y=%2772%27 x=%2750%27 text-anchor=%27middle%27 font-size=%2762%27>🛒</text></svg>","sizes":"192x192 512x512","type":"image/svg+xml","purpose":"any maskable"}]}' />
   <meta name="description" content="Mercao — tu lista de la compra compartida" />
 
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -102,6 +103,15 @@
     .search-box.show{display:block}
     .search-box input{width:100%;padding:10px 36px 10px 14px;border:1px solid var(--bd2);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--sf);color:var(--tx);outline:none}
     .search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--tx3);cursor:pointer;padding:4px}
+
+    .frecs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:.5rem;margin-bottom:.5rem}
+    .frecs::-webkit-scrollbar{display:none}
+    .frecs:empty{display:none}
+    .freclbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);padding:6px 4px 6px 2px;flex-shrink:0;align-self:center}
+    .frecchip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--sf);border:1px solid var(--bd2);border-radius:999px;font-size:13px;color:var(--tx);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'DM Sans',sans-serif}
+    .frecchip:active{background:var(--sf2)}
+    .frecchip .fce{font-size:14px}
+    body.shop .frecs{display:none}
 
     .catsec{margin-bottom:1rem}
     .cathdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin-bottom:7px;display:flex;align-items:center;gap:7px;padding:0 2px;cursor:pointer;user-select:none}
@@ -210,6 +220,9 @@
     .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#5ad4a0;border-radius:50%;animation:spin .8s linear infinite}
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--acd);color:#a8e6cc;padding:10px 18px;border-radius:999px;font-size:13px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s;z-index:500}
     .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.interactive{pointer-events:auto;display:flex;align-items:center;gap:10px}
+    .toast .undo-btn{background:transparent;border:none;color:#7ce0af;font-weight:700;font-size:13px;cursor:pointer;padding:2px 8px;border-radius:999px}
+    .toast .undo-btn:active{background:rgba(255,255,255,.08)}
   </style>
 </head>
 <body>
@@ -225,7 +238,9 @@
     <div class="f" id="fkey"><label>API KEY</label><input id="skey" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" /></div>
     <div class="f"><label>TU NOMBRE</label><input id="sname" placeholder="Diego" autocomplete="off" /></div>
     <div class="f" id="froom"><label>SALA</label><input id="sroom" placeholder="familia" autocomplete="off" spellcheck="false" /></div>
+    <div class="f" id="fsecret" style="display:none"><label>CLAVE DE ADMIN (opcional)</label><input id="ssecret" placeholder="Solo si quieres recuperar el rol de admin" autocomplete="off" spellcheck="false" /></div>
     <button class="gbtn" id="gobtn">Entrar a la lista</button>
+    <button class="wait-cancel" id="toggleSecret" style="margin-top:1rem">¿Eres el admin de esta sala?</button>
   </div>
 </div>
 
@@ -304,6 +319,8 @@
       <div class="manualSearchHint">Escribe un producto y pulsa Buscar. Si aparece en la base de datos, lo eliges; si no, puedes añadirlo a mano.</div>
     </div>
 
+    <div class="frecs" id="frecs"></div>
+
     <button class="finishShopBtn" id="finishShopBtn">✅ Finalizar compra y guardar historial</button>
 
     <div id="emptyMsg" class="empty" style="display:none"><span class="emptyico">🧺</span>La lista está vacía.<br />Escanea o escribe un producto.</div>
@@ -348,6 +365,7 @@
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
     <button class="sbBtn" id="si-rename">✏️ Cambiar mi nombre</button>
+    <button class="sbBtn" id="si-adminkey" style="display:none">🔑 Ver mi clave de admin</button>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
     <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
@@ -458,6 +476,18 @@
   </div>
 </div>
 
+<div class="overlay" id="adminKeyModal">
+  <div class="sheet">
+    <div class="stitle">🔑 Clave de admin</div>
+    <div class="ssub" id="adminKeyIntro">Guarda esta clave en un sitio seguro. Sirve para recuperar el rol de admin si cambias de móvil o borras la app. <b>No la compartas con nadie.</b></div>
+    <div style="background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);padding:1rem;text-align:center;margin-bottom:1rem;font-family:'DM Mono',monospace;font-size:18px;font-weight:700;letter-spacing:2px;color:var(--ac);user-select:all" id="adminKeyValue">—</div>
+    <div class="sactions">
+      <button class="scancel" id="adminKeyClose">Cerrar</button>
+      <button class="sok" id="adminKeyCopy">Copiar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="historyModal">
   <div class="sheet" style="max-height:86dvh;overflow:hidden;display:flex;flex-direction:column;">
     <div class="stitle">🧾 Historial de compras</div>
@@ -493,10 +523,34 @@ function esc(s){
 
 function toast(msg){
   const t = $('toast');
+  t.classList.remove('interactive');
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(t._t);
   t._t = setTimeout(() => t.classList.remove('on'), 2500);
+}
+
+function toastUndo(msg, undoLabel, onUndo, timeoutMs = 6000){
+  const t = $('toast');
+  t.innerHTML = '';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  const btn = document.createElement('button');
+  btn.className = 'undo-btn';
+  btn.textContent = undoLabel || 'Deshacer';
+  t.appendChild(span);
+  t.appendChild(btn);
+  t.classList.add('on','interactive');
+  clearTimeout(t._t);
+  const done = () => {
+    t.classList.remove('on','interactive');
+    t.innerHTML = '';
+  };
+  btn.onclick = () => {
+    try{ onUndo(); }catch(e){ console.error(e); }
+    done();
+  };
+  t._t = setTimeout(done, timeoutMs);
 }
 
 function spin(msg){
@@ -730,40 +784,60 @@ function guesscat(n, oc = ''){
 // ─────────────────────────────────────────────────────────────
 // BASES DE DATOS DE CÓDIGOS DE BARRAS
 // ─────────────────────────────────────────────────────────────
+// Campos ampliados: nombre en varias lenguas, marca como fallback, y descriptores.
+const PRODUCT_FIELDS = 'code,product_name,product_name_es,product_name_it,product_name_en,product_name_fr,product_name_de,product_name_pt,abbreviated_product_name,generic_name,generic_name_es,generic_name_en,brands,brands_tags,image_front_small_url,image_small_url,image_url,categories_tags,quantity,labels_tags';
+
 const PRODUCT_DBS = [
   {
     id: 'food',
     label: 'Open Food Facts',
     short: 'Food',
-    url: code => `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: (q, page = 1) => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    url: code => `https://world.openfoodfacts.org/api/v2/product/${code}?fields=${PRODUCT_FIELDS}`,
+    searchUrl: (q, page = 1) => `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=24&fields=${PRODUCT_FIELDS}`,
     defaultCat: 'conservas'
   },
   {
     id: 'beauty',
     label: 'Open Beauty Facts',
     short: 'Beauty',
-    url: code => `https://world.openbeautyfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: (q, page = 1) => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    url: code => `https://world.openbeautyfacts.org/api/v2/product/${code}?fields=${PRODUCT_FIELDS}`,
+    searchUrl: (q, page = 1) => `https://world.openbeautyfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=24&fields=${PRODUCT_FIELDS}`,
     defaultCat: 'higiene'
   },
   {
     id: 'products',
     label: 'Open Products Facts',
     short: 'Products',
-    url: code => `https://world.openproductsfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: (q, page = 1) => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    url: code => `https://world.openproductsfacts.org/api/v2/product/${code}?fields=${PRODUCT_FIELDS}`,
+    searchUrl: (q, page = 1) => `https://world.openproductsfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=24&fields=${PRODUCT_FIELDS}`,
     defaultCat: 'hogar'
   },
   {
     id: 'petfood',
     label: 'Open Pet Food Facts',
     short: 'Pet',
-    url: code => `https://world.openpetfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
-    searchUrl: (q, page = 1) => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,product_name_es,brands,image_front_small_url,categories_tags,generic_name,quantity`,
+    url: code => `https://world.openpetfoodfacts.org/api/v2/product/${code}?fields=${PRODUCT_FIELDS}`,
+    searchUrl: (q, page = 1) => `https://world.openpetfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page=${page}&page_size=24&fields=${PRODUCT_FIELDS}`,
     defaultCat: 'mascotas'
   }
 ];
+
+function extractProductName(p){
+  return String(
+    p.product_name_es ||
+    p.product_name ||
+    p.product_name_it ||
+    p.product_name_en ||
+    p.product_name_fr ||
+    p.product_name_de ||
+    p.product_name_pt ||
+    p.abbreviated_product_name ||
+    p.generic_name_es ||
+    p.generic_name ||
+    p.generic_name_en ||
+    ''
+  ).trim();
+}
 
 async function lookupProductByBarcode(code){
   for(const source of PRODUCT_DBS){
@@ -780,17 +854,14 @@ async function lookupProductByBarcode(code){
 
       if(data.status === 1 && data.product){
         const p = data.product;
-
-        const name =
-          p.product_name_es ||
-          p.product_name ||
-          p.generic_name ||
-          '';
-
-        if(!name || !name.trim()) continue;
-
         const brand = p.brands ? p.brands.split(',')[0].trim() : '';
-        const img = p.image_front_small_url || '';
+
+        // Nombre permisivo: si no hay ninguno, usamos la marca como último recurso.
+        let name = extractProductName(p);
+        if(!name) name = brand;
+        if(!name) continue;
+
+        const img = p.image_front_small_url || p.image_small_url || p.image_url || '';
         const rawCategories = (p.categories_tags || []).join(' ');
 
         return {
@@ -798,7 +869,7 @@ async function lookupProductByBarcode(code){
           source: source.id,
           sourceLabel: source.label,
           sourceShort: source.short,
-          name: name.trim(),
+          name,
           brand,
           img,
           barcode: code,
@@ -825,14 +896,7 @@ async function lookupProductByBarcode(code){
   };
 }
 
-async function searchProductsByText(query){
-  const q = String(query || '').trim();
-  if(q.length < 2) return [];
-
-  const all = [];
-  const seen = new Set();
-
-  const pagesPerSource = 2;
+async function runSearchTerms(term, pagesPerSource){
   const jobs = [];
   for(const source of PRODUCT_DBS){
     if(!source.searchUrl) continue;
@@ -844,8 +908,8 @@ async function searchProductsByText(query){
   const responses = await Promise.all(jobs.map(async ({ source, page }) => {
     try{
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 5000);
-      const res = await fetch(source.searchUrl(q, page), { signal: ctrl.signal });
+      const timer = setTimeout(() => ctrl.abort(), 5500);
+      const res = await fetch(source.searchUrl(term, page), { signal: ctrl.signal });
       clearTimeout(timer);
       if(!res.ok) return [];
       const data = await res.json();
@@ -855,19 +919,19 @@ async function searchProductsByText(query){
     }
   }));
 
-  for(const items of responses){
-    for(const { source, p } of items){
-      const name = (p.product_name_es || p.product_name || p.generic_name || '').trim();
-      if(!name) continue;
-      const barcode = p.code || '';
-      const key = barcode || `${source.id}:${name.toLowerCase()}`;
-      if(seen.has(key)) continue;
-      seen.add(key);
-
+  const out = [];
+  for(const items2 of responses){
+    for(const { source, p } of items2){
       const brand = p.brands ? p.brands.split(',')[0].trim() : '';
-      const img = p.image_front_small_url || '';
+      // Mucho más permisivo: nombre, marca, o cualquier campo genérico.
+      let name = extractProductName(p);
+      if(!name) name = brand;
+      if(!name) continue;
+
+      const barcode = p.code || '';
+      const img = p.image_front_small_url || p.image_small_url || p.image_url || '';
       const rawCategories = (p.categories_tags || []).join(' ');
-      all.push({
+      out.push({
         found:true,
         source:source.id,
         sourceLabel:source.label,
@@ -881,17 +945,58 @@ async function searchProductsByText(query){
       });
     }
   }
+  return out;
+}
 
-  // Orden simple: prioriza coincidencias en el nombre y luego marca conocida.
+async function searchProductsByText(query){
+  const q = String(query || '').trim();
+  if(q.length < 2) return [];
+
+  // Primer intento: query completa.
+  let raw = await runSearchTerms(q, 2);
+
+  // Si no hay resultados, probamos con la palabra más larga (>=3 letras).
+  // Muy útil con marcas compuestas tipo "pizza ristorante" -> "ristorante".
+  if(raw.length === 0){
+    const words = q.split(/\s+/).filter(w => w.length >= 3).sort((a,b) => b.length - a.length);
+    for(const w of words){
+      if(w.toLowerCase() === q.toLowerCase()) continue;
+      raw = await runSearchTerms(w, 1);
+      if(raw.length) break;
+    }
+  }
+
+  // Dedupe por código de barras o (source, nombre normalizado).
+  const seen = new Set();
+  const all = [];
+  for(const p of raw){
+    const key = p.barcode || `${p.source}:${p.name.toLowerCase()}`;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    all.push(p);
+  }
+
+  // Puntuación permisiva: nombre completo, nombre por palabra o marca cuentan.
   const norm = q.toLowerCase();
-  all.sort((a,b) => {
-    const an = a.name.toLowerCase().includes(norm) ? 0 : 1;
-    const bn = b.name.toLowerCase().includes(norm) ? 0 : 1;
-    if(an !== bn) return an - bn;
-    return (b.brand ? 1 : 0) - (a.brand ? 1 : 0);
-  });
+  const words = norm.split(/\s+/).filter(w => w.length >= 3);
+  function score(p){
+    const n = (p.name || '').toLowerCase();
+    const b = (p.brand || '').toLowerCase();
+    let s = 0;
+    if(n === norm) s += 100;
+    if(n.includes(norm)) s += 50;
+    if(b.includes(norm)) s += 30;
+    for(const w of words){
+      if(n.includes(w)) s += 8;
+      if(b.includes(w)) s += 5;
+    }
+    if(p.img) s += 4;
+    if(p.brand) s += 2;
+    return s;
+  }
+  all.sort((a,b) => score(b) - score(a));
 
-  return all.slice(0, 60);
+  return all.slice(0, 80);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -903,6 +1008,7 @@ const HK='lc_v6_hist';
 const CK='lc_v6_collapsed';
 const UK='lc_v6_uid';
 const RK='lc_v6_rooms';
+const IK='lc_v6_items_cache';  // caché de items {[room__list]: items}
 
 let db, room, user, uid, curList='Principal';
 let lists = [];
@@ -1010,11 +1116,19 @@ if(saved){
 // ─────────────────────────────────────────────────────────────
 // SETUP / FIREBASE
 // ─────────────────────────────────────────────────────────────
+$('toggleSecret').onclick = () => {
+  const sec = $('fsecret');
+  const show = sec.style.display === 'none';
+  sec.style.display = show ? 'block' : 'none';
+  $('toggleSecret').textContent = show ? 'Ocultar clave de admin' : '¿Eres el admin de esta sala?';
+};
+
 $('gobtn').addEventListener('click', () => {
   const p = $('spid').value.trim();
   const k = $('skey').value.trim();
   const r = normalizeRoomName($('sroom').value);
   const u = $('sname').value.trim() || 'Yo';
+  const secret = $('ssecret').value.trim();
 
   $('serr').style.display = 'none';
 
@@ -1024,10 +1138,20 @@ $('gobtn').addEventListener('click', () => {
     return;
   }
 
-  doConnect(p,k,r,u);
+  doConnect(p,k,r,u,secret);
 });
 
-function doConnect(p,k,r,u){
+function genAdminSecret(){
+  // 12 caracteres legibles, sin ambiguos.
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for(let i = 0; i < 12; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return out.replace(/(.{4})/g, '$1-').replace(/-$/, '');
+}
+
+let adminSecret = '';
+
+function doConnect(p,k,r,u,secret){
   try{
     const app = initializeApp({
       apiKey:k,
@@ -1051,13 +1175,30 @@ function doConnect(p,k,r,u){
       const adminData = snap.val();
 
       if(!adminData){
-        set(ref(db,`listas/${room}/_admin`), { name:user, uid });
+        // Primera vez: creamos la sala. Se genera una clave que el admin debe guardar
+        // para recuperar el rol si pierde el dispositivo.
+        adminSecret = genAdminSecret();
+        set(ref(db,`listas/${room}/_admin`), { name:user, uid, secret:adminSecret, createdAt:Date.now() });
         set(ref(db,`listas/${room}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now() });
         amAdmin = true;
         launchApp();
+        // Mostramos la clave al usuario para que la copie.
+        setTimeout(() => showAdminSecretModal(true), 400);
       }else{
-        amAdmin = adminData.uid === uid || adminData.name === user;
-        checkAccessAndWait();
+        // Admin solo por UID. Si el usuario aporta la clave correcta, transferimos el admin.
+        const secretMatch = secret && adminData.secret && secret.replace(/[-\s]/g,'').toUpperCase() === String(adminData.secret).replace(/[-\s]/g,'').toUpperCase();
+        if(secretMatch){
+          update(ref(db,`listas/${room}/_admin`), { name:user, uid });
+          set(ref(db,`listas/${room}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now(), recoveredAdmin:true });
+          adminSecret = adminData.secret;
+          amAdmin = true;
+          launchApp();
+          toast('Rol de admin recuperado ✓');
+        }else{
+          amAdmin = adminData.uid === uid;
+          adminSecret = amAdmin ? (adminData.secret || '') : '';
+          checkAccessAndWait();
+        }
       }
     }, { onlyOnce:true });
 
@@ -1154,6 +1295,23 @@ function renderTabs(){
   });
 }
 
+function itemsCacheKey(r, l){ return `${r}__${l}`; }
+
+function loadItemsFromCache(r, l){
+  try{
+    const all = JSON.parse(localStorage.getItem(IK) || '{}');
+    return all[itemsCacheKey(r,l)] || {};
+  }catch{ return {}; }
+}
+
+function saveItemsToCache(r, l, data){
+  try{
+    const all = JSON.parse(localStorage.getItem(IK) || '{}');
+    all[itemsCacheKey(r,l)] = data || {};
+    localStorage.setItem(IK, JSON.stringify(all));
+  }catch{}
+}
+
 function subscribe(name){
   curList = name;
   renderTabs();
@@ -1161,8 +1319,16 @@ function subscribe(name){
   $('dot').className = 'dot sy';
   $('sub').textContent = 'Conectando...';
 
+  // Render inmediato desde caché local para evitar pantalla vacía offline / con lag.
+  const cached = loadItemsFromCache(room, name);
+  if(Object.keys(cached).length){
+    items = cached;
+    render();
+  }
+
   onValue(ref(db,`listas/${room}/${name}/items`), snap => {
     items = snap.val() || {};
+    saveItemsToCache(room, name, items);
     $('dot').className = 'dot ok';
     render();
   }, e => {
@@ -1648,10 +1814,16 @@ document.addEventListener('click', e => {
   if(a === '+') update(r2, { qty:(item.qty || 1) + 1 });
   if(a === '-'){
     if((item.qty || 1) > 1) update(r2, { qty:(item.qty || 1) - 1 });
-    else remove(r2);
+    else {
+      const snapshot = { ...item };
+      remove(r2);
+      toastUndo(`Eliminado: ${item.name}`, 'Deshacer', () => set(r2, snapshot));
+    }
   }
   if(a === 'del'){
-    if(confirm('¿Eliminar ' + item.name + '?')) remove(r2);
+    const snapshot = { ...item };
+    remove(r2);
+    toastUndo(`Eliminado: ${item.name}`, 'Deshacer', () => set(r2, snapshot));
   }
 });
 
@@ -1852,6 +2024,7 @@ if($('finishShopBtn')) $('finishShopBtn').onclick = finishShopping;
 // ─────────────────────────────────────────────────────────────
 function openSidebar(){
   $('si-user').textContent = `${user || '-'}${amAdmin ? ' 👑 admin' : ''}`;
+  $('si-adminkey').style.display = (amAdmin && adminSecret) ? 'block' : 'none';
 
   const all = Object.values(items);
   const done = all.filter(i => i.checked);
@@ -2098,6 +2271,29 @@ $('roomOk').onclick = () => {
   switchRoomTo(newRoom);
 };
 
+function showAdminSecretModal(firstTime){
+  if(!adminSecret){
+    toast('No hay clave que mostrar (no eres el admin)');
+    return;
+  }
+  $('adminKeyValue').textContent = adminSecret;
+  $('adminKeyIntro').innerHTML = firstTime
+    ? '🎉 Has creado esta sala y eres el admin. <b>Guarda esta clave</b> — te permite recuperar el rol de admin si cambias de móvil. Nadie más debería tenerla.'
+    : 'Guarda esta clave en un sitio seguro. Sirve para recuperar el rol de admin si cambias de móvil o borras la app. <b>No la compartas con nadie.</b>';
+  $('adminKeyModal').classList.add('on');
+}
+
+$('si-adminkey').onclick = () => {
+  closeSidebar();
+  showAdminSecretModal(false);
+};
+
+$('adminKeyClose').onclick = () => $('adminKeyModal').classList.remove('on');
+$('adminKeyModal').onclick = e => { if(e.target === $('adminKeyModal')) $('adminKeyModal').classList.remove('on'); };
+$('adminKeyCopy').onclick = () => {
+  navigator.clipboard.writeText(adminSecret).then(() => toast('Clave copiada ✓'));
+};
+
 $('si-history').onclick = openPurchaseHistory;
 $('historyClose').onclick = () => $('historyModal').classList.remove('on');
 $('historyModal').onclick = e => { if(e.target === $('historyModal')) $('historyModal').classList.remove('on'); };
@@ -2141,6 +2337,41 @@ $('si-logout').onclick = () => {
 // ─────────────────────────────────────────────────────────────
 // RENDER
 // ─────────────────────────────────────────────────────────────
+function renderFrequents(){
+  const el = $('frecs');
+  if(!el) return;
+  el.innerHTML = '';
+
+  // Nombres que ya están en la lista actual (para no sugerirlos).
+  const inList = new Set(Object.values(items).map(v => (v.name || '').toLowerCase()));
+
+  // Últimos 12 productos añadidos alguna vez que no estén ya en la lista.
+  const recent = hist
+    .slice()
+    .sort((a,b) => (b.lastAdded || 0) - (a.lastAdded || 0))
+    .filter(h => h.name && !inList.has((h.name || '').toLowerCase()))
+    .slice(0, 12);
+
+  if(!recent.length) return;
+
+  const lbl = document.createElement('div');
+  lbl.className = 'freclbl';
+  lbl.textContent = 'Recientes';
+  el.appendChild(lbl);
+
+  recent.forEach(h => {
+    const emoji = productEmoji(h.name) || (CATS[h.cat] || CATS.otros).i;
+    const chip = document.createElement('button');
+    chip.className = 'frecchip';
+    chip.type = 'button';
+    chip.innerHTML = `<span class="fce">${emoji}</span>${esc(h.name)}`;
+    chip.onclick = () => {
+      addItem(h.name, h.brand || '', '', h.cat || guesscat(h.name), h.unit || '', h.img || '', h.source || 'Reciente');
+    };
+    el.appendChild(chip);
+  });
+}
+
 function render(){
   let allEntries = Object.entries(items).map(([k,v]) => ({ ...v, key:k }));
 
@@ -2160,6 +2391,8 @@ function render(){
   $('sub').textContent = all.length
     ? `${all.length} producto${all.length>1?'s':''} · ${total} unidad${total>1?'es':''}`
     : 'sin productos';
+
+  renderFrequents();
 
   if(all.length){
     $('progwrap').style.display = 'block';
@@ -2280,6 +2513,20 @@ document.addEventListener('click', e => {
 document.getElementById('imgzoom-close').onclick = () => imgZoom.classList.remove('on');
 imgZoom.addEventListener('click', e => { if(e.target === imgZoom) imgZoom.classList.remove('on'); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape') imgZoom.classList.remove('on'); });
+
+// ─── SERVICE WORKER / PWA ───────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // Guarda los params actuales en el SW para reabrir sin QR / sin URL completa.
+      navigator.serviceWorker.ready.then(sw => {
+        if(location.search){
+          sw.active?.postMessage({ type:'SAVE_PARAMS', params:location.search });
+        }
+      });
+    }).catch(() => {});
+  });
+}
 </script>
 
 <div id="imgzoom">
