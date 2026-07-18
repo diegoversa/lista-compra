@@ -964,16 +964,20 @@ const up = new URLSearchParams(location.search);
 const ip = up.get('p'), ik = up.get('k'), ir = up.get('r'), il = up.get('l'), iu = up.get('u'), iid = up.get('id');
 
 uid = (() => {
+  // La UID local siempre gana: evita que una URL compartida sobrescriba la identidad
+  // de este dispositivo y convierta a dos personas en el mismo usuario.
+  let u = localStorage.getItem(UK);
+  if(u) return u;
+
+  // Solo un dispositivo sin UID previa puede adoptar la de la URL (restaurar bookmark propio).
   const invitedUid = String(iid || '').trim();
   if(invitedUid){
     localStorage.setItem(UK, invitedUid);
     return invitedUid;
   }
-  let u = localStorage.getItem(UK);
-  if(!u){
-    u = genUID();
-    localStorage.setItem(UK,u);
-  }
+
+  u = genUID();
+  localStorage.setItem(UK, u);
   return u;
 })();
 
@@ -997,8 +1001,10 @@ const saved = (() => {
 
 if(saved){
   doConnect(saved.projectId, saved.apiKey, saved.roomId, saved.userName || 'Yo');
-}else if(ip && ik && ir){
-  doConnect(ip, ik, ir, iu || $('sname').value.trim() || 'Yo');
+}else if(ip && ik && ir && iu){
+  // Solo autoconecta si el enlace ya trae nombre (bookmark propio del usuario).
+  // Un enlace compartido no lleva "u", así el invitado ve el formulario y escribe el suyo.
+  doConnect(ip, ik, ir, iu);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1041,12 +1047,12 @@ function doConnect(p,k,r,u){
       userName:user
     }));
 
-    onValue(ref(db,`listas/${r}/_admin`), snap => {
+    onValue(ref(db,`listas/${room}/_admin`), snap => {
       const adminData = snap.val();
 
       if(!adminData){
-        set(ref(db,`listas/${r}/_admin`), { name:user, uid });
-        set(ref(db,`listas/${r}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now() });
+        set(ref(db,`listas/${room}/_admin`), { name:user, uid });
+        set(ref(db,`listas/${room}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now() });
         amAdmin = true;
         launchApp();
       }else{
@@ -2099,7 +2105,9 @@ $('historyModal').onclick = e => { if(e.target === $('historyModal')) $('history
 $('si-share').onclick = () => {
   const s = JSON.parse(localStorage.getItem(SK) || '{}');
   const base = location.origin + location.pathname;
-  const url = `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}&u=${encodeURIComponent(user || s.userName || 'Yo')}&id=${encodeURIComponent(uid)}`;
+  // No incluimos ni id ni u: el enlace es para invitar a otra persona,
+  // no debe transferirle la identidad ni el nombre del que comparte.
+  const url = `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
 
   const text = `🛒 Mercao — lista compartida\nSala: ${room}\n\nEntra aquí:\n${url}`;
 
