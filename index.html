@@ -1111,14 +1111,25 @@ uid = (() => {
   return u;
 })();
 
-if(ip && ik && ir){
+const invited = !!(ip && ik && ir);
+
+if(invited){
+  // Invitación por URL: prellenamos p/k/r y los ocultamos, pero el receptor SIEMPRE
+  // escribe su nombre y pulsa "Unirse", incluso si el navegador tenía credenciales
+  // guardadas de otra sesión. Así nadie entra sin querer con la identidad de otro.
   $('spid').value = ip;
   $('skey').value = ik;
   $('sroom').value = ir;
   $('fpid').style.display = 'none';
   $('fkey').style.display = 'none';
   $('froom').style.display = 'none';
-  if(iu) $('sname').value = iu;
+  $('sname').value = '';
+  $('sname').placeholder = 'Escribe tu nombre';
+  $('gobtn').textContent = `Unirse a "${ir}"`;
+  const setupTitle = document.querySelector('#setup h1');
+  if(setupTitle) setupTitle.textContent = 'Únete a la sala';
+  const setupIntro = document.querySelector('#setup > p');
+  if(setupIntro) setupIntro.textContent = `Te han invitado a "${ir}". Escribe tu nombre para entrar.`;
 }
 
 const saved = (() => {
@@ -1129,12 +1140,12 @@ const saved = (() => {
   return null;
 })();
 
-if(saved){
+if(invited){
+  // No autoconectamos: obligamos a teclear el nombre desde el botón "Unirse".
+  // El foco al campo de nombre para que se vea claro qué hay que hacer.
+  setTimeout(() => $('sname').focus(), 100);
+}else if(saved){
   doConnect(saved.projectId, saved.apiKey, saved.roomId, saved.userName || 'Yo');
-}else if(ip && ik && ir && iu){
-  // Solo autoconecta si el enlace ya trae nombre (bookmark propio del usuario).
-  // Un enlace compartido no lleva "u", así el invitado ve el formulario y escribe el suyo.
-  doConnect(ip, ik, ir, iu);
 }
 
 // ─────────────────────────────────────────────────────────────
