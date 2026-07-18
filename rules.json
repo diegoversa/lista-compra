@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "listas": {
+      "$room": {
+        "_admin": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid || newData.child('secret').val() === data.child('secret').val())",
+          "secret": {
+            ".read": "auth != null && root.child('listas').child($room).child('_admin').child('uid').val() === auth.uid"
+          }
+        },
+        "_members": {
+          ".read": "auth != null",
+          "$memberUid": {
+            ".write": "auth != null && (auth.uid === $memberUid || root.child('listas').child($room).child('_admin').child('uid').val() === auth.uid)"
+          }
+        },
+        "$anythingelse": {
+          ".read":  "auth != null && root.child('listas').child($room).child('_members').child(auth.uid).child('approved').val() === true",
+          ".write": "auth != null && root.child('listas').child($room).child('_members').child(auth.uid).child('approved').val() === true"
+        }
+      }
+    }
+  }
+}
