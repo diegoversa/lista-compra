@@ -137,6 +137,10 @@
     .imeta{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:5px;margin-top:1px;flex-wrap:wrap}
     .ubadge{display:inline-block;width:14px;height:14px;border-radius:50%;font-size:8px;font-weight:700;line-height:14px;text-align:center}
     .sourcebadge{font-size:10px;background:var(--sf2);padding:1px 6px;border-radius:999px;color:var(--tx3)}
+    .price{font-size:12px;font-weight:700;color:var(--ac);background:var(--acl);padding:3px 8px;border-radius:999px;cursor:pointer;font-family:'DM Mono',monospace;flex-shrink:0;white-space:nowrap}
+    .price.empty{color:var(--tx3);background:transparent;border:1px dashed var(--bd2);font-weight:400}
+    body:not(.shop) .price.empty{display:none}
+    .priceinput{width:70px;padding:3px 6px;border:1px solid var(--ac);border-radius:999px;font-size:12px;background:var(--sf);color:var(--tx);outline:none;font-family:'DM Mono',monospace}
     .qty{display:flex;align-items:center;gap:5px;flex-shrink:0}
     .qbtn{width:24px;height:24px;border-radius:50%;border:1px solid var(--bd2);background:var(--sf2);color:var(--tx);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .qnum{font-size:13px;font-weight:700;min-width:22px;text-align:center;font-family:'DM Mono',monospace;color:var(--tx)}
@@ -365,6 +369,7 @@
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
     <button class="sbBtn" id="si-rename">✏️ Cambiar mi nombre</button>
+    <button class="sbBtn" id="si-notif" style="display:none">🔔 Activar avisos de nuevos usuarios</button>
     <button class="sbBtn" id="si-adminkey" style="display:none">🔑 Ver mi clave de admin</button>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
     <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
@@ -403,6 +408,10 @@
         <option value="caja">caja</option>
         <option value="rollo">rollo</option>
       </select>
+    </div>
+
+    <div class="srow">
+      <input type="number" id="mprice" placeholder="Precio € (opcional)" step="0.01" min="0" inputmode="decimal" style="flex:1;margin-bottom:0" />
     </div>
 
     <select id="mcat">
@@ -476,6 +485,20 @@
   </div>
 </div>
 
+<div class="overlay" id="shareModal">
+  <div class="sheet">
+    <div class="stitle">📤 Compartir sala</div>
+    <div class="ssub">Escanea el QR con la cámara del otro móvil, o comparte el enlace.</div>
+    <div id="shareQr" style="background:#fff;border-radius:var(--rs);padding:14px;display:flex;justify-content:center;margin-bottom:1rem"></div>
+    <div style="background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2);word-break:break-all;margin-bottom:1rem;max-height:80px;overflow-y:auto" id="shareUrl"></div>
+    <div class="sactions">
+      <button class="scancel" id="shareClose">Cerrar</button>
+      <button class="sok" id="shareCopy">Copiar link</button>
+      <button class="sok" id="shareSend" style="display:none">Compartir…</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="adminKeyModal">
   <div class="sheet">
     <div class="stitle">🔑 Clave de admin</div>
@@ -503,6 +526,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -1268,14 +1292,89 @@ function embedParamsInUrl(){
 // ─────────────────────────────────────────────────────────────
 // PENDIENTES
 // ─────────────────────────────────────────────────────────────
+let pendingSeen = null; // Set de UIDs ya vistos como pendientes en este proceso.
+let firstPendingSnapshot = true;
+
+function notifyNewPending(name){
+  try{
+    if(typeof Notification === 'undefined') return;
+    if(Notification.permission !== 'granted') return;
+    if(document.visibilityState === 'visible') return; // Con la app abierta basta el toast.
+    const n = new Notification('Mercao — nueva solicitud', {
+      body: `${name || 'Alguien'} quiere unirse a la sala "${room}"`,
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6b4a'/><text y='72' x='50' text-anchor='middle' font-size='62'>🛒</text></svg>",
+      tag: `pending-${uid}`,
+      requireInteraction: false
+    });
+    n.onclick = () => { window.focus(); openSidebar(); n.close(); };
+  }catch(e){}
+}
+
 function watchPending(){
   onValue(ref(db,`listas/${room}/_members`), snap => {
     const members = snap.val() || {};
     const pending = Object.entries(members).filter(([,v]) => !v.approved);
-    if(pending.length > 0){
-      toast(`${pending.length} persona${pending.length>1?'s':''} esperando aprobación`);
+    const currentIds = new Set(pending.map(([id]) => id));
+
+    if(firstPendingSnapshot){
+      // La primera lectura suele traer todos los pendientes ya existentes: no notificamos ninguno,
+      // solo los inicializamos para detectar "nuevos" de ahora en adelante.
+      pendingSeen = currentIds;
+      firstPendingSnapshot = false;
+      if(pending.length > 0){
+        toast(`${pending.length} persona${pending.length>1?'s':''} esperando aprobación`);
+      }
+      return;
     }
+
+    // Nuevos = los que están en current y no estaban en seen.
+    const nuevos = pending.filter(([id]) => !pendingSeen.has(id));
+    if(nuevos.length){
+      nuevos.forEach(([, m]) => notifyNewPending(m.name));
+      toast(`${nuevos.length} nueva${nuevos.length>1?'s':''} solicitud${nuevos.length>1?'es':''}`);
+    }
+    pendingSeen = currentIds;
   });
+}
+
+function updateNotifButton(){
+  const btn = $('si-notif');
+  if(!btn) return;
+  if(!amAdmin || typeof Notification === 'undefined'){
+    btn.style.display = 'none';
+    return;
+  }
+  btn.style.display = 'block';
+  if(Notification.permission === 'granted'){
+    btn.textContent = '🔔 Avisos activos ✓';
+    btn.classList.add('accent');
+  }else if(Notification.permission === 'denied'){
+    btn.textContent = '🔕 Avisos bloqueados (ajústalo en el navegador)';
+    btn.classList.remove('accent');
+  }else{
+    btn.textContent = '🔔 Activar avisos de nuevos usuarios';
+    btn.classList.remove('accent');
+  }
+}
+
+if($('si-notif')){
+  $('si-notif').onclick = async () => {
+    if(typeof Notification === 'undefined'){
+      toast('Este navegador no soporta notificaciones');
+      return;
+    }
+    if(Notification.permission === 'granted'){
+      toast('Los avisos ya están activos');
+      return;
+    }
+    if(Notification.permission === 'denied'){
+      toast('Están bloqueados en el navegador. Actívalos desde ajustes.');
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    updateNotifButton();
+    if(perm === 'granted') toast('Avisos activados ✓');
+  };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1620,6 +1719,7 @@ function openModal(code, sub, prefill, title, img, cat){
   $('msub').textContent = sub || '';
   $('mname').value = prefill || '';
   $('munitm').value = '';
+  $('mprice').value = '';
   $('mcat').value = cat || 'otros';
 
   const im = $('mimg');
@@ -1644,10 +1744,11 @@ $('mok').onclick = () => {
 
   const cat = $('mcat').value;
   const unit = $('munitm').value;
+  const price = parseFloat(String($('mprice').value).replace(',','.')) || 0;
 
   closeModal();
 
-  addItem(v, pBrand, pCode, cat, unit, pImg, pSource);
+  addItem(v, pBrand, pCode, cat, unit, pImg, pSource, price);
 
   pBrand = '';
   pImg = '';
@@ -1747,16 +1848,16 @@ $('manualSearchModal').onclick = e => { if(e.target === $('manualSearchModal')) 
 // ─────────────────────────────────────────────────────────────
 // ITEMS
 // ─────────────────────────────────────────────────────────────
-function addItem(name, brand='', barcode='', cat='otros', unit='', img='', source=''){
+function addItem(name, brand='', barcode='', cat='otros', unit='', img='', source='', price=0){
   name = String(name || '').trim();
   if(!name) return;
 
   const exact = Object.entries(items).find(([,v]) => (v.name || '').toLowerCase() === name.toLowerCase());
 
   if(exact){
-    update(ref(db,`listas/${room}/${curList}/items/${exact[0]}`), {
-      qty:(exact[1].qty || 1) + 1
-    });
+    const patch = { qty:(exact[1].qty || 1) + 1 };
+    if(price && !exact[1].price) patch.price = price;
+    update(ref(db,`listas/${room}/${curList}/items/${exact[0]}`), patch);
     toast(`+1 ${name}`);
     return;
   }
@@ -1769,6 +1870,7 @@ function addItem(name, brand='', barcode='', cat='otros', unit='', img='', sourc
     unit:unit || '',
     img:img || '',
     source:source || '',
+    price:price || 0,
     qty:1,
     checked:false,
     ts:Date.now(),
@@ -1776,15 +1878,22 @@ function addItem(name, brand='', barcode='', cat='otros', unit='', img='', sourc
   });
 
   const hi = hist.findIndex(h => (h.name || '').toLowerCase() === name.toLowerCase());
+  const histEntry = { name, brand, cat, unit, img, source, lastAdded:Date.now() };
+  if(price) histEntry.price = price;
   if(hi >= 0){
-    hist[hi] = { ...hist[hi], name, brand, cat, unit, img, source, lastAdded:Date.now() };
+    hist[hi] = { ...hist[hi], ...histEntry };
   }else{
-    hist.unshift({ name, brand, cat, unit, img, source, lastAdded:Date.now() });
+    hist.unshift(histEntry);
     if(hist.length > 200) hist.pop();
   }
 
   localStorage.setItem(HK, JSON.stringify(hist));
   toast(`Añadido: ${name}`);
+}
+
+function formatEUR(v){
+  const n = Number(v) || 0;
+  return n.toFixed(2).replace('.', ',') + ' €';
 }
 
 document.addEventListener('click', e => {
@@ -1825,7 +1934,40 @@ document.addEventListener('click', e => {
     remove(r2);
     toastUndo(`Eliminado: ${item.name}`, 'Deshacer', () => set(r2, snapshot));
   }
+  if(a === 'price'){
+    startEditingPrice(btn, item, key);
+  }
 });
+
+function startEditingPrice(badge, item, key){
+  if(badge.querySelector('input')) return;
+  const current = Number(item.price) || 0;
+  const inp = document.createElement('input');
+  inp.type = 'number';
+  inp.step = '0.01';
+  inp.min = '0';
+  inp.inputMode = 'decimal';
+  inp.className = 'priceinput';
+  inp.value = current ? current.toFixed(2) : '';
+  inp.placeholder = '€';
+
+  badge.innerHTML = '';
+  badge.appendChild(inp);
+  inp.focus();
+  inp.select();
+
+  const commit = () => {
+    const raw = String(inp.value).replace(',','.').trim();
+    const v = raw === '' ? 0 : Math.max(0, Number(raw) || 0);
+    update(ref(db,`listas/${room}/${curList}/items/${key}`), { price:v });
+  };
+
+  inp.addEventListener('blur', commit, { once:true });
+  inp.addEventListener('keydown', e2 => {
+    if(e2.key === 'Enter'){ e2.preventDefault(); inp.blur(); }
+    else if(e2.key === 'Escape'){ inp.value = current ? current.toFixed(2) : ''; inp.blur(); }
+  });
+}
 
 document.addEventListener('click', e => {
   if(document.body.classList.contains('shop')) return;
@@ -1881,7 +2023,7 @@ document.addEventListener('click', e => {
 // En modo comprar, tocar una fila completa también la tacha o destacha.
 document.addEventListener('click', e => {
   if(!document.body.classList.contains('shop')) return;
-  if(e.target.closest('[data-a], button, .qbtn, .qty, .delbtn')) return;
+  if(e.target.closest('[data-a], button, .qbtn, .qty, .delbtn, .price, .priceinput')) return;
 
   const li = e.target.closest('.item');
   if(!li) return;
@@ -1937,7 +2079,8 @@ async function finishShopping(){
   }
 
   const totalUnits = checked.reduce((s,[,v]) => s + (v.qty || 1), 0);
-  const ok = confirm(`¿Finalizar compra?\n\nSe guardarán ${checked.length} producto${checked.length>1?'s':''} en el historial y desaparecerán de la lista actual.`);
+  const totalCost = checked.reduce((s,[,v]) => s + ((Number(v.price) || 0) * (v.qty || 1)), 0);
+  const ok = confirm(`¿Finalizar compra?\n\nSe guardarán ${checked.length} producto${checked.length>1?'s':''}${totalCost ? ` (${formatEUR(totalCost)})` : ''} en el historial y desaparecerán de la lista actual.`);
   if(!ok) return;
 
   const now = Date.now();
@@ -1948,6 +2091,7 @@ async function finishShopping(){
     finishedBy: user,
     totalProducts: checked.length,
     totalUnits,
+    totalCost,
     items: checked.map(([key,v]) => ({
       key,
       name: v.name || '',
@@ -1956,6 +2100,7 @@ async function finishShopping(){
       cat: v.cat || 'otros',
       unit: v.unit || '',
       qty: v.qty || 1,
+      price: Number(v.price) || 0,
       source: v.source || '',
       img: v.img || '',
       addedBy: v.addedBy || '',
@@ -1995,9 +2140,12 @@ function openPurchaseHistory(){
 
     cont.innerHTML = purchases.slice(0,50).map(p => {
       const items2 = Array.isArray(p.items) ? p.items : Object.values(p.items || {});
+      const cost = Number(p.totalCost) || items2.reduce((s,it) => s + ((Number(it.price) || 0) * (it.qty || 1)), 0);
       const shown = items2.slice(0,8).map(it => {
         const qty = it.unit ? `${it.qty || 1} ${esc(it.unit)}` : `${it.qty || 1}`;
-        return `<div class="history-item"><span>${esc(it.name || 'Producto')}</span><span>${qty}</span></div>`;
+        const itCost = (Number(it.price) || 0) * (it.qty || 1);
+        const rhs = itCost ? `${qty} · ${formatEUR(itCost)}` : qty;
+        return `<div class="history-item"><span>${esc(it.name || 'Producto')}</span><span>${rhs}</span></div>`;
       }).join('');
       const more = items2.length > 8 ? `<div style="font-size:12px;color:var(--tx3);margin-top:6px">+${items2.length - 8} producto${items2.length-8>1?'s':''} más</div>` : '';
 
@@ -2008,7 +2156,7 @@ function openPurchaseHistory(){
               <div class="history-date">${formatDateTime(p.finishedAt)}</div>
               <div class="history-meta">Lista: ${esc(p.list || 'Principal')} · Finalizada por ${esc(p.finishedBy || 'alguien')}</div>
             </div>
-            <div class="history-total">${p.totalProducts || items2.length} prod.</div>
+            <div class="history-total">${p.totalProducts || items2.length} prod.${cost ? ' · ' + formatEUR(cost) : ''}</div>
           </div>
           <div class="history-items">${shown}${more}</div>
         </div>
@@ -2025,10 +2173,13 @@ if($('finishShopBtn')) $('finishShopBtn').onclick = finishShopping;
 function openSidebar(){
   $('si-user').textContent = `${user || '-'}${amAdmin ? ' 👑 admin' : ''}`;
   $('si-adminkey').style.display = (amAdmin && adminSecret) ? 'block' : 'none';
+  updateNotifButton();
 
   const all = Object.values(items);
   const done = all.filter(i => i.checked);
   const total = all.reduce((s,i) => s + (i.qty || 1), 0);
+  const totalCost = all.reduce((s,i) => s + ((Number(i.price) || 0) * (i.qty || 1)), 0);
+  const doneCost = done.reduce((s,i) => s + ((Number(i.price) || 0) * (i.qty || 1)), 0);
   const cats = new Set(all.map(i => i.cat || 'otros')).size;
 
   $('si-stats').innerHTML = `
@@ -2036,6 +2187,7 @@ function openSidebar(){
     <div class="statbox"><div class="statnum">${done.length}</div><div class="statlbl">tachados</div></div>
     <div class="statbox"><div class="statnum">${total}</div><div class="statlbl">unidades</div></div>
     <div class="statbox"><div class="statnum">${cats}</div><div class="statlbl">categorías</div></div>
+    ${totalCost ? `<div class="statbox" style="grid-column:1 / -1"><div class="statnum">${formatEUR(totalCost)}</div><div class="statlbl">total estimado${doneCost ? ` · ${formatEUR(doneCost)} en el carro` : ''}</div></div>` : ''}
   `;
 
   renderPendingInSidebar();
@@ -2298,19 +2450,60 @@ $('si-history').onclick = openPurchaseHistory;
 $('historyClose').onclick = () => $('historyModal').classList.remove('on');
 $('historyModal').onclick = e => { if(e.target === $('historyModal')) $('historyModal').classList.remove('on'); };
 
-$('si-share').onclick = () => {
+function buildShareUrl(){
   const s = JSON.parse(localStorage.getItem(SK) || '{}');
   const base = location.origin + location.pathname;
   // No incluimos ni id ni u: el enlace es para invitar a otra persona,
   // no debe transferirle la identidad ni el nombre del que comparte.
-  const url = `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
+  return `${base}?p=${encodeURIComponent(s.projectId)}&k=${encodeURIComponent(s.apiKey)}&r=${encodeURIComponent(room)}&l=${encodeURIComponent(curList)}`;
+}
 
-  const text = `🛒 Mercao — lista compartida\nSala: ${room}\n\nEntra aquí:\n${url}`;
+function renderQr(container, text){
+  container.innerHTML = '';
+  try{
+    // qrcode-generator: type 0 auto, level M.
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    // Genera SVG a mano para poder escalar sin blur.
+    const modules = qr.getModuleCount();
+    const size = 240;
+    const cell = size / modules;
+    let rects = '';
+    for(let r = 0; r < modules; r++){
+      for(let c = 0; c < modules; c++){
+        if(qr.isDark(r,c)){
+          rects += `<rect x="${(c*cell).toFixed(2)}" y="${(r*cell).toFixed(2)}" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}"/>`;
+        }
+      }
+    }
+    container.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block"><rect width="${size}" height="${size}" fill="#fff"/><g fill="#1a1a18">${rects}</g></svg>`;
+  }catch(e){
+    container.innerHTML = `<div style="color:var(--red);font-size:13px;padding:1rem;text-align:center">No se pudo generar el QR: ${esc(e.message || '')}</div>`;
+  }
+}
 
-  if(navigator.share) navigator.share({ title:'Mercao', text, url });
-  else navigator.clipboard.writeText(text).then(() => toast('Copiado ✓'));
-
+$('si-share').onclick = () => {
+  const url = buildShareUrl();
+  $('shareUrl').textContent = url;
+  renderQr($('shareQr'), url);
+  $('shareSend').style.display = navigator.share ? 'block' : 'none';
   closeSidebar();
+  $('shareModal').classList.add('on');
+};
+
+$('shareClose').onclick = () => $('shareModal').classList.remove('on');
+$('shareModal').onclick = e => { if(e.target === $('shareModal')) $('shareModal').classList.remove('on'); };
+
+$('shareCopy').onclick = () => {
+  const url = $('shareUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => toast('Enlace copiado ✓'));
+};
+
+$('shareSend').onclick = () => {
+  const url = $('shareUrl').textContent;
+  const text = `🛒 Mercao — lista compartida\nSala: ${room}\n\nEntra aquí:\n${url}`;
+  if(navigator.share) navigator.share({ title:'Mercao', text, url });
 };
 
 $('si-clearchecked').onclick = () => {
@@ -2386,10 +2579,11 @@ function render(){
   const pending = all.filter(i => !i.checked);
   const done = all.filter(i => i.checked);
   const total = all.reduce((s,i) => s + (i.qty || 1), 0);
+  const totalCost = all.reduce((s,i) => s + ((Number(i.price) || 0) * (i.qty || 1)), 0);
 
   $('emptyMsg').style.display = all.length ? 'none' : 'block';
   $('sub').textContent = all.length
-    ? `${all.length} producto${all.length>1?'s':''} · ${total} unidad${total>1?'es':''}`
+    ? `${all.length} producto${all.length>1?'s':''} · ${total} unidad${total>1?'es':''}${totalCost ? ' · ' + formatEUR(totalCost) : ''}`
     : 'sin productos';
 
   renderFrequents();
@@ -2476,6 +2670,13 @@ function mkItem(item){
   const info = CATS[item.cat || 'otros'] || CATS.otros;
   const emoji = productEmoji(item.name) || info.i;
 
+  const priceUnit = Number(item.price) || 0;
+  const priceTotal = priceUnit * (item.qty || 1);
+  const priceLabel = priceUnit
+    ? formatEUR(priceTotal)
+    : '€';
+  const priceCls = priceUnit ? 'price' : 'price empty';
+
   li.innerHTML = `
     ${item.img ? `<img class="iimg" src="${esc(item.img)}" loading="lazy" />` : `<div class="iemoji">${emoji}</div>`}
     <div class="chk${item.checked ? ' on' : ''}" data-a="chk" data-id="${item.key}">
@@ -2489,6 +2690,7 @@ function mkItem(item){
         <span class="ubadge" style="background:${col};color:#fff">${ini}</span>
       </div>
     </div>
+    <span class="${priceCls}" data-a="price" data-id="${item.key}" title="Precio unitario">${priceLabel}</span>
     <div class="qty">
       <button class="qbtn" data-a="-" data-id="${item.key}">−</button>
       <span class="qnum">${qty}</span>
