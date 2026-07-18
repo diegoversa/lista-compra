@@ -1,5 +1,5 @@
 // Mercao Service Worker
-const CACHE = 'mercao-v3';
+const CACHE = 'mercao-v5';
 const SHELL = [
   './',
   './index.html'
