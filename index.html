@@ -531,6 +531,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, remove, update, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -1186,13 +1187,35 @@ function genAdminSecret(){
 
 let adminSecret = '';
 
-function doConnect(p,k,r,u,secret){
+async function doConnect(p,k,r,u,secret){
   try{
     const app = initializeApp({
       apiKey:k,
       databaseURL:`https://${p}-default-rtdb.europe-west1.firebasedatabase.app`,
       projectId:p
     }, 'lc');
+
+    // Autenticación anónima primero: sin esto, las reglas de Firebase no pueden
+    // distinguir a nadie y cualquiera con la API key podría escribir en la base.
+    const auth = getAuth(app);
+    try{
+      const cred = await signInAnonymously(auth);
+      // Sustituimos la UID de localStorage por la que emite Firebase.
+      // localStorage.UK se mantiene como "legacyUid" para migrar admin/miembros existentes.
+      window.__legacyUid = uid;
+      uid = cred.user.uid;
+    }catch(authErr){
+      const code = authErr?.code || '';
+      let msg = 'No se pudo autenticar con Firebase.';
+      if(code === 'auth/admin-restricted-operation' || code === 'auth/operation-not-allowed'){
+        msg = 'Falta habilitar Anonymous Auth en Firebase Console → Authentication → Sign-in method.';
+      }else if(code){
+        msg = `Auth: ${code}`;
+      }
+      $('serr').textContent = msg;
+      $('serr').style.display = 'block';
+      return;
+    }
 
     db = getDatabase(app);
     room = normalizeRoomName(r);
@@ -1220,6 +1243,25 @@ function doConnect(p,k,r,u,secret){
         // Mostramos la clave al usuario para que la copie.
         setTimeout(() => showAdminSecretModal(true), 400);
       }else{
+        // Migración one-shot: si la sala guardaba nuestra UID legacy como admin,
+        // reescribimos a la nueva auth.uid. Se ejecuta una vez y solo funciona
+        // mientras las reglas aún estén abiertas.
+        const legacyUid = window.__legacyUid;
+        const wasLegacyAdmin = legacyUid && adminData.uid === legacyUid;
+        if(wasLegacyAdmin){
+          update(ref(db,`listas/${room}/_admin`), { uid, name:user, migratedAt:Date.now(), legacyUid });
+          set(ref(db,`listas/${room}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now(), migratedFrom:legacyUid });
+          remove(ref(db,`listas/${room}/_members/${legacyUid}`));
+          adminSecret = adminData.secret || genAdminSecret();
+          if(!adminData.secret){
+            update(ref(db,`listas/${room}/_admin`), { secret: adminSecret });
+          }
+          amAdmin = true;
+          launchApp();
+          toast('Cuenta migrada a auth de Firebase ✓');
+          return;
+        }
+
         // Admin solo por UID. Si el usuario aporta la clave correcta, transferimos el admin.
         const secretMatch = secret && adminData.secret && secret.replace(/[-\s]/g,'').toUpperCase() === String(adminData.secret).replace(/[-\s]/g,'').toUpperCase();
         if(secretMatch){
@@ -1232,6 +1274,16 @@ function doConnect(p,k,r,u,secret){
         }else{
           amAdmin = adminData.uid === uid;
           adminSecret = amAdmin ? (adminData.secret || '') : '';
+          // Migrar member legacy: si tenías entry aprobado con tu UID vieja, lo movemos a la nueva.
+          if(legacyUid){
+            onValue(ref(db,`listas/${room}/_members/${legacyUid}`), lsnap => {
+              const legacyMember = lsnap.val();
+              if(legacyMember?.approved){
+                set(ref(db,`listas/${room}/_members/${uid}`), { name:user, uid, approved:true, joinedAt:Date.now(), migratedFrom:legacyUid });
+                remove(ref(db,`listas/${room}/_members/${legacyUid}`));
+              }
+            }, { onlyOnce:true });
+          }
           checkAccessAndWait();
         }
       }
