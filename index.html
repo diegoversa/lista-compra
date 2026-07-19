@@ -397,6 +397,7 @@
     <button class="sbBtn" id="si-adminkey" style="display:none">🔑 Ver mi clave de admin</button>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
     <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
+    <button class="sbBtn" id="si-balances">💰 Balances (quién debe a quién)</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista completa</button>
     <button class="sbBtn" id="si-logout">🔓 Salir / cambiar cuenta Firebase</button>
@@ -531,6 +532,50 @@
     <div class="sactions">
       <button class="scancel" id="adminKeyClose">Cerrar</button>
       <button class="sok" id="adminKeyCopy">Copiar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="finishShopModal">
+  <div class="sheet">
+    <div class="stitle">✅ Finalizar compra</div>
+    <div class="ssub" id="finishShopSummary">—</div>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Quién ha pagado?</label>
+    <select id="finishShopPayer" style="margin-bottom:12px"></select>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Total pagado (opcional, sobreescribe la suma)</label>
+    <input id="finishShopTotalOverride" type="number" step="0.01" min="0" inputmode="decimal" placeholder="€" />
+    <div class="sactions">
+      <button class="scancel" id="finishShopCancel">Cancelar</button>
+      <button class="sok" id="finishShopOk">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="balancesModal">
+  <div class="sheet" style="max-height:88dvh;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="stitle">💰 Balances</div>
+    <div class="ssub">Quién debe a quién, contando compras y pagos entre miembros.</div>
+    <div id="balancesContent" style="overflow-y:auto;flex:1;margin-bottom:1rem"></div>
+    <div class="sactions" style="flex-shrink:0">
+      <button class="scancel" id="balancesClose">Cerrar</button>
+      <button class="sok" id="balancesRecord">Registrar un pago</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="recordPayModal">
+  <div class="sheet">
+    <div class="stitle">💸 Registrar pago</div>
+    <div class="ssub">Alguien ha pagado a otro para saldar cuentas.</div>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">De</label>
+    <select id="payFrom" style="margin-bottom:10px"></select>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">A</label>
+    <select id="payTo" style="margin-bottom:10px"></select>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Importe</label>
+    <input id="payAmount" type="number" step="0.01" min="0" inputmode="decimal" placeholder="€" />
+    <div class="sactions">
+      <button class="scancel" id="payCancel">Cancelar</button>
+      <button class="sok" id="payOk">Guardar</button>
     </div>
   </div>
 </div>
@@ -2252,6 +2297,8 @@ function getCheckedItems(){
   return Object.entries(items).filter(([,v]) => v.checked);
 }
 
+let finishShopPending = null;
+
 async function finishShopping(){
   const checked = getCheckedItems();
 
@@ -2262,8 +2309,41 @@ async function finishShopping(){
 
   const totalUnits = checked.reduce((s,[,v]) => s + (v.qty || 1), 0);
   const totalCost = checked.reduce((s,[,v]) => s + ((Number(v.price) || 0) * (v.qty || 1)), 0);
-  const ok = confirm(`¿Finalizar compra?\n\nSe guardarán ${checked.length} producto${checked.length>1?'s':''}${totalCost ? ` (${formatEUR(totalCost)})` : ''} en el historial y desaparecerán de la lista actual.`);
-  if(!ok) return;
+
+  finishShopPending = { checked, totalUnits, totalCost };
+
+  const members = await loadApprovedMembersOnce();
+  const payerSelect = $('finishShopPayer');
+  payerSelect.innerHTML = '';
+  members.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.uid;
+    opt.textContent = m.name || m.uid;
+    if(m.uid === uid) opt.selected = true;
+    payerSelect.appendChild(opt);
+  });
+  if(!members.length){
+    const opt = document.createElement('option');
+    opt.value = uid;
+    opt.textContent = user || 'Yo';
+    payerSelect.appendChild(opt);
+  }
+
+  $('finishShopTotalOverride').value = totalCost ? totalCost.toFixed(2) : '';
+  $('finishShopSummary').textContent = `${checked.length} producto${checked.length>1?'s':''}${totalCost ? ` · ${formatEUR(totalCost)}` : ''}`;
+  $('finishShopModal').classList.add('on');
+}
+
+async function commitFinishShopping(){
+  if(!finishShopPending) return;
+  const { checked, totalUnits, totalCost:autoCost } = finishShopPending;
+
+  const payerUid = $('finishShopPayer').value || uid;
+  const override = parseFloat(String($('finishShopTotalOverride').value).replace(',','.'));
+  const totalCost = Number.isFinite(override) && override >= 0 ? override : autoCost;
+
+  const members = await loadApprovedMembersOnce();
+  const payerName = members.find(m => m.uid === payerUid)?.name || user;
 
   const now = Date.now();
   const purchase = {
@@ -2271,6 +2351,10 @@ async function finishShopping(){
     list: curList,
     finishedAt: now,
     finishedBy: user,
+    finishedByUid: uid,
+    paidBy: payerName,
+    paidByUid: payerUid,
+    membersSnapshot: members.map(m => ({ uid:m.uid, name:m.name || m.uid })),
     totalProducts: checked.length,
     totalUnits,
     totalCost,
@@ -2295,13 +2379,202 @@ async function finishShopping(){
   try{
     await set(push(ref(db,`listas/${room}/_purchaseHistory`)), purchase);
     await Promise.all(checked.map(([key]) => remove(ref(db,`listas/${room}/${curList}/items/${key}`))));
-    toast(`Compra finalizada: ${checked.length} producto${checked.length>1?'s':''}`);
+    toast(`Compra guardada${totalCost ? ' · ' + formatEUR(totalCost) : ''}`);
   }catch(e){
     toast('Error al guardar historial: ' + e.message);
   }finally{
     unspin();
+    finishShopPending = null;
+    $('finishShopModal').classList.remove('on');
   }
 }
+
+$('finishShopCancel').onclick = () => {
+  finishShopPending = null;
+  $('finishShopModal').classList.remove('on');
+};
+$('finishShopOk').onclick = commitFinishShopping;
+$('finishShopModal').onclick = e => { if(e.target === $('finishShopModal')){ finishShopPending = null; $('finishShopModal').classList.remove('on'); } };
+
+function loadApprovedMembersOnce(){
+  return new Promise(resolve => {
+    onValue(ref(db,`listas/${room}/_members`), snap => {
+      const val = snap.val() || {};
+      const list = Object.values(val).filter(m => m.approved).map(m => ({ uid:m.uid, name:m.name || m.uid }));
+      resolve(list);
+    }, { onlyOnce:true });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// BALANCES / TRICOUNT
+// ─────────────────────────────────────────────────────────────
+function computeBalances(purchases, settlements, members){
+  const byUid = Object.fromEntries(members.map(m => [m.uid, { uid:m.uid, name:m.name, paid:0, share:0, received:0, sent:0 }]));
+
+  // Compras: quien pagó suma a "paid"; todos los miembros del snapshot suman a "share" su parte.
+  for(const p of purchases){
+    const cost = Number(p.totalCost) || 0;
+    if(!cost) continue;
+    const snapshot = Array.isArray(p.membersSnapshot) && p.membersSnapshot.length
+      ? p.membersSnapshot
+      : members.map(m => ({ uid:m.uid, name:m.name }));
+
+    // Solo consideramos miembros que aún existen. Si el snapshot tenía a alguien que ya no está,
+    // le seguimos contando la parte para no distorsionar; pero si el que pagó ya no está,
+    // reasignamos al que pagó como cuenta "fantasma" para respetar el balance histórico.
+    const payerUid = p.paidByUid;
+    if(payerUid && !byUid[payerUid]){
+      byUid[payerUid] = { uid:payerUid, name:p.paidBy || payerUid, paid:0, share:0, received:0, sent:0, ghost:true };
+    }
+    for(const m of snapshot){
+      if(!byUid[m.uid]){
+        byUid[m.uid] = { uid:m.uid, name:m.name || m.uid, paid:0, share:0, received:0, sent:0, ghost:true };
+      }
+    }
+    const share = cost / snapshot.length;
+    for(const m of snapshot) byUid[m.uid].share += share;
+    if(payerUid && byUid[payerUid]) byUid[payerUid].paid += cost;
+  }
+
+  // Settlements: from paga a to → from.sent aumenta (redujo su deuda), to.received aumenta.
+  for(const s of settlements){
+    const amt = Number(s.amount) || 0;
+    if(!amt) continue;
+    if(byUid[s.fromUid]) byUid[s.fromUid].sent += amt;
+    if(byUid[s.toUid]) byUid[s.toUid].received += amt;
+  }
+
+  return Object.values(byUid).map(b => ({
+    ...b,
+    balance: b.paid - b.share + b.sent - b.received
+  }));
+}
+
+function suggestSettlements(balances){
+  // Copia balances no cero.
+  const debtors = balances.filter(b => b.balance < -0.005).map(b => ({ ...b, remaining: -b.balance })).sort((a,b) => b.remaining - a.remaining);
+  const creditors = balances.filter(b => b.balance > 0.005).map(b => ({ ...b, remaining: b.balance })).sort((a,b) => b.remaining - a.remaining);
+  const out = [];
+
+  let i = 0, j = 0;
+  while(i < debtors.length && j < creditors.length){
+    const d = debtors[i], c = creditors[j];
+    const pay = Math.min(d.remaining, c.remaining);
+    if(pay > 0.005) out.push({ fromUid:d.uid, from:d.name, toUid:c.uid, to:c.name, amount: Math.round(pay * 100) / 100 });
+    d.remaining -= pay;
+    c.remaining -= pay;
+    if(d.remaining < 0.005) i++;
+    if(c.remaining < 0.005) j++;
+  }
+
+  return out;
+}
+
+async function openBalances(){
+  closeSidebar();
+  const cont = $('balancesContent');
+  cont.innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Cargando…</div>';
+  $('balancesModal').classList.add('on');
+
+  const [purchases, settlements, members] = await Promise.all([
+    new Promise(resolve => onValue(ref(db,`listas/${room}/_purchaseHistory`), s => resolve(Object.values(s.val() || {})), { onlyOnce:true })),
+    new Promise(resolve => onValue(ref(db,`listas/${room}/_settlements`), s => resolve(Object.values(s.val() || {})), { onlyOnce:true })),
+    loadApprovedMembersOnce()
+  ]);
+
+  const balances = computeBalances(purchases, settlements, members).sort((a,b) => b.balance - a.balance);
+  const suggestions = suggestSettlements(balances);
+  const totalSpent = purchases.reduce((s,p) => s + (Number(p.totalCost) || 0), 0);
+
+  const rows = balances.filter(b => Math.abs(b.balance) > 0.005 || b.paid > 0 || b.share > 0).map(b => {
+    const cls = b.balance > 0 ? 'ac' : b.balance < 0 ? 'red' : 'tx3';
+    const sign = b.balance > 0 ? '+' : '';
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:6px">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.name)}${b.ghost ? ' <span style="font-size:10px;color:var(--tx3);font-weight:400">(no está en la sala)</span>' : ''}</div>
+          <div style="font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;margin-top:2px">
+            pagó ${formatEUR(b.paid)} · su parte ${formatEUR(b.share)}${b.sent ? ' · dio ' + formatEUR(b.sent) : ''}${b.received ? ' · recibió ' + formatEUR(b.received) : ''}
+          </div>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:var(--${cls});font-family:'DM Mono',monospace;text-align:right;white-space:nowrap">${sign}${formatEUR(b.balance).replace(/^\+/, '')}</div>
+      </div>
+    `;
+  }).join('');
+
+  const suggestBlock = suggestions.length ? `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin:1rem 0 .5rem 2px">Para saldar</div>
+    ${suggestions.map(s => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--acl);color:var(--ac);border-radius:var(--rs);margin-bottom:6px">
+        <div style="font-size:14px;font-weight:600">${esc(s.from)} → ${esc(s.to)}</div>
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace">${formatEUR(s.amount)}</div>
+      </div>
+    `).join('')}
+  ` : `<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Todo saldado ✓</div>`;
+
+  const summary = `
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:10px;font-family:'DM Mono',monospace">
+      ${purchases.length} compra${purchases.length===1?'':'s'} · ${formatEUR(totalSpent)} en total · ${members.length} miembro${members.length===1?'':'s'}
+    </div>
+  `;
+
+  cont.innerHTML = summary + (rows || '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Sin gastos todavía.</div>') + suggestBlock;
+}
+
+$('si-balances').onclick = openBalances;
+$('balancesClose').onclick = () => $('balancesModal').classList.remove('on');
+$('balancesModal').onclick = e => { if(e.target === $('balancesModal')) $('balancesModal').classList.remove('on'); };
+
+$('balancesRecord').onclick = async () => {
+  const members = await loadApprovedMembersOnce();
+  if(members.length < 2){ toast('Necesitas al menos 2 miembros'); return; }
+  const fromSel = $('payFrom'), toSel = $('payTo');
+  fromSel.innerHTML = '';
+  toSel.innerHTML = '';
+  members.forEach(m => {
+    const o1 = document.createElement('option'); o1.value = m.uid; o1.textContent = m.name || m.uid; fromSel.appendChild(o1);
+    const o2 = document.createElement('option'); o2.value = m.uid; o2.textContent = m.name || m.uid; toSel.appendChild(o2);
+  });
+  fromSel.value = uid;
+  toSel.value = members.find(m => m.uid !== uid)?.uid || members[0].uid;
+  $('payAmount').value = '';
+  $('recordPayModal').classList.add('on');
+};
+
+$('payCancel').onclick = () => $('recordPayModal').classList.remove('on');
+$('recordPayModal').onclick = e => { if(e.target === $('recordPayModal')) $('recordPayModal').classList.remove('on'); };
+
+$('payOk').onclick = async () => {
+  const fromUid = $('payFrom').value;
+  const toUid = $('payTo').value;
+  const amount = parseFloat(String($('payAmount').value).replace(',','.'));
+  if(!fromUid || !toUid || fromUid === toUid){ toast('Elige personas distintas'); return; }
+  if(!Number.isFinite(amount) || amount <= 0){ toast('Pon un importe válido'); return; }
+
+  const members = await loadApprovedMembersOnce();
+  const fromName = members.find(m => m.uid === fromUid)?.name || fromUid;
+  const toName = members.find(m => m.uid === toUid)?.name || toUid;
+
+  spin('Guardando pago...');
+  try{
+    await set(push(ref(db,`listas/${room}/_settlements`)), {
+      fromUid, toUid,
+      from: fromName, to: toName,
+      amount: Math.round(amount * 100) / 100,
+      at: Date.now(),
+      recordedByUid: uid,
+      recordedBy: user
+    });
+    toast(`${fromName} → ${toName}: ${formatEUR(amount)} ✓`);
+    $('recordPayModal').classList.remove('on');
+    if($('balancesModal').classList.contains('on')) openBalances();
+  }catch(e){
+    toast('Error: ' + e.message);
+  }finally{
+    unspin();
+  }
+};
 
 function openPurchaseHistory(){
   closeSidebar();
