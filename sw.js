@@ -1,5 +1,5 @@
 // Mercao Service Worker
-const CACHE = 'mercao-v5';
+const CACHE = 'mercao-v6';
 const SHELL = [
   './',
   './index.html'
@@ -23,38 +23,22 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Navegación al root sin params: si hay params guardados, redirige.
-  if (e.request.mode === 'navigate' &&
-      (url.pathname === '/lista-compra' || url.pathname === '/lista-compra/' || url.pathname === '/' || url.pathname === '/index.html') &&
-      !url.search) {
-    e.respondWith(
-      caches.open(CACHE).then(async cache => {
-        const saved = await cache.match('mercao-params');
-        if (saved) {
-          const params = await saved.text();
-          if (params) return Response.redirect(url.pathname + params, 302);
-        }
-        // Sin params: sirve el shell desde caché con fallback a red.
-        try {
-          const fresh = await fetch(e.request);
-          cache.put(e.request, fresh.clone());
-          return fresh;
-        } catch (err) {
-          const cached = await cache.match('./index.html') || await cache.match('./');
-          if (cached) return cached;
-          throw err;
-        }
-      })
-    );
-    return;
-  }
-
-  // Navegación con params: intenta red, cae a caché.
+  // Navegación: siempre intenta red primero (para traer HTML fresco) y cae a caché
+  // si no hay conexión. YA NO redirigimos a los params guardados: la app tiene su
+  // propio menú de selección de sala y necesita ver la URL limpia para mostrarlo.
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).catch(async () => {
+      fetch(e.request).then(res => {
+        if (res && res.ok) {
+          caches.open(CACHE).then(cache => cache.put(e.request, res.clone()));
+        }
+        return res;
+      }).catch(async () => {
         const cache = await caches.open(CACHE);
-        return (await cache.match('./index.html')) || (await cache.match('./')) || new Response('Offline', { status: 503 });
+        return (await cache.match(e.request)) ||
+               (await cache.match('./index.html')) ||
+               (await cache.match('./')) ||
+               new Response('Offline', { status: 503 });
       })
     );
     return;
