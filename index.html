@@ -396,6 +396,7 @@
     <button class="sbBtn" id="si-notif" style="display:none">🔔 Activar avisos de nuevos usuarios</button>
     <button class="sbBtn" id="si-adminkey" style="display:none">🔑 Ver mi clave de admin</button>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
+    <button class="sbBtn" id="si-a2hs">📲 Añadir a pantalla de inicio</button>
     <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
     <button class="sbBtn" id="si-balances">💰 Balances (quién debe a quién)</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
@@ -532,6 +533,24 @@
     <div class="sactions">
       <button class="scancel" id="adminKeyClose">Cerrar</button>
       <button class="sok" id="adminKeyCopy">Copiar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="a2hsModal">
+  <div class="sheet">
+    <div class="stitle">📲 Añadir a pantalla de inicio</div>
+    <div class="ssub">La app funciona como PWA: se puede añadir a la pantalla de inicio y arranca en pantalla completa como una app nativa. iOS Safari le da su propio almacenamiento — por eso guardamos las credenciales dentro de la URL antes de añadirla, para que el acceso directo entre solo a tu sala.</div>
+    <ol style="font-size:14px;color:var(--tx);line-height:1.7;padding-left:1.2rem;margin-bottom:1rem">
+      <li>Pulsa el botón <b>Compartir</b> de Safari (el cuadrado con la flecha).</li>
+      <li>Baja hasta <b>Añadir a pantalla de inicio</b>.</li>
+      <li>Ponle un nombre y pulsa <b>Añadir</b>.</li>
+    </ol>
+    <div style="font-size:12px;color:var(--tx3);line-height:1.6;background:var(--sf2);padding:10px 12px;border-radius:var(--rs);margin-bottom:1rem">
+      💡 Al abrir el acceso directo por primera vez, la app te reconecta automáticamente con tu identidad. Si en el futuro cambias de sala desde el menú, actualiza el acceso directo repitiendo estos pasos para que apunte a la sala nueva.
+    </div>
+    <div class="sactions">
+      <button class="scancel" id="a2hsClose">Entendido</button>
     </div>
   </div>
 </div>
@@ -1181,7 +1200,14 @@ uid = (() => {
   return u;
 })();
 
-const invited = !!(ip && ik && ir);
+// Distinguimos "acceso directo mío" de "invitación de otro":
+// - `id=` solo lo pone embedParamsInUrl (address bar / bookmark propio). El botón de
+//   compartir NO lo incluye desde el fix de seguridad, así que verlo prueba que la URL
+//   es de este dispositivo (o de un usuario dispuesto a asumir esa identidad).
+// - Sin `id=`, la URL con p+k+r se trata como invitación y obliga a teclear nombre.
+const hasCreds = !!(ip && ik && ir);
+const invited = hasCreds && !iid;
+const ownBookmark = hasCreds && !!iid;
 
 if(invited){
   // Invitación por URL: prellenamos p/k/r y los ocultamos, pero el receptor SIEMPRE
@@ -1213,6 +1239,11 @@ const saved = (() => {
 if(invited){
   // No autoconectamos: obligamos a teclear el nombre desde el botón "Unirse".
   setTimeout(() => $('sname').focus(), 100);
+}else if(ownBookmark){
+  // Acceso directo propio (o bookmark): autoconecta con lo que trae la URL sin picker,
+  // porque este flujo se dispara al abrir el shortcut de pantalla de inicio en iOS,
+  // donde el localStorage puede estar vacío pero la URL sí trae credenciales.
+  doConnect(ip, ik, ir, iu || (saved?.userName) || 'Yo');
 }else if(saved){
   // Con credenciales guardadas, mostramos el picker en vez de autoconectar a saco.
   // Así el usuario elige a qué sala entrar cuando abre la PWA.
@@ -2907,6 +2938,21 @@ if($('si-picker')){
     // params, la app arranca en el picker.
     location.href = location.pathname;
   };
+}
+
+if($('si-a2hs')){
+  $('si-a2hs').onclick = () => {
+    // Nos aseguramos de que la URL tenga los params completos ANTES de que el usuario
+    // pulse "Añadir a pantalla de inicio", así el shortcut queda con todo lo necesario.
+    embedParamsInUrl();
+    closeSidebar();
+    $('a2hsModal').classList.add('on');
+  };
+}
+
+if($('a2hsClose')){
+  $('a2hsClose').onclick = () => $('a2hsModal').classList.remove('on');
+  $('a2hsModal').onclick = e => { if(e.target === $('a2hsModal')) $('a2hsModal').classList.remove('on'); };
 }
 
 $('si-history').onclick = openPurchaseHistory;
