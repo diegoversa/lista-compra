@@ -146,6 +146,17 @@
     .imeta{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:5px;margin-top:1px;flex-wrap:wrap}
     .ubadge{display:inline-block;width:14px;height:14px;border-radius:50%;font-size:8px;font-weight:700;line-height:14px;text-align:center}
     .sourcebadge{font-size:10px;background:var(--sf2);padding:1px 6px;border-radius:999px;color:var(--tx3)}
+    .chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+    .chip-row .chip{padding:7px 12px;border-radius:999px;border:1.5px solid var(--bd2);background:var(--sf);color:var(--tx2);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .chip-row .chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+    .chip-row .chip-all{border-style:dashed;color:var(--tx3);font-weight:500}
+    .expense-row{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px}
+    .expense-row .exp-info{flex:1;min-width:0}
+    .expense-row .exp-title{font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .expense-row .exp-meta{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;margin-top:1px}
+    .expense-row .exp-amt{font-size:13px;font-weight:700;color:var(--tx);font-family:'DM Mono',monospace;white-space:nowrap}
+    .expense-row .exp-del{background:none;border:none;color:var(--tx3);cursor:pointer;padding:4px;font-size:14px}
+    .expense-row .exp-del:active{color:var(--red)}
     .price{font-size:12px;font-weight:700;color:var(--ac);background:var(--acl);padding:3px 8px;border-radius:999px;cursor:pointer;font-family:'DM Mono',monospace;flex-shrink:0;white-space:nowrap}
     .price.empty{color:var(--tx3);background:transparent;border:1px dashed var(--bd2);font-weight:400}
     body:not(.shop) .price.empty{display:none}
@@ -537,11 +548,13 @@
 </div>
 
 <div class="overlay" id="finishShopModal">
-  <div class="sheet">
+  <div class="sheet" style="max-height:88dvh;overflow-y:auto">
     <div class="stitle">✅ Finalizar compra</div>
     <div class="ssub" id="finishShopSummary">—</div>
     <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Quién ha pagado?</label>
     <select id="finishShopPayer" style="margin-bottom:12px"></select>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Entre quiénes se reparte?</label>
+    <div class="chip-row" id="finishShopParticipants"></div>
     <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Total pagado (opcional, sobreescribe la suma)</label>
     <input id="finishShopTotalOverride" type="number" step="0.01" min="0" inputmode="decimal" placeholder="€" />
     <div class="sactions">
@@ -552,13 +565,33 @@
 </div>
 
 <div class="overlay" id="balancesModal">
-  <div class="sheet" style="max-height:88dvh;overflow:hidden;display:flex;flex-direction:column;">
+  <div class="sheet" style="max-height:90dvh;overflow:hidden;display:flex;flex-direction:column;">
     <div class="stitle">💰 Balances</div>
-    <div class="ssub">Quién debe a quién, contando compras y pagos entre miembros.</div>
+    <div class="ssub">Quién debe a quién, contando compras, gastos y pagos entre miembros.</div>
     <div id="balancesContent" style="overflow-y:auto;flex:1;margin-bottom:1rem"></div>
-    <div class="sactions" style="flex-shrink:0">
+    <div class="sactions" style="flex-shrink:0;flex-wrap:wrap;gap:6px">
       <button class="scancel" id="balancesClose">Cerrar</button>
-      <button class="sok" id="balancesRecord">Registrar un pago</button>
+      <button class="sok" id="balancesRecord">💸 Pago</button>
+      <button class="sok" id="balancesAddExpense" style="background:var(--tx)">➕ Gasto</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="expenseModal">
+  <div class="sheet" style="max-height:90dvh;overflow-y:auto">
+    <div class="stitle">➕ Añadir gasto</div>
+    <div class="ssub">Un gasto compartido, sin pasar por la lista de la compra: cena, taxi, entradas, alquiler…</div>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Descripción</label>
+    <input id="expenseDesc" placeholder="Cena en el chino, gasolina…" />
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Importe</label>
+    <input id="expenseAmount" type="number" step="0.01" min="0" inputmode="decimal" placeholder="€" />
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Quién ha pagado?</label>
+    <select id="expensePayer" style="margin-bottom:12px"></select>
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Entre quiénes se reparte?</label>
+    <div class="chip-row" id="expenseParticipants"></div>
+    <div class="sactions">
+      <button class="scancel" id="expenseCancel">Cancelar</button>
+      <button class="sok" id="expenseOk">Guardar</button>
     </div>
   </div>
 </div>
@@ -2313,21 +2346,19 @@ async function finishShopping(){
   finishShopPending = { checked, totalUnits, totalCost };
 
   const members = await loadApprovedMembersOnce();
+  const memberPool = members.length ? members : [{ uid, name: user || 'Yo' }];
+
   const payerSelect = $('finishShopPayer');
   payerSelect.innerHTML = '';
-  members.forEach(m => {
+  memberPool.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m.uid;
     opt.textContent = m.name || m.uid;
     if(m.uid === uid) opt.selected = true;
     payerSelect.appendChild(opt);
   });
-  if(!members.length){
-    const opt = document.createElement('option');
-    opt.value = uid;
-    opt.textContent = user || 'Yo';
-    payerSelect.appendChild(opt);
-  }
+
+  renderParticipantChips('finishShopParticipants', memberPool, memberPool.map(m => m.uid));
 
   $('finishShopTotalOverride').value = totalCost ? totalCost.toFixed(2) : '';
   $('finishShopSummary').textContent = `${checked.length} producto${checked.length>1?'s':''}${totalCost ? ` · ${formatEUR(totalCost)}` : ''}`;
@@ -2344,6 +2375,8 @@ async function commitFinishShopping(){
 
   const members = await loadApprovedMembersOnce();
   const payerName = members.find(m => m.uid === payerUid)?.name || user;
+  let participants = collectSelectedUids('finishShopParticipants');
+  if(!participants.length) participants = members.length ? members.map(m => m.uid) : [uid];
 
   const now = Date.now();
   const purchase = {
@@ -2354,6 +2387,7 @@ async function commitFinishShopping(){
     finishedByUid: uid,
     paidBy: payerName,
     paidByUid: payerUid,
+    participants,
     membersSnapshot: members.map(m => ({ uid:m.uid, name:m.name || m.uid })),
     totalProducts: checked.length,
     totalUnits,
@@ -2406,43 +2440,89 @@ function loadApprovedMembersOnce(){
   });
 }
 
+function renderParticipantChips(containerId, members, selectedUids){
+  const cont = $(containerId);
+  cont.innerHTML = '';
+  const selected = new Set(selectedUids || members.map(m => m.uid));
+
+  members.forEach(m => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip' + (selected.has(m.uid) ? ' on' : '');
+    chip.dataset.uid = m.uid;
+    chip.textContent = m.name || m.uid;
+    chip.onclick = () => chip.classList.toggle('on');
+    cont.appendChild(chip);
+  });
+
+  // Botón "todos / ninguno" al final.
+  if(members.length > 1){
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'chip chip-all';
+    toggle.textContent = 'Todos';
+    toggle.onclick = () => {
+      const chips = cont.querySelectorAll('.chip:not(.chip-all)');
+      const allOn = Array.from(chips).every(c => c.classList.contains('on'));
+      chips.forEach(c => c.classList.toggle('on', !allOn));
+    };
+    cont.appendChild(toggle);
+  }
+}
+
+function collectSelectedUids(containerId){
+  return Array.from($(containerId).querySelectorAll('.chip:not(.chip-all).on')).map(c => c.dataset.uid);
+}
+
 // ─────────────────────────────────────────────────────────────
 // BALANCES / TRICOUNT
 // ─────────────────────────────────────────────────────────────
-function computeBalances(purchases, settlements, members){
+function computeBalances(entries, settlements, members){
   const byUid = Object.fromEntries(members.map(m => [m.uid, { uid:m.uid, name:m.name, paid:0, share:0, received:0, sent:0 }]));
 
-  // Compras: quien pagó suma a "paid"; todos los miembros del snapshot suman a "share" su parte.
-  for(const p of purchases){
-    const cost = Number(p.totalCost) || 0;
-    if(!cost) continue;
-    const snapshot = Array.isArray(p.membersSnapshot) && p.membersSnapshot.length
-      ? p.membersSnapshot
-      : members.map(m => ({ uid:m.uid, name:m.name }));
+  const ensure = (uid2, name) => {
+    if(!byUid[uid2]){
+      byUid[uid2] = { uid:uid2, name:name || uid2, paid:0, share:0, received:0, sent:0, ghost:true };
+    }
+    return byUid[uid2];
+  };
 
-    // Solo consideramos miembros que aún existen. Si el snapshot tenía a alguien que ya no está,
-    // le seguimos contando la parte para no distorsionar; pero si el que pagó ya no está,
-    // reasignamos al que pagó como cuenta "fantasma" para respetar el balance histórico.
-    const payerUid = p.paidByUid;
-    if(payerUid && !byUid[payerUid]){
-      byUid[payerUid] = { uid:payerUid, name:p.paidBy || payerUid, paid:0, share:0, received:0, sent:0, ghost:true };
+  // Cada entry (compra o gasto manual) tiene:
+  //   amount, paidByUid, paidBy, participants (lista de uids) o membersSnapshot como fallback.
+  for(const e of entries){
+    const cost = Number(e.amount) || 0;
+    if(!cost) continue;
+
+    // Determina participantes: participants explícito > membersSnapshot > miembros actuales.
+    let participantUids;
+    if(Array.isArray(e.participants) && e.participants.length){
+      participantUids = e.participants;
+    }else if(Array.isArray(e.membersSnapshot) && e.membersSnapshot.length){
+      participantUids = e.membersSnapshot.map(m => m.uid);
+    }else{
+      participantUids = members.map(m => m.uid);
     }
-    for(const m of snapshot){
-      if(!byUid[m.uid]){
-        byUid[m.uid] = { uid:m.uid, name:m.name || m.uid, paid:0, share:0, received:0, sent:0, ghost:true };
-      }
+    if(!participantUids.length) continue;
+
+    const payerUid = e.paidByUid;
+    if(payerUid) ensure(payerUid, e.paidBy);
+    for(const pUid of participantUids){
+      const snapName = e.membersSnapshot?.find(m => m.uid === pUid)?.name;
+      ensure(pUid, snapName);
     }
-    const share = cost / snapshot.length;
-    for(const m of snapshot) byUid[m.uid].share += share;
+
+    const share = cost / participantUids.length;
+    for(const pUid of participantUids) byUid[pUid].share += share;
     if(payerUid && byUid[payerUid]) byUid[payerUid].paid += cost;
   }
 
-  // Settlements: from paga a to → from.sent aumenta (redujo su deuda), to.received aumenta.
   for(const s of settlements){
     const amt = Number(s.amount) || 0;
     if(!amt) continue;
-    if(byUid[s.fromUid]) byUid[s.fromUid].sent += amt;
-    if(byUid[s.toUid]) byUid[s.toUid].received += amt;
+    ensure(s.fromUid, s.from);
+    ensure(s.toUid, s.to);
+    byUid[s.fromUid].sent += amt;
+    byUid[s.toUid].received += amt;
   }
 
   return Object.values(byUid).map(b => ({
@@ -2477,15 +2557,52 @@ async function openBalances(){
   cont.innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Cargando…</div>';
   $('balancesModal').classList.add('on');
 
-  const [purchases, settlements, members] = await Promise.all([
-    new Promise(resolve => onValue(ref(db,`listas/${room}/_purchaseHistory`), s => resolve(Object.values(s.val() || {})), { onlyOnce:true })),
-    new Promise(resolve => onValue(ref(db,`listas/${room}/_settlements`), s => resolve(Object.values(s.val() || {})), { onlyOnce:true })),
+  const [purchases, expenses, settlements, members] = await Promise.all([
+    new Promise(resolve => onValue(ref(db,`listas/${room}/_purchaseHistory`), s => {
+      const v = s.val() || {};
+      resolve(Object.entries(v).map(([id, e]) => ({ ...e, id, kind:'purchase' })));
+    }, { onlyOnce:true })),
+    new Promise(resolve => onValue(ref(db,`listas/${room}/_expenses`), s => {
+      const v = s.val() || {};
+      resolve(Object.entries(v).map(([id, e]) => ({ ...e, id, kind:'expense' })));
+    }, { onlyOnce:true })),
+    new Promise(resolve => onValue(ref(db,`listas/${room}/_settlements`), s => {
+      const v = s.val() || {};
+      resolve(Object.entries(v).map(([id, e]) => ({ ...e, id })));
+    }, { onlyOnce:true })),
     loadApprovedMembersOnce()
   ]);
 
-  const balances = computeBalances(purchases, settlements, members).sort((a,b) => b.balance - a.balance);
+  // Normalizamos purchases y expenses en una lista de "entries" con la misma forma:
+  // amount, paidBy(Uid), participants, at, description.
+  const entries = [
+    ...purchases.map(p => ({
+      id: p.id,
+      kind: 'purchase',
+      description: `Compra · ${p.list || 'Principal'}`,
+      amount: Number(p.totalCost) || 0,
+      paidByUid: p.paidByUid,
+      paidBy: p.paidBy,
+      participants: p.participants,
+      membersSnapshot: p.membersSnapshot,
+      at: p.finishedAt
+    })),
+    ...expenses.map(e => ({
+      id: e.id,
+      kind: 'expense',
+      description: e.description || 'Gasto',
+      amount: Number(e.amount) || 0,
+      paidByUid: e.paidByUid,
+      paidBy: e.paidBy,
+      participants: e.participants,
+      membersSnapshot: e.membersSnapshot,
+      at: e.at
+    }))
+  ];
+
+  const balances = computeBalances(entries, settlements, members).sort((a,b) => b.balance - a.balance);
   const suggestions = suggestSettlements(balances);
-  const totalSpent = purchases.reduce((s,p) => s + (Number(p.totalCost) || 0), 0);
+  const totalSpent = entries.reduce((s,e) => s + e.amount, 0);
 
   const rows = balances.filter(b => Math.abs(b.balance) > 0.005 || b.paid > 0 || b.share > 0).map(b => {
     const cls = b.balance > 0 ? 'ac' : b.balance < 0 ? 'red' : 'tx3';
@@ -2511,20 +2628,155 @@ async function openBalances(){
         <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace">${formatEUR(s.amount)}</div>
       </div>
     `).join('')}
-  ` : `<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Todo saldado ✓</div>`;
+  ` : `<div style="text-align:center;color:var(--tx3);font-size:13px;padding:.75rem">Todo saldado ✓</div>`;
 
   const summary = `
     <div style="font-size:12px;color:var(--tx3);margin-bottom:10px;font-family:'DM Mono',monospace">
-      ${purchases.length} compra${purchases.length===1?'':'s'} · ${formatEUR(totalSpent)} en total · ${members.length} miembro${members.length===1?'':'s'}
+      ${entries.length} gasto${entries.length===1?'':'s'} · ${formatEUR(totalSpent)} en total · ${members.length} miembro${members.length===1?'':'s'}
     </div>
   `;
 
-  cont.innerHTML = summary + (rows || '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Sin gastos todavía.</div>') + suggestBlock;
+  const sortedEntries = entries.slice().sort((a,b) => (b.at || 0) - (a.at || 0));
+  const entriesBlock = sortedEntries.length ? `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin:1rem 0 .5rem 2px">Gastos</div>
+    <div id="balancesEntries"></div>
+  ` : '';
+
+  const settlementsSorted = settlements.slice().sort((a,b) => (b.at || 0) - (a.at || 0));
+  const settlementsBlock = settlementsSorted.length ? `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin:1rem 0 .5rem 2px">Pagos entre personas</div>
+    <div id="balancesSettlements"></div>
+  ` : '';
+
+  cont.innerHTML =
+    summary +
+    (rows || '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Sin gastos todavía.</div>') +
+    suggestBlock +
+    entriesBlock +
+    settlementsBlock;
+
+  if(sortedEntries.length){
+    const entCont = $('balancesEntries');
+    sortedEntries.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'expense-row';
+      const nP = (e.participants?.length) || (e.membersSnapshot?.length) || members.length;
+      const dateStr = e.at ? new Date(e.at).toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit' }) : '';
+      const icon = e.kind === 'purchase' ? '🛒' : '💳';
+      row.innerHTML = `
+        <div class="exp-info">
+          <div class="exp-title">${icon} ${esc(e.description)}</div>
+          <div class="exp-meta">${dateStr ? dateStr + ' · ' : ''}${esc(e.paidBy || '?')} pagó · ${nP} pers.</div>
+        </div>
+        <div class="exp-amt">${formatEUR(e.amount)}</div>
+        <button class="exp-del" title="Eliminar">✕</button>
+      `;
+      row.querySelector('.exp-del').onclick = async () => {
+        if(!confirm(`¿Eliminar "${e.description}" (${formatEUR(e.amount)})?`)) return;
+        const path = e.kind === 'purchase'
+          ? `listas/${room}/_purchaseHistory/${e.id}`
+          : `listas/${room}/_expenses/${e.id}`;
+        try{
+          await remove(ref(db, path));
+          openBalances();
+        }catch(err){
+          toast('Error al eliminar: ' + err.message);
+        }
+      };
+      entCont.appendChild(row);
+    });
+  }
+
+  if(settlementsSorted.length){
+    const stCont = $('balancesSettlements');
+    settlementsSorted.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'expense-row';
+      const dateStr = s.at ? new Date(s.at).toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit' }) : '';
+      row.innerHTML = `
+        <div class="exp-info">
+          <div class="exp-title">💸 ${esc(s.from || '?')} → ${esc(s.to || '?')}</div>
+          <div class="exp-meta">${dateStr}</div>
+        </div>
+        <div class="exp-amt">${formatEUR(s.amount)}</div>
+        <button class="exp-del" title="Eliminar">✕</button>
+      `;
+      row.querySelector('.exp-del').onclick = async () => {
+        if(!confirm(`¿Eliminar pago de ${s.from} a ${s.to} (${formatEUR(s.amount)})?`)) return;
+        try{
+          await remove(ref(db, `listas/${room}/_settlements/${s.id}`));
+          openBalances();
+        }catch(err){
+          toast('Error al eliminar: ' + err.message);
+        }
+      };
+      stCont.appendChild(row);
+    });
+  }
 }
 
 $('si-balances').onclick = openBalances;
 $('balancesClose').onclick = () => $('balancesModal').classList.remove('on');
 $('balancesModal').onclick = e => { if(e.target === $('balancesModal')) $('balancesModal').classList.remove('on'); };
+
+async function openExpenseModal(){
+  const members = await loadApprovedMembersOnce();
+  const pool = members.length ? members : [{ uid, name: user || 'Yo' }];
+  const payerSel = $('expensePayer');
+  payerSel.innerHTML = '';
+  pool.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.uid;
+    opt.textContent = m.name || m.uid;
+    if(m.uid === uid) opt.selected = true;
+    payerSel.appendChild(opt);
+  });
+  renderParticipantChips('expenseParticipants', pool, pool.map(m => m.uid));
+  $('expenseDesc').value = '';
+  $('expenseAmount').value = '';
+  $('expenseModal').classList.add('on');
+  setTimeout(() => $('expenseDesc').focus(), 150);
+}
+
+$('balancesAddExpense').onclick = openExpenseModal;
+$('expenseCancel').onclick = () => $('expenseModal').classList.remove('on');
+$('expenseModal').onclick = e => { if(e.target === $('expenseModal')) $('expenseModal').classList.remove('on'); };
+
+$('expenseOk').onclick = async () => {
+  const desc = $('expenseDesc').value.trim();
+  const amount = parseFloat(String($('expenseAmount').value).replace(',','.'));
+  const payerUid = $('expensePayer').value;
+  let participants = collectSelectedUids('expenseParticipants');
+
+  if(!desc){ toast('Pon una descripción'); return; }
+  if(!Number.isFinite(amount) || amount <= 0){ toast('Pon un importe válido'); return; }
+  if(!participants.length){ toast('Elige al menos un participante'); return; }
+
+  const members = await loadApprovedMembersOnce();
+  const payerName = members.find(m => m.uid === payerUid)?.name || user;
+
+  spin('Guardando gasto...');
+  try{
+    await set(push(ref(db,`listas/${room}/_expenses`)), {
+      description: desc,
+      amount: Math.round(amount * 100) / 100,
+      paidByUid: payerUid,
+      paidBy: payerName,
+      participants,
+      membersSnapshot: members.map(m => ({ uid:m.uid, name:m.name || m.uid })),
+      at: Date.now(),
+      createdByUid: uid,
+      createdBy: user
+    });
+    toast(`Gasto guardado · ${formatEUR(amount)} ✓`);
+    $('expenseModal').classList.remove('on');
+    if($('balancesModal').classList.contains('on')) openBalances();
+  }catch(e){
+    toast('Error: ' + e.message);
+  }finally{
+    unspin();
+  }
+};
 
 $('balancesRecord').onclick = async () => {
   const members = await loadApprovedMembersOnce();
