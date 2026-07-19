@@ -34,8 +34,17 @@
     html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased}
     body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height:100dvh}
 
-    #setup,#waiting{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem 1.5rem;text-align:center}
-    #waiting{display:none}
+    #setup,#waiting,#picker{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem 1.5rem;text-align:center}
+    #waiting,#picker{display:none}
+    #picker h1,#picker p{font-size:14px;color:var(--tx2);line-height:1.6}
+    #picker h1{font-size:28px;font-weight:600;letter-spacing:-.5px;margin-bottom:.5rem;color:var(--tx)}
+    #picker p{margin-bottom:2rem}
+    .room-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px;border:1px solid var(--bd2);border-radius:var(--rs);background:var(--sf);color:var(--tx);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;margin-bottom:8px;text-align:left}
+    .room-btn:active{background:var(--sf2)}
+    .room-btn .rlbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .room-btn .rmeta{font-size:11px;font-weight:400;color:var(--tx3);font-family:'DM Mono',monospace;flex-shrink:0}
+    .picker-actions{display:flex;flex-direction:column;gap:8px;margin-top:1rem}
+    .picker-link{background:none;border:none;color:var(--tx3);font-size:13px;cursor:pointer;padding:8px;font-family:'DM Sans',sans-serif;text-decoration:underline}
     #setup h1,#waiting h2{font-size:28px;font-weight:600;letter-spacing:-.5px;margin-bottom:.5rem}
     #setup p,#waiting p{font-size:14px;color:var(--tx2);margin-bottom:2rem;line-height:1.6}
     .card{width:100%;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:1.5rem;margin-bottom:1rem}
@@ -248,6 +257,20 @@
   </div>
 </div>
 
+<div id="picker">
+  <div style="font-size:48px;margin-bottom:1rem">🛒</div>
+  <h1>Mercao</h1>
+  <p>Elige la sala a la que quieres entrar.</p>
+  <div class="card">
+    <h2>Tus salas</h2>
+    <div id="pickerRooms"></div>
+    <div class="picker-actions">
+      <button class="gbtn" id="pickerNewRoom">➕ Nueva sala</button>
+      <button class="picker-link" id="pickerChangeAccount">Cambiar cuenta de Firebase</button>
+    </div>
+  </div>
+</div>
+
 <div id="waiting">
   <div class="wait-spinner"></div>
   <h2>Esperando aprobación</h2>
@@ -369,6 +392,7 @@
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
     <button class="sbBtn" id="si-rename">✏️ Cambiar mi nombre</button>
+    <button class="sbBtn" id="si-picker">🏠 Menú de salas</button>
     <button class="sbBtn" id="si-notif" style="display:none">🔔 Activar avisos de nuevos usuarios</button>
     <button class="sbBtn" id="si-adminkey" style="display:none">🔑 Ver mi clave de admin</button>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
@@ -1143,10 +1167,105 @@ const saved = (() => {
 
 if(invited){
   // No autoconectamos: obligamos a teclear el nombre desde el botón "Unirse".
-  // El foco al campo de nombre para que se vea claro qué hay que hacer.
   setTimeout(() => $('sname').focus(), 100);
 }else if(saved){
-  doConnect(saved.projectId, saved.apiKey, saved.roomId, saved.userName || 'Yo');
+  // Con credenciales guardadas, mostramos el picker en vez de autoconectar a saco.
+  // Así el usuario elige a qué sala entrar cuando abre la PWA.
+  showPicker();
+}
+
+function collectPickerRooms(){
+  const rooms = getSavedRooms();
+  const map = new Map(rooms.map(r => [r.id, r]));
+  // Aseguramos que la última sala guardada en SK aparezca aunque no esté en RK.
+  if(saved?.roomId && !map.has(saved.roomId)){
+    map.set(saved.roomId, { id: saved.roomId, label: saved.roomId, lastUsed: 0 });
+  }
+  return Array.from(map.values()).sort((a,b) => (b.lastUsed || 0) - (a.lastUsed || 0));
+}
+
+function timeAgo(ts){
+  if(!ts) return '';
+  const secs = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+  if(secs < 60) return 'hace un momento';
+  const mins = Math.floor(secs / 60);
+  if(mins < 60) return `hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return `hace ${hrs} h`;
+  const days = Math.floor(hrs / 24);
+  if(days < 30) return `hace ${days} d`;
+  const months = Math.floor(days / 30);
+  return `hace ${months} m`;
+}
+
+function showPicker(){
+  $('setup').style.display = 'none';
+  $('waiting').style.display = 'none';
+  $('picker').style.display = 'flex';
+
+  const cont = $('pickerRooms');
+  cont.innerHTML = '';
+
+  const rooms = collectPickerRooms();
+  if(!rooms.length){
+    // No hay ninguna sala guardada: caemos al formulario completo.
+    hidePicker();
+    return;
+  }
+
+  rooms.forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = 'room-btn';
+    btn.type = 'button';
+    btn.innerHTML = `
+      <span class="rlbl">🏠 ${esc(r.label || r.id)}</span>
+      <span class="rmeta">${esc(timeAgo(r.lastUsed))}</span>
+    `;
+    btn.onclick = () => enterRoomFromPicker(r.id);
+    cont.appendChild(btn);
+  });
+}
+
+function hidePicker(){
+  $('picker').style.display = 'none';
+  $('setup').style.display = 'flex';
+}
+
+function enterRoomFromPicker(roomId){
+  if(!saved?.projectId || !saved?.apiKey){
+    hidePicker();
+    return;
+  }
+  // Mostramos el setup card para que se vea el error si Firebase / Auth falla.
+  $('picker').style.display = 'none';
+  $('setup').style.display = 'flex';
+  const nextRoom = normalizeRoomName(roomId);
+  saveRoomLocal(nextRoom, nextRoom);
+  localStorage.setItem(SK, JSON.stringify({
+    ...saved,
+    roomId: nextRoom,
+    userName: saved.userName || 'Yo'
+  }));
+  doConnect(saved.projectId, saved.apiKey, nextRoom, saved.userName || 'Yo');
+}
+
+if($('pickerNewRoom')){
+  $('pickerNewRoom').onclick = () => {
+    const name = (prompt('Nombre de la nueva sala:', '') || '').trim();
+    if(!name) return;
+    const nextRoom = normalizeRoomName(name);
+    saveRoomLocal(nextRoom, name);
+    enterRoomFromPicker(nextRoom);
+  };
+}
+
+if($('pickerChangeAccount')){
+  $('pickerChangeAccount').onclick = () => {
+    if(!confirm('¿Cambiar la cuenta de Firebase? Tendrás que volver a introducir Project ID y API Key.')) return;
+    localStorage.removeItem(SK);
+    hidePicker();
+    location.reload();
+  };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2508,6 +2627,14 @@ $('adminKeyModal').onclick = e => { if(e.target === $('adminKeyModal')) $('admin
 $('adminKeyCopy').onclick = () => {
   navigator.clipboard.writeText(adminSecret).then(() => toast('Clave copiada ✓'));
 };
+
+if($('si-picker')){
+  $('si-picker').onclick = () => {
+    // Recargamos para descartar listeners activos de la sala actual. Al abrir sin
+    // params, la app arranca en el picker.
+    location.href = location.pathname;
+  };
+}
 
 $('si-history').onclick = openPurchaseHistory;
 $('historyClose').onclick = () => $('historyModal').classList.remove('on');
