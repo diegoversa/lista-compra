@@ -291,6 +291,9 @@
 
 <div id="app">
   <div class="topbar">
+    <button class="icoBtn" id="navPrev" title="Sala anterior" style="display:none">‹</button>
+    <button class="icoBtn" id="navHome" title="Menú principal">🏠</button>
+    <button class="icoBtn" id="navNext" title="Sala siguiente" style="display:none">›</button>
     <div class="tabs" id="tabs"></div>
     <button class="icoBtn" id="newtab" title="Nueva lista">+</button>
     <div class="dot sy" id="dot"></div>
@@ -407,6 +410,7 @@
     <button class="sbBtn" id="si-notif" style="display:none">🔔 Activar avisos de nuevos usuarios</button>
     <button class="sbBtn" id="si-adminkey" style="display:none">🔑 Ver mi clave de admin</button>
     <button class="sbBtn accent" id="si-share">📤 Compartir sala</button>
+    <button class="sbBtn" id="si-a2hs">📲 Añadir a pantalla de inicio</button>
     <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
     <button class="sbBtn" id="si-balances">💰 Balances (quién debe a quién)</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
@@ -543,6 +547,24 @@
     <div class="sactions">
       <button class="scancel" id="adminKeyClose">Cerrar</button>
       <button class="sok" id="adminKeyCopy">Copiar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="a2hsModal">
+  <div class="sheet">
+    <div class="stitle">📲 Añadir a pantalla de inicio</div>
+    <div class="ssub">La app funciona como PWA: se puede añadir a la pantalla de inicio y arrancar en pantalla completa como una app nativa. He preparado la URL como <b>acceso directo al menú principal</b>, así el shortcut te lleva al selector de salas y no queda pegado a una en concreto.</div>
+    <ol style="font-size:14px;color:var(--tx);line-height:1.7;padding-left:1.2rem;margin-bottom:1rem">
+      <li>Pulsa el botón <b>Compartir</b> de Safari (el cuadrado con la flecha).</li>
+      <li>Baja hasta <b>Añadir a pantalla de inicio</b>.</li>
+      <li>Ponle un nombre y pulsa <b>Añadir</b>.</li>
+    </ol>
+    <div style="font-size:12px;color:var(--tx3);line-height:1.6;background:var(--sf2);padding:10px 12px;border-radius:var(--rs);margin-bottom:1rem">
+      💡 Al abrir el acceso directo verás el menú con todas tus salas. Cuando cierres esta ventana volvemos a la sala actual.
+    </div>
+    <div class="sactions">
+      <button class="scancel" id="a2hsClose">Entendido</button>
     </div>
   </div>
 </div>
@@ -1214,7 +1236,16 @@ uid = (() => {
   return u;
 })();
 
-const invited = !!(ip && ik && ir);
+// Tres tipos de URL:
+// - "invited": p+k+r sin id → invitación de otro, forzamos teclear nombre.
+// - "ownBookmark": p+k+r con id → acceso directo a una sala concreta, autoconecta.
+// - "menuShortcut": p+k con id pero sin r → acceso directo al MENÚ PRINCIPAL:
+//     populamos SK con las credenciales de la URL para poder mostrar el picker
+//     aunque el localStorage del PWA aislado esté vacío.
+const hasFullCreds = !!(ip && ik && ir);
+const invited = hasFullCreds && !iid;
+const ownBookmark = hasFullCreds && !!iid;
+const menuShortcut = !!(ip && ik && !ir && iid);
 
 if(invited){
   // Invitación por URL: prellenamos p/k/r y los ocultamos, pero el receptor SIEMPRE
@@ -1235,7 +1266,7 @@ if(invited){
   if(setupIntro) setupIntro.textContent = `Te han invitado a "${ir}". Escribe tu nombre para entrar.`;
 }
 
-const saved = (() => {
+let saved = (() => {
   try{
     const v = JSON.parse(localStorage.getItem(SK));
     if(v?.projectId && v?.apiKey && v?.roomId) return v;
@@ -1243,12 +1274,31 @@ const saved = (() => {
   return null;
 })();
 
+// Si venimos por un acceso directo del menú (p+k+id sin r), guardamos las credenciales
+// en SK para que el picker las pueda usar. roomId queda como referencia por si el usuario
+// no elige nada (no se autoconecta, solo sirve de fallback en flujos posteriores).
+if(menuShortcut && !saved){
+  const seed = {
+    projectId: ip,
+    apiKey: ik,
+    roomId: 'familia',
+    userName: iu || 'Yo'
+  };
+  localStorage.setItem(SK, JSON.stringify(seed));
+  saved = seed;
+}
+
 if(invited){
   // No autoconectamos: obligamos a teclear el nombre desde el botón "Unirse".
   setTimeout(() => $('sname').focus(), 100);
+}else if(ownBookmark){
+  // Acceso directo propio a una sala concreta: autoconecta sin picker.
+  doConnect(ip, ik, ir, iu || (saved?.userName) || 'Yo');
+}else if(menuShortcut){
+  // Acceso directo al menú principal (URL sin r): siempre muestra el picker.
+  showPicker();
 }else if(saved){
-  // Con credenciales guardadas, mostramos el picker en vez de autoconectar a saco.
-  // Así el usuario elige a qué sala entrar cuando abre la PWA.
+  // Credenciales guardadas: por defecto también picker (mismo criterio que antes).
   showPicker();
 }
 
@@ -1537,6 +1587,7 @@ function launchApp(){
   if(amAdmin) watchPending();
 
   embedParamsInUrl();
+  updateSalaNav();
 }
 
 function embedParamsInUrl(){
@@ -3152,6 +3203,81 @@ $('adminKeyModal').onclick = e => { if(e.target === $('adminKeyModal')) $('admin
 $('adminKeyCopy').onclick = () => {
   navigator.clipboard.writeText(adminSecret).then(() => toast('Clave copiada ✓'));
 };
+
+// Navegación por flechas entre salas. Se actualizan al arrancar y cuando cambia RK.
+function updateSalaNav(){
+  if(!$('navHome')) return;
+  const rooms = getSavedRooms();
+  const others = rooms.filter(r => r.id !== room);
+  const showArrows = others.length > 0;
+  $('navPrev').style.display = showArrows ? 'flex' : 'none';
+  $('navNext').style.display = showArrows ? 'flex' : 'none';
+}
+
+function jumpToRoom(delta){
+  const rooms = getSavedRooms();
+  if(!rooms.length) return;
+  const idx = rooms.findIndex(r => r.id === room);
+  const start = idx < 0 ? 0 : idx;
+  const nextIdx = ((start + delta) % rooms.length + rooms.length) % rooms.length;
+  const next = rooms[nextIdx];
+  if(!next || next.id === room) return;
+  switchRoomTo(next.id);
+}
+
+if($('navHome')){
+  $('navHome').onclick = () => {
+    // Vuelve al menú principal descartando listeners con una recarga limpia.
+    location.href = location.pathname;
+  };
+}
+if($('navPrev')){
+  $('navPrev').onclick = () => jumpToRoom(-1);
+}
+if($('navNext')){
+  $('navNext').onclick = () => jumpToRoom(1);
+}
+
+// Guardamos la URL "de sala" para restaurarla cuando el usuario cierre el modal.
+let a2hsRestoreUrl = null;
+
+function menuShortcutUrl(){
+  const s = JSON.parse(localStorage.getItem(SK) || '{}');
+  if(!s.projectId || !s.apiKey) return null;
+  const params = new URLSearchParams();
+  params.set('p', s.projectId);
+  params.set('k', s.apiKey);
+  if(s.userName) params.set('u', s.userName);
+  if(uid) params.set('id', uid);
+  // No metemos r ni l a propósito: es el shortcut al menú.
+  return location.pathname + '?' + params.toString();
+}
+
+if($('si-a2hs')){
+  $('si-a2hs').onclick = () => {
+    // 1) Guardamos la URL actual (sala) por si el usuario cancela sin añadir shortcut.
+    a2hsRestoreUrl = location.href;
+    // 2) Escribimos una URL de MENÚ en la barra (sin r/l). Es la que Safari captura
+    //    cuando el usuario pulse "Añadir a pantalla de inicio".
+    const menu = menuShortcutUrl();
+    if(menu) history.replaceState(null, '', menu);
+    closeSidebar();
+    $('a2hsModal').classList.add('on');
+  };
+}
+
+if($('a2hsClose')){
+  const closeA2HS = () => {
+    $('a2hsModal').classList.remove('on');
+    // Restauramos la URL de sala para que la app siga funcionando en esta pestaña.
+    if(a2hsRestoreUrl){
+      history.replaceState(null, '', a2hsRestoreUrl);
+      a2hsRestoreUrl = null;
+    }
+  };
+  $('a2hsClose').onclick = closeA2HS;
+  $('a2hsModal').onclick = e => { if(e.target === $('a2hsModal')) closeA2HS(); };
+}
 
 if($('si-picker')){
   $('si-picker').onclick = () => {
