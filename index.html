@@ -102,6 +102,20 @@
     #scanCounter.on{display:block}
 
     .inputwrap{position:relative;margin-bottom:.75rem}
+    .ac-list{position:absolute;top:calc(100% - .25rem);left:0;right:0;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rs);z-index:60;max-height:60vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.15);display:none;margin-top:4px}
+    .ac-list.on{display:block}
+    .ac-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bd);background:var(--sf)}
+    .ac-item:last-child{border-bottom:none}
+    .ac-item:active,.ac-item.on{background:var(--sf2)}
+    .ac-item .ai-emoji,.ac-item img{width:34px;height:34px;background:var(--sf2);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;object-fit:contain}
+    .ac-item .ai-info{flex:1;min-width:0}
+    .ac-item .ai-name{font-size:14px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ac-item .ai-meta{font-size:11px;color:var(--tx3);font-family:'DM Mono',monospace;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ac-item .ai-store{display:inline-block;font-size:10px;background:var(--acl);color:var(--ac);padding:1px 6px;border-radius:999px;margin-right:4px;font-weight:600;font-family:'DM Sans',sans-serif}
+    .ac-item .ai-price{font-size:13px;font-weight:700;color:var(--ac);font-family:'DM Mono',monospace;flex-shrink:0;white-space:nowrap;text-align:right}
+    .ac-item .ai-new{font-size:11px;color:var(--tx3);font-style:italic;margin-left:auto}
+    .ac-item.ai-new-row{color:var(--tx2)}
+    .ac-item.ai-new-row .ai-emoji{background:var(--acl);color:var(--ac)}
     .inputrow{display:flex;gap:6px}
     .inputrow input{flex:1;padding:11px 13px;border:1px solid var(--bd2);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--sf);color:var(--tx);outline:none}
     .inputrow input:focus{border-color:var(--ac)}
@@ -354,7 +368,8 @@
         </select>
         <button class="addbtn" id="addbtn">Buscar</button>
       </div>
-      <div class="manualSearchHint">Escribe un producto y pulsa Buscar. Si aparece en la base de datos, lo eliges; si no, puedes añadirlo a mano.</div>
+      <div class="ac-list" id="acList"></div>
+      <div class="manualSearchHint">Escribe un producto. Si ya lo compraste antes, aparecerá con su precio guardado y un tap lo añade con todo. Si es nuevo, pulsa <b>Buscar</b> para buscar online o Enter para añadirlo tal cual.</div>
     </div>
 
     <div class="frecs" id="frecs"></div>
@@ -1978,9 +1993,10 @@ function openModal(code, sub, prefill, title, img, cat){
   $('mtitle').textContent = title || 'Añadir producto';
   $('msub').textContent = sub || '';
   $('mname').value = prefill || '';
-  $('munitm').value = '';
-  $('mprice').value = '';
-  $('mcat').value = cat || 'otros';
+  const prev = lookupHistByName(prefill);
+  $('munitm').value = prev?.unit || '';
+  $('mprice').value = prev?.price ? Number(prev.price).toFixed(2) : '';
+  $('mcat').value = cat || prev?.cat || 'otros';
 
   const im = $('mimg');
   if(img){
@@ -2026,11 +2042,158 @@ $('modal').onclick = e => { if(e.target === $('modal')) closeModal(); };
 let manualTypedName = '';
 let manualTypedUnit = '';
 
-$('addbtn').onclick = () => searchManualProduct();
+$('addbtn').onclick = () => {
+  hideAcList();
+  searchManualProduct();
+};
 
 $('minput').addEventListener('keydown', e => {
-  if(e.key === 'Enter') searchManualProduct();
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    // Si hay un item resaltado en el autocomplete, elegir ese.
+    const selected = $('acList').querySelector('.ac-item.on');
+    if(selected){ selected.click(); return; }
+    // Si escribiste un producto que ya conocemos, añadirlo directamente sin buscar online.
+    const q = $('minput').value.trim();
+    const prev = q ? lookupHistByName(q) : null;
+    if(prev){
+      addItem(prev.name, prev.brand || '', '', prev.cat || 'otros', prev.unit || $('munit').value || '', prev.img || '', prev.source || 'Reciente', prev.price || 0);
+      $('minput').value = '';
+      $('munit').value = '';
+      hideAcList();
+      return;
+    }
+    hideAcList();
+    searchManualProduct();
+  }
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    moveAcSelection(e.key === 'ArrowDown' ? 1 : -1);
+  }
+  if(e.key === 'Escape'){
+    hideAcList();
+  }
 });
+
+$('minput').addEventListener('input', () => {
+  clearTimeout($('minput')._acT);
+  $('minput')._acT = setTimeout(() => renderAcList($('minput').value), 100);
+});
+
+$('minput').addEventListener('focus', () => {
+  if($('minput').value.trim().length >= 1) renderAcList($('minput').value);
+});
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('.inputwrap')) hideAcList();
+});
+
+function hideAcList(){
+  const list = $('acList');
+  list.classList.remove('on');
+  list.innerHTML = '';
+}
+
+function moveAcSelection(delta){
+  const list = $('acList');
+  if(!list.classList.contains('on')) return;
+  const items = Array.from(list.querySelectorAll('.ac-item'));
+  if(!items.length) return;
+  const idx = items.findIndex(el => el.classList.contains('on'));
+  const next = ((idx < 0 ? -1 : idx) + delta + items.length) % items.length;
+  items.forEach((el,i) => el.classList.toggle('on', i === next));
+  items[next].scrollIntoView({ block:'nearest' });
+}
+
+function renderAcList(rawQuery){
+  const list = $('acList');
+  const q = String(rawQuery || '').trim().toLowerCase();
+  if(q.length < 1){ hideAcList(); return; }
+
+  // Palabras que empiezan (mejor) vs contienen la query.
+  const scored = hist
+    .map(h => {
+      const n = (h.name || '').toLowerCase();
+      if(!n.includes(q)) return null;
+      let s = 0;
+      if(n === q) s += 100;
+      else if(n.startsWith(q)) s += 50;
+      // Prioriza la misma "tienda" (nombre de la lista actual).
+      if(h.store === curList) s += 20;
+      // Recencia: usados hace menos suman más.
+      const days = (Date.now() - (h.lastAdded || 0)) / 86400000;
+      s += Math.max(0, 20 - days);
+      // Extra si tiene precio guardado.
+      if(h.price) s += 5;
+      if(h.img) s += 3;
+      return { h, s };
+    })
+    .filter(Boolean)
+    .sort((a,b) => b.s - a.s)
+    .slice(0, 8);
+
+  list.innerHTML = '';
+  scored.forEach(({ h }, i) => {
+    const emoji = productEmoji(h.name) || (CATS[h.cat] || CATS.otros).i;
+    const priceTxt = h.price ? formatEUR(h.price) : '';
+    const meta = [
+      h.brand ? esc(h.brand) : '',
+      (CATS[h.cat] || CATS.otros).l
+    ].filter(Boolean).join(' · ');
+    const storeBadge = h.store && h.store !== curList ? `<span class="ai-store">${esc(h.store)}</span>` : '';
+
+    const item = document.createElement('div');
+    item.className = 'ac-item' + (i === 0 ? ' on' : '');
+    item.innerHTML = `
+      ${h.img ? `<img src="${esc(h.img)}" loading="lazy" />` : `<div class="ai-emoji">${emoji}</div>`}
+      <div class="ai-info">
+        <div class="ai-name">${esc(h.name)}</div>
+        <div class="ai-meta">${storeBadge}${esc(meta)}</div>
+      </div>
+      ${priceTxt ? `<div class="ai-price">${priceTxt}</div>` : ''}
+    `;
+    item.onmousedown = (e) => e.preventDefault(); // evita que el input pierda foco antes del click
+    item.onclick = () => {
+      addItem(h.name, h.brand || '', '', h.cat || 'otros', h.unit || $('munit').value || '', h.img || '', h.source || 'Reciente', h.price || 0);
+      $('minput').value = '';
+      $('munit').value = '';
+      hideAcList();
+      $('minput').focus();
+    };
+    list.appendChild(item);
+  });
+
+  // Si la query es una palabra nueva que no coincide exactamente con nada del historial,
+  // ofrecemos añadirla tal cual como último item.
+  const exactMatch = hist.some(h => (h.name || '').toLowerCase() === q);
+  if(!exactMatch && q.length >= 2){
+    const emoji = productEmoji(rawQuery) || CATS[guesscat(rawQuery)].i || '📦';
+    const item = document.createElement('div');
+    item.className = 'ac-item ai-new-row';
+    item.innerHTML = `
+      <div class="ai-emoji">${emoji}</div>
+      <div class="ai-info">
+        <div class="ai-name">Añadir "${esc(rawQuery)}"</div>
+        <div class="ai-meta">Producto nuevo · sin precio</div>
+      </div>
+      <span class="ai-new">+</span>
+    `;
+    item.onmousedown = (e) => e.preventDefault();
+    item.onclick = () => {
+      const name = rawQuery.trim();
+      const unit = $('munit').value;
+      addItem(name, '', '', guesscat(name), unit, '', 'Manual', 0);
+      $('minput').value = '';
+      $('munit').value = '';
+      hideAcList();
+      $('minput').focus();
+    };
+    list.appendChild(item);
+  }
+
+  if(list.children.length){ list.classList.add('on'); }
+  else{ hideAcList(); }
+}
 
 async function searchManualProduct(){
   const v = $('minput').value.trim();
@@ -2108,9 +2271,27 @@ $('manualSearchModal').onclick = e => { if(e.target === $('manualSearchModal')) 
 // ─────────────────────────────────────────────────────────────
 // ITEMS
 // ─────────────────────────────────────────────────────────────
+function lookupHistByName(name){
+  const q = String(name || '').trim().toLowerCase();
+  if(!q) return null;
+  return hist.find(h => (h.name || '').toLowerCase() === q) || null;
+}
+
 function addItem(name, brand='', barcode='', cat='otros', unit='', img='', source='', price=0){
   name = String(name || '').trim();
   if(!name) return;
+
+  // Herencia automática desde historial: si no nos dieron precio/marca/imagen/etc.
+  // pero ya conocemos el producto de antes, arrastra lo que sepamos.
+  const prev = lookupHistByName(name);
+  if(prev){
+    if(!price && prev.price) price = prev.price;
+    if(!brand && prev.brand) brand = prev.brand;
+    if(!img && prev.img) img = prev.img;
+    if(!unit && prev.unit) unit = prev.unit;
+    if((!cat || cat === 'otros') && prev.cat) cat = prev.cat;
+    if(!source && prev.source) source = prev.source;
+  }
 
   const exact = Object.entries(items).find(([,v]) => (v.name || '').toLowerCase() === name.toLowerCase());
 
@@ -2138,7 +2319,7 @@ function addItem(name, brand='', barcode='', cat='otros', unit='', img='', sourc
   });
 
   const hi = hist.findIndex(h => (h.name || '').toLowerCase() === name.toLowerCase());
-  const histEntry = { name, brand, cat, unit, img, source, lastAdded:Date.now() };
+  const histEntry = { name, brand, cat, unit, img, source, lastAdded:Date.now(), store:curList };
   if(price) histEntry.price = price;
   if(hi >= 0){
     hist[hi] = { ...hist[hi], ...histEntry };
@@ -2148,7 +2329,7 @@ function addItem(name, brand='', barcode='', cat='otros', unit='', img='', sourc
   }
 
   localStorage.setItem(HK, JSON.stringify(hist));
-  toast(`Añadido: ${name}`);
+  toast(price ? `Añadido: ${name} · ${formatEUR(price)}` : `Añadido: ${name}`);
 }
 
 function formatEUR(v){
