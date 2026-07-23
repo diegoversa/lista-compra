@@ -150,6 +150,10 @@
     .chip-row .chip{padding:7px 12px;border-radius:999px;border:1.5px solid var(--bd2);background:var(--sf);color:var(--tx2);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
     .chip-row .chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
     .chip-row .chip-all{border-style:dashed;color:var(--tx3);font-weight:500}
+    .split-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:12px}
+    .split-summary .split-text{font-size:13px;color:var(--tx);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .split-summary .split-edit{background:none;border:none;color:var(--ac);font-size:12px;font-weight:600;cursor:pointer;padding:2px 8px;font-family:'DM Sans',sans-serif;flex-shrink:0}
+    .split-summary .split-edit:active{opacity:.7}
     .expense-row{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px}
     .expense-row .exp-info{flex:1;min-width:0}
     .expense-row .exp-title{font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -554,7 +558,11 @@
     <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Quién ha pagado?</label>
     <select id="finishShopPayer" style="margin-bottom:12px"></select>
     <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Entre quiénes se reparte?</label>
-    <div class="chip-row" id="finishShopParticipants"></div>
+    <div class="split-summary" id="finishShopSplitSummary">
+      <span class="split-text" id="finishShopSplitText">Todos</span>
+      <button type="button" class="split-edit" id="finishShopSplitEdit">Cambiar</button>
+    </div>
+    <div class="chip-row" id="finishShopParticipants" style="display:none"></div>
     <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Total pagado (opcional, sobreescribe la suma)</label>
     <input id="finishShopTotalOverride" type="number" step="0.01" min="0" inputmode="decimal" placeholder="€" />
     <div class="sactions">
@@ -588,7 +596,11 @@
     <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Quién ha pagado?</label>
     <select id="expensePayer" style="margin-bottom:12px"></select>
     <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">¿Entre quiénes se reparte?</label>
-    <div class="chip-row" id="expenseParticipants"></div>
+    <div class="split-summary" id="expenseSplitSummary">
+      <span class="split-text" id="expenseSplitText">Todos</span>
+      <button type="button" class="split-edit" id="expenseSplitEdit">Cambiar</button>
+    </div>
+    <div class="chip-row" id="expenseParticipants" style="display:none"></div>
     <div class="sactions">
       <button class="scancel" id="expenseCancel">Cancelar</button>
       <button class="sok" id="expenseOk">Guardar</button>
@@ -2358,7 +2370,20 @@ async function finishShopping(){
     payerSelect.appendChild(opt);
   });
 
-  renderParticipantChips('finishShopParticipants', memberPool, memberPool.map(m => m.uid));
+  // Recuperar última selección de esta sala. Si no coincide con la lista actual
+  // de miembros (alguien se ha ido/añadido), se filtra y se cae a "todos" si quedaría vacío.
+  const lastSel = getLastParticipants();
+  const validLast = lastSel && lastSel.filter(u => memberPool.some(m => m.uid === u));
+  const initialSel = (validLast && validLast.length ? validLast : memberPool.map(m => m.uid));
+
+  bindSplitSummary({
+    summaryId: 'finishShopSplitSummary',
+    textId: 'finishShopSplitText',
+    editId: 'finishShopSplitEdit',
+    chipRowId: 'finishShopParticipants',
+    members: memberPool,
+    initialSelected: initialSel
+  });
 
   $('finishShopTotalOverride').value = totalCost ? totalCost.toFixed(2) : '';
   $('finishShopSummary').textContent = `${checked.length} producto${checked.length>1?'s':''}${totalCost ? ` · ${formatEUR(totalCost)}` : ''}`;
@@ -2377,6 +2402,7 @@ async function commitFinishShopping(){
   const payerName = members.find(m => m.uid === payerUid)?.name || user;
   let participants = collectSelectedUids('finishShopParticipants');
   if(!participants.length) participants = members.length ? members.map(m => m.uid) : [uid];
+  saveLastParticipants(participants);
 
   const now = Date.now();
   const purchase = {
@@ -2440,7 +2466,7 @@ function loadApprovedMembersOnce(){
   });
 }
 
-function renderParticipantChips(containerId, members, selectedUids){
+function renderParticipantChips(containerId, members, selectedUids, onChange){
   const cont = $(containerId);
   cont.innerHTML = '';
   const selected = new Set(selectedUids || members.map(m => m.uid));
@@ -2451,11 +2477,13 @@ function renderParticipantChips(containerId, members, selectedUids){
     chip.className = 'chip' + (selected.has(m.uid) ? ' on' : '');
     chip.dataset.uid = m.uid;
     chip.textContent = m.name || m.uid;
-    chip.onclick = () => chip.classList.toggle('on');
+    chip.onclick = () => {
+      chip.classList.toggle('on');
+      if(onChange) onChange();
+    };
     cont.appendChild(chip);
   });
 
-  // Botón "todos / ninguno" al final.
   if(members.length > 1){
     const toggle = document.createElement('button');
     toggle.type = 'button';
@@ -2465,6 +2493,7 @@ function renderParticipantChips(containerId, members, selectedUids){
       const chips = cont.querySelectorAll('.chip:not(.chip-all)');
       const allOn = Array.from(chips).every(c => c.classList.contains('on'));
       chips.forEach(c => c.classList.toggle('on', !allOn));
+      if(onChange) onChange();
     };
     cont.appendChild(toggle);
   }
@@ -2472,6 +2501,57 @@ function renderParticipantChips(containerId, members, selectedUids){
 
 function collectSelectedUids(containerId){
   return Array.from($(containerId).querySelectorAll('.chip:not(.chip-all).on')).map(c => c.dataset.uid);
+}
+
+const PARTKEY = 'lc_v6_last_participants';
+
+function getLastParticipants(){
+  try{
+    const all = JSON.parse(localStorage.getItem(PARTKEY) || '{}');
+    return all[room] || null;
+  }catch{ return null; }
+}
+
+function saveLastParticipants(uids){
+  try{
+    const all = JSON.parse(localStorage.getItem(PARTKEY) || '{}');
+    all[room] = uids;
+    localStorage.setItem(PARTKEY, JSON.stringify(all));
+  }catch{}
+}
+
+function formatParticipantSummary(selectedUids, members){
+  if(!selectedUids || !selectedUids.length) return 'Nadie';
+  if(selectedUids.length === members.length) return `Todos (${members.length} personas)`;
+  const names = selectedUids
+    .map(u => members.find(m => m.uid === u)?.name)
+    .filter(Boolean);
+  if(names.length <= 3) return names.join(', ');
+  return `${names.slice(0,2).join(', ')} y ${names.length - 2} más`;
+}
+
+function bindSplitSummary(cfg){
+  // cfg: {summaryId, textId, editId, chipRowId, members, initialSelected, defaultAll}
+  const chipRow = $(cfg.chipRowId);
+  const editBtn = $(cfg.editId);
+  const textEl = $(cfg.textId);
+
+  const refresh = () => {
+    const selected = collectSelectedUids(cfg.chipRowId);
+    textEl.textContent = formatParticipantSummary(selected, cfg.members);
+  };
+
+  renderParticipantChips(cfg.chipRowId, cfg.members, cfg.initialSelected, refresh);
+  refresh();
+
+  // El botón despliega u oculta los chips.
+  chipRow.style.display = 'none';
+  editBtn.textContent = 'Cambiar';
+  editBtn.onclick = () => {
+    const shown = chipRow.style.display !== 'none';
+    chipRow.style.display = shown ? 'none' : 'flex';
+    editBtn.textContent = shown ? 'Cambiar' : 'Ocultar';
+  };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2731,7 +2811,19 @@ async function openExpenseModal(){
     if(m.uid === uid) opt.selected = true;
     payerSel.appendChild(opt);
   });
-  renderParticipantChips('expenseParticipants', pool, pool.map(m => m.uid));
+  const lastSel = getLastParticipants();
+  const validLast = lastSel && lastSel.filter(u => pool.some(m => m.uid === u));
+  const initialSel = (validLast && validLast.length ? validLast : pool.map(m => m.uid));
+
+  bindSplitSummary({
+    summaryId: 'expenseSplitSummary',
+    textId: 'expenseSplitText',
+    editId: 'expenseSplitEdit',
+    chipRowId: 'expenseParticipants',
+    members: pool,
+    initialSelected: initialSel
+  });
+
   $('expenseDesc').value = '';
   $('expenseAmount').value = '';
   $('expenseModal').classList.add('on');
@@ -2754,6 +2846,7 @@ $('expenseOk').onclick = async () => {
 
   const members = await loadApprovedMembersOnce();
   const payerName = members.find(m => m.uid === payerUid)?.name || user;
+  saveLastParticipants(participants);
 
   spin('Guardando gasto...');
   try{
