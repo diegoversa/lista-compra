@@ -616,6 +616,7 @@
   <div class="sheet" style="max-height:90dvh;overflow:hidden;display:flex;flex-direction:column">
     <div class="stitle">🇩🇰 Ofertas Salling</div>
     <div class="ssub" id="sallingOffersSub">Cargando ofertas de tu tienda…</div>
+    <div class="chip-row" id="sallingBrandChips" style="margin-bottom:8px"></div>
     <input id="sallingFilter" placeholder="Filtrar (mælk, brød…)" style="margin-bottom:12px" />
     <div id="sallingOffersList" style="overflow-y:auto;flex:1;margin-bottom:1rem"></div>
     <div class="sactions">
@@ -3292,6 +3293,7 @@ $('sallingOffersClose').onclick = () => $('sallingOffersModal').classList.remove
 $('sallingOffersModal').onclick = e => { if(e.target === $('sallingOffersModal')) $('sallingOffersModal').classList.remove('on'); };
 
 let sallingOffersCache = [];
+let sallingBrandFilter = 'all';
 
 async function openSallingOffers(){
   closeSidebar();
@@ -3301,45 +3303,100 @@ async function openSallingOffers(){
     $('si-salling-cfg').click();
     return;
   }
+  if(!cfg.zip){
+    toast('Añade tu código postal en ⚙️ Configurar Salling');
+    $('si-salling-cfg').click();
+    return;
+  }
 
-  $('sallingOffersSub').textContent = cfg.storeName
-    ? `${cfg.storeBrand ? cfg.storeBrand.toUpperCase() + ' · ' : ''}${cfg.storeName}`
-    : 'Buscando ofertas…';
+  $('sallingOffersSub').textContent = `Buscando tiendas en ${cfg.zip}…`;
   $('sallingOffersList').innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Cargando ofertas…</div>';
+  $('sallingBrandChips').innerHTML = '';
   $('sallingFilter').value = '';
   $('sallingOffersModal').classList.add('on');
+  sallingBrandFilter = 'all';
 
   try{
-    let storeId = cfg.storeId;
-    if(!storeId && cfg.zip){
-      // Sin tienda por defecto, cogemos la primera del zip.
-      const stores = await sallingSearchStores(cfg.zip);
-      storeId = stores[0]?.id;
-    }
-    if(!storeId){
-      $('sallingOffersList').innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Sin tienda configurada. Ve a ⚙️ Configurar Salling.</div>';
+    const stores = await sallingSearchStores(cfg.zip);
+    if(!stores.length){
+      $('sallingOffersList').innerHTML = `<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">No hay tiendas Salling en el código postal ${esc(cfg.zip)}.</div>`;
       return;
     }
-    const raw = await sallingFetchFoodWaste(storeId);
-    sallingOffersCache = flattenSallingClearances(raw);
+
+    $('sallingOffersSub').textContent = `Cargando ofertas de ${stores.length} tienda${stores.length===1?'':'s'} cerca de ${cfg.zip}…`;
+
+    // Lanzamos food-waste en paralelo para TODAS las tiendas del zip (Netto + Føtex + Bilka).
+    // allSettled: si alguna tienda falla, seguimos con las que respondan.
+    const results = await Promise.allSettled(stores.map(s =>
+      sallingFetchFoodWaste(s.id).then(raw => ({ raw, store: s }))
+    ));
+
+    const merged = [];
+    const brands = new Set();
+    for(const r of results){
+      if(r.status !== 'fulfilled') continue;
+      const { raw, store } = r.value;
+      const items = flattenSallingClearances(raw);
+      for(const it of items){
+        it.storeBrand = it.brand || store.brand || '';
+        it.storeName = store.name || '';
+        it.storeCity = store.city || '';
+        it.storeId = store.id;
+        if(it.storeBrand) brands.add(it.storeBrand.toLowerCase());
+        merged.push(it);
+      }
+    }
+
+    sallingOffersCache = merged;
+    renderSallingBrandChips(Array.from(brands));
+
+    const brandSummary = Array.from(brands).map(b => b.toUpperCase()).join(' · ') || 'sin ofertas';
+    $('sallingOffersSub').textContent = `${merged.length} ofertas · ${stores.length} tienda${stores.length===1?'':'s'} · ${brandSummary}`;
+
     renderSallingOffers();
   }catch(e){
     $('sallingOffersList').innerHTML = `<div style="color:var(--red);font-size:13px;padding:1rem;text-align:center">Error: ${esc(e.message)}</div>`;
   }
 }
 
+function renderSallingBrandChips(brands){
+  const cont = $('sallingBrandChips');
+  cont.innerHTML = '';
+  if(brands.length <= 1){ return; }
+
+  const mkChip = (label, value) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (sallingBrandFilter === value ? ' on' : '');
+    b.textContent = label;
+    b.onclick = () => {
+      sallingBrandFilter = value;
+      cont.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b));
+      renderSallingOffers();
+    };
+    return b;
+  };
+
+  cont.appendChild(mkChip('Todos', 'all'));
+  brands.sort().forEach(b => cont.appendChild(mkChip(b.charAt(0).toUpperCase() + b.slice(1), b)));
+}
+
 $('sallingFilter').addEventListener('input', () => renderSallingOffers());
 
 function renderSallingOffers(){
   const q = $('sallingFilter').value.trim().toLowerCase();
-  const filtered = q
-    ? sallingOffersCache.filter(o => (o.name || '').toLowerCase().includes(q))
-    : sallingOffersCache;
+  let filtered = sallingOffersCache;
+  if(sallingBrandFilter && sallingBrandFilter !== 'all'){
+    filtered = filtered.filter(o => (o.storeBrand || '').toLowerCase() === sallingBrandFilter);
+  }
+  if(q){
+    filtered = filtered.filter(o => (o.name || '').toLowerCase().includes(q));
+  }
 
   const cont = $('sallingOffersList');
   if(!filtered.length){
-    cont.innerHTML = q
-      ? '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Nada coincide con esa búsqueda.</div>'
+    cont.innerHTML = q || sallingBrandFilter !== 'all'
+      ? '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Nada coincide con ese filtro.</div>'
       : '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Sin ofertas food-waste ahora mismo.</div>';
     return;
   }
@@ -3364,14 +3421,14 @@ function renderSallingOffers(){
       ${o.img ? `<img src="${esc(o.img)}" loading="lazy" style="width:34px;height:34px;object-fit:contain;border-radius:6px;background:var(--sf);flex-shrink:0" />` : `<div class="ai-emoji">🏷️</div>`}
       <div class="exp-info">
         <div class="exp-title">${esc(o.name)}${(() => { const es = translateDaEs(o.name); return es ? ` <span style="color:var(--tx3);font-weight:400;font-size:12px">· ${esc(es)}</span>` : ''; })()}</div>
-        <div class="exp-meta">${oldStr}${priceStr}${pctStr}</div>
+        <div class="exp-meta">${oldStr}${priceStr}${pctStr}${o.storeBrand ? ` · <span style="background:var(--sf);border:1px solid var(--bd);padding:1px 6px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase">${esc(o.storeBrand)}${o.storeCity ? ' · ' + esc(o.storeCity) : ''}</span>` : ''}</div>
       </div>
       <button class="sok" style="padding:6px 12px;font-size:12px;flex-shrink:0${allergy ? ';background:var(--red)' : ''}">Añadir</button>
     `;
     row.querySelector('button').onclick = (e) => {
       e.stopPropagation();
       if(allergy && !confirm(`⚠️ ALERGIA (${allergy})\n\n"${o.name}"\n\ncontiene leche de ${allergy}. ¿Añadir de todas formas?`)) return;
-      const brand = (getSallingCfg().storeBrand || 'Salling').toUpperCase();
+      const brand = (o.storeBrand || getSallingCfg().storeBrand || 'Salling').toUpperCase();
       addItem(o.name, brand, o.ean || '', 'otros', '', o.img || '', 'Salling', o.price || 0);
       row.style.opacity = '.5';
     };
