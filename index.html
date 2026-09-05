@@ -428,6 +428,8 @@
     <button class="sbBtn" id="si-a2hs">📲 Añadir a pantalla de inicio</button>
     <button class="sbBtn" id="si-history">🧾 Ver historial de compras</button>
     <button class="sbBtn" id="si-balances">💰 Balances (quién debe a quién)</button>
+    <button class="sbBtn" id="si-salling">🇩🇰 Ofertas Salling (Netto · Føtex · Bilka)</button>
+    <button class="sbBtn" id="si-salling-cfg">⚙️ Configurar Salling</button>
     <button class="sbBtn" id="si-clearchecked">🗑 Borrar productos tachados</button>
     <button class="sbBtn danger" id="si-clearall">⚠️ Vaciar lista completa</button>
     <button class="sbBtn" id="si-logout">🔓 Salir / cambiar cuenta Firebase</button>
@@ -580,6 +582,44 @@
     </div>
     <div class="sactions">
       <button class="scancel" id="a2hsClose">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sallingCfgModal">
+  <div class="sheet">
+    <div class="stitle">⚙️ Configurar Salling</div>
+    <div class="ssub">Si tienes una API key de <a href="https://developer.sallinggroup.com/" target="_blank" rel="noopener" style="color:var(--ac);text-decoration:underline">developer.sallinggroup.com</a>, la app te muestra las ofertas <b>food waste</b> (productos cerca de caducar con descuento) de Netto, Føtex y Bilka. Todo se guarda solo en este dispositivo.</div>
+
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">API key</label>
+    <input id="sallingKey" placeholder="SG_APIM_..." autocomplete="off" spellcheck="false" />
+
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Código postal</label>
+    <input id="sallingZip" placeholder="2200" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" />
+
+    <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Tienda por defecto</label>
+    <select id="sallingStore">
+      <option value="">— Guarda primero, luego elígela —</option>
+    </select>
+    <button class="sbBtn" id="sallingLoadStores" style="margin-bottom:12px">🔍 Buscar tiendas por este código postal</button>
+
+    <div id="sallingCfgStatus" style="font-size:12px;color:var(--tx3);margin-bottom:1rem;min-height:16px"></div>
+
+    <div class="sactions">
+      <button class="scancel" id="sallingCfgCancel">Cancelar</button>
+      <button class="sok" id="sallingCfgSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="sallingOffersModal">
+  <div class="sheet" style="max-height:90dvh;overflow:hidden;display:flex;flex-direction:column">
+    <div class="stitle">🇩🇰 Ofertas Salling</div>
+    <div class="ssub" id="sallingOffersSub">Cargando ofertas de tu tienda…</div>
+    <input id="sallingFilter" placeholder="Filtrar (mælk, brød…)" style="margin-bottom:12px" />
+    <div id="sallingOffersList" style="overflow-y:auto;flex:1;margin-bottom:1rem"></div>
+    <div class="sactions">
+      <button class="scancel" id="sallingOffersClose">Cerrar</button>
     </div>
   </div>
 </div>
@@ -2948,6 +2988,252 @@ async function openBalances(){
 }
 
 $('si-balances').onclick = openBalances;
+
+// ─────────────────────────────────────────────────────────────
+// SALLING GROUP INTEGRATION
+// ─────────────────────────────────────────────────────────────
+// La API key y config se guardan solo en localStorage. Nunca en Firebase ni en el repo.
+const SALLING_CFG_KEY = 'lc_v6_salling_cfg';
+const SALLING_API_BASE = 'https://api.sallinggroup.com';
+
+function getSallingCfg(){
+  try{ return JSON.parse(localStorage.getItem(SALLING_CFG_KEY) || '{}'); }
+  catch{ return {}; }
+}
+function saveSallingCfg(cfg){
+  localStorage.setItem(SALLING_CFG_KEY, JSON.stringify(cfg || {}));
+}
+
+async function sallingFetch(path){
+  const cfg = getSallingCfg();
+  if(!cfg.apiKey) throw new Error('Falta configurar la API key de Salling');
+  const url = path.startsWith('http') ? path : (SALLING_API_BASE + path);
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': 'Bearer ' + cfg.apiKey,
+      'Accept': 'application/json'
+    }
+  });
+  if(res.status === 401 || res.status === 403){
+    throw new Error('API key rechazada por Salling (401/403). Revisa key y origen.');
+  }
+  if(!res.ok){
+    throw new Error(`Salling API ${res.status}: ${await res.text().catch(()=>'error')}`);
+  }
+  return res.json();
+}
+
+async function sallingSearchStores(zip){
+  // /v2/stores?zip=XXXX&country=dk — devuelve array de tiendas del grupo Salling.
+  const data = await sallingFetch(`/v2/stores?zip=${encodeURIComponent(zip)}&country=dk&per_page=50`);
+  const list = Array.isArray(data) ? data : (data?.stores || data?.results || []);
+  return list.map(s => ({
+    id: s.id || s.storeId || s.store_id,
+    name: s.name || s.title || 'Tienda',
+    brand: s.brand || s.chain || s.type || '',
+    city: s.city || s.address?.city || '',
+    address: s.address?.street || s.street || '',
+    raw: s
+  })).filter(s => s.id);
+}
+
+async function sallingFetchFoodWaste(storeId){
+  // Probamos las dos rutas conocidas: v1 y v1-beta.
+  try{
+    const v1 = await sallingFetch(`/v1/food-waste/${encodeURIComponent(storeId)}`);
+    return v1;
+  }catch(e1){
+    try{
+      return await sallingFetch(`/v1-beta/food-waste/${encodeURIComponent(storeId)}`);
+    }catch(e2){
+      throw e1;
+    }
+  }
+}
+
+function flattenSallingClearances(raw){
+  // Los food-waste vienen anidados por tienda o clearances. Aplanamos a items uniformes.
+  const out = [];
+  const stores = Array.isArray(raw) ? raw : [raw];
+  for(const s of stores){
+    if(!s) continue;
+    const storeInfo = s.store || {};
+    const brand = storeInfo.brand || s.brand || '';
+    const cs = s.clearances || s.items || [];
+    for(const c of cs){
+      const off = c.offer || c;
+      const prod = c.product || c;
+      const price = Number(off?.newPrice ?? off?.price ?? 0) || 0;
+      const oldPrice = Number(off?.originalPrice ?? off?.oldPrice ?? 0) || 0;
+      const currency = off?.currency || 'DKK';
+      out.push({
+        name: prod?.description || prod?.name || prod?.title || 'Ukendt',
+        ean: prod?.ean || prod?.barcode || '',
+        img: prod?.image || prod?.imageUrl || prod?.imageURL || '',
+        price,
+        oldPrice,
+        currency,
+        percentOff: off?.percentDiscount || (oldPrice && price ? Math.round((1 - price/oldPrice) * 100) : 0),
+        expiry: off?.endTime || off?.expirationDate || '',
+        brand,
+        storeId: storeInfo.id || s.storeId || '',
+        raw: c
+      });
+    }
+  }
+  return out;
+}
+
+function formatDKK(n){
+  const v = Number(n) || 0;
+  return v.toFixed(2).replace('.', ',') + ' kr';
+}
+
+// ─── Config modal ─────────────────────────────────────────────
+$('si-salling-cfg').onclick = () => {
+  closeSidebar();
+  const cfg = getSallingCfg();
+  $('sallingKey').value = cfg.apiKey || '';
+  $('sallingZip').value = cfg.zip || '';
+  $('sallingStore').innerHTML = cfg.storeId
+    ? `<option value="${esc(cfg.storeId)}" selected>${esc(cfg.storeName || cfg.storeId)}</option>`
+    : `<option value="">— Guarda primero, luego elígela —</option>`;
+  $('sallingCfgStatus').textContent = '';
+  $('sallingCfgModal').classList.add('on');
+};
+
+$('sallingCfgCancel').onclick = () => $('sallingCfgModal').classList.remove('on');
+$('sallingCfgModal').onclick = e => { if(e.target === $('sallingCfgModal')) $('sallingCfgModal').classList.remove('on'); };
+
+$('sallingLoadStores').onclick = async () => {
+  const key = $('sallingKey').value.trim();
+  const zip = $('sallingZip').value.trim();
+  if(!key){ $('sallingCfgStatus').textContent = 'Pega primero la API key.'; return; }
+  if(!zip){ $('sallingCfgStatus').textContent = 'Pon un código postal.'; return; }
+
+  // Guardamos temporalmente para que sallingFetch pueda usar la key.
+  const prev = getSallingCfg();
+  saveSallingCfg({ ...prev, apiKey:key, zip });
+
+  $('sallingCfgStatus').textContent = 'Buscando tiendas…';
+  try{
+    const stores = await sallingSearchStores(zip);
+    if(!stores.length){
+      $('sallingCfgStatus').textContent = 'No hay tiendas en ese código postal.';
+      return;
+    }
+    const sel = $('sallingStore');
+    sel.innerHTML = '';
+    stores.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.dataset.name = s.name;
+      opt.dataset.brand = s.brand;
+      opt.textContent = `${s.brand ? s.brand.toUpperCase() + ' · ' : ''}${s.name}${s.city ? ' (' + s.city + ')' : ''}`;
+      sel.appendChild(opt);
+    });
+    $('sallingCfgStatus').textContent = `${stores.length} tienda${stores.length===1?'':'s'} encontradas. Elige una.`;
+  }catch(e){
+    $('sallingCfgStatus').textContent = e.message;
+  }
+};
+
+$('sallingCfgSave').onclick = () => {
+  const apiKey = $('sallingKey').value.trim();
+  const zip = $('sallingZip').value.trim();
+  const opt = $('sallingStore').selectedOptions[0];
+  const storeId = opt?.value || '';
+  const storeName = opt?.dataset.name || '';
+  const storeBrand = opt?.dataset.brand || '';
+  if(!apiKey){ $('sallingCfgStatus').textContent = 'Falta la API key.'; return; }
+  saveSallingCfg({ apiKey, zip, storeId, storeName, storeBrand });
+  $('sallingCfgModal').classList.remove('on');
+  toast(storeId ? `Salling: ${storeBrand || ''} ${storeName} guardada` : 'Salling: key guardada');
+};
+
+// ─── Offers modal ─────────────────────────────────────────────
+$('si-salling').onclick = openSallingOffers;
+$('sallingOffersClose').onclick = () => $('sallingOffersModal').classList.remove('on');
+$('sallingOffersModal').onclick = e => { if(e.target === $('sallingOffersModal')) $('sallingOffersModal').classList.remove('on'); };
+
+let sallingOffersCache = [];
+
+async function openSallingOffers(){
+  closeSidebar();
+  const cfg = getSallingCfg();
+  if(!cfg.apiKey){
+    toast('Configura primero Salling (⚙️ Configurar Salling)');
+    $('si-salling-cfg').click();
+    return;
+  }
+
+  $('sallingOffersSub').textContent = cfg.storeName
+    ? `${cfg.storeBrand ? cfg.storeBrand.toUpperCase() + ' · ' : ''}${cfg.storeName}`
+    : 'Buscando ofertas…';
+  $('sallingOffersList').innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Cargando ofertas…</div>';
+  $('sallingFilter').value = '';
+  $('sallingOffersModal').classList.add('on');
+
+  try{
+    let storeId = cfg.storeId;
+    if(!storeId && cfg.zip){
+      // Sin tienda por defecto, cogemos la primera del zip.
+      const stores = await sallingSearchStores(cfg.zip);
+      storeId = stores[0]?.id;
+    }
+    if(!storeId){
+      $('sallingOffersList').innerHTML = '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Sin tienda configurada. Ve a ⚙️ Configurar Salling.</div>';
+      return;
+    }
+    const raw = await sallingFetchFoodWaste(storeId);
+    sallingOffersCache = flattenSallingClearances(raw);
+    renderSallingOffers();
+  }catch(e){
+    $('sallingOffersList').innerHTML = `<div style="color:var(--red);font-size:13px;padding:1rem;text-align:center">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+$('sallingFilter').addEventListener('input', () => renderSallingOffers());
+
+function renderSallingOffers(){
+  const q = $('sallingFilter').value.trim().toLowerCase();
+  const filtered = q
+    ? sallingOffersCache.filter(o => (o.name || '').toLowerCase().includes(q))
+    : sallingOffersCache;
+
+  const cont = $('sallingOffersList');
+  if(!filtered.length){
+    cont.innerHTML = q
+      ? '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Nada coincide con esa búsqueda.</div>'
+      : '<div style="text-align:center;color:var(--tx3);font-size:13px;padding:1rem">Sin ofertas food-waste ahora mismo.</div>';
+    return;
+  }
+
+  cont.innerHTML = '';
+  filtered.slice(0, 200).forEach(o => {
+    const row = document.createElement('div');
+    row.className = 'expense-row';
+    row.style.cursor = 'pointer';
+    const priceStr = formatDKK(o.price);
+    const oldStr = o.oldPrice && o.oldPrice > o.price ? `<span style="text-decoration:line-through;color:var(--tx3);margin-right:6px">${formatDKK(o.oldPrice)}</span>` : '';
+    const pctStr = o.percentOff ? `<span style="background:var(--red);color:#fff;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700;margin-left:4px">-${o.percentOff}%</span>` : '';
+    row.innerHTML = `
+      ${o.img ? `<img src="${esc(o.img)}" loading="lazy" style="width:34px;height:34px;object-fit:contain;border-radius:6px;background:var(--sf);flex-shrink:0" />` : `<div class="ai-emoji">🏷️</div>`}
+      <div class="exp-info">
+        <div class="exp-title">${esc(o.name)}</div>
+        <div class="exp-meta">${oldStr}${priceStr}${pctStr}</div>
+      </div>
+      <button class="sok" style="padding:6px 12px;font-size:12px;flex-shrink:0">Añadir</button>
+    `;
+    row.querySelector('button').onclick = (e) => {
+      e.stopPropagation();
+      const brand = (getSallingCfg().storeBrand || 'Salling').toUpperCase();
+      addItem(o.name, brand, o.ean || '', 'otros', '', o.img || '', 'Salling', o.price || 0);
+      row.style.opacity = '.5';
+    };
+    cont.appendChild(row);
+  });
+}
 $('balancesClose').onclick = () => $('balancesModal').classList.remove('on');
 $('balancesModal').onclick = e => { if(e.target === $('balancesModal')) $('balancesModal').classList.remove('on'); };
 
