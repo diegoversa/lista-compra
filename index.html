@@ -3051,6 +3051,137 @@ async function sallingFetchFoodWaste(storeId){
   }
 }
 
+// Diccionario mínimo de supermercado DA→ES. No es traducción real, es un mapeo
+// palabra a palabra pensado solo para leer un ticket. Sin acentos y en minúsculas.
+// Se prefieren frases largas antes de palabras sueltas.
+const DA_ES_PHRASES = [
+  ['rødvin','vino tinto'], ['hvidvin','vino blanco'], ['rosévin','vino rosado'],
+  ['pilsner øl','cerveza rubia'], ['alkoholfri øl','cerveza sin alcohol'],
+  ['fedtfattig mælk','leche desnatada'], ['sødmælk','leche entera'],
+  ['minimælk','leche desnatada'], ['letmælk','leche semi'], ['skummetmælk','leche desnatada'],
+  ['kærnemælk','suero de leche'], ['kefir','kefir'],
+  ['flødeost','queso crema'], ['smøreost','queso para untar'], ['revet ost','queso rallado'],
+  ['gulerødder','zanahorias'], ['grønne bønner','judías verdes'],
+  ['røde peberfrugter','pimientos rojos'], ['grønne peberfrugter','pimientos verdes'],
+  ['grønne æbler','manzanas verdes'], ['røde æbler','manzanas rojas'],
+  ['røget laks','salmón ahumado'], ['røget makrel','caballa ahumada'],
+  ['toastbrød','pan de molde'], ['rugbrød','pan de centeno'],
+  ['franskbrød','pan blanco'], ['fuldkorn brød','pan integral'],
+  ['hakket oksekød','carne picada de ternera'], ['hakket svinekød','carne picada de cerdo'],
+  ['kylling filet','filete de pollo'], ['kylling bryst','pechuga de pollo'],
+  ['sødmælks yoghurt','yogur entero'], ['naturell yoghurt','yogur natural'],
+  ['jordbær syltetøj','mermelada de fresa'],
+  ['is', 'helado']
+];
+
+const DA_ES = {
+  // Lácteos
+  'mælk':'leche','fløde':'nata','smør':'mantequilla','ost':'queso','yoghurt':'yogur',
+  'skyr':'skyr','flødeskum':'nata montada','kvark':'quark','feta':'feta','mozzarella':'mozzarella',
+  // Panadería / cereales
+  'brød':'pan','bolle':'bollo','boller':'panecillos','rundstykker':'panecillos',
+  'baguette':'baguette','kage':'pastel','kager':'pasteles','småkager':'galletas',
+  'kiks':'galletas','morgenmadsprodukter':'cereales','cornflakes':'cornflakes',
+  'havregryn':'copos de avena','havre':'avena','müsli':'muesli','ris':'arroz','pasta':'pasta',
+  'mel':'harina','sukker':'azúcar','salt':'sal','peber':'pimienta','krydderier':'especias',
+  // Carne y pescado
+  'kød':'carne','oksekød':'ternera','svinekød':'cerdo','lam':'cordero','kalkun':'pavo',
+  'kylling':'pollo','and':'pato','bacon':'bacon','skinke':'jamón','pølse':'salchicha',
+  'pølser':'salchichas','frikadeller':'albóndigas','leverpostej':'paté','fisk':'pescado',
+  'laks':'salmón','tun':'atún','torsk':'bacalao','sild':'arenque','rejer':'gambas',
+  'makrel':'caballa','sardin':'sardina','sardiner':'sardinas',
+  // Fruta
+  'æble':'manzana','æbler':'manzanas','pære':'pera','pærer':'peras','banan':'plátano',
+  'bananer':'plátanos','appelsin':'naranja','appelsiner':'naranjas','citron':'limón',
+  'lime':'lima','jordbær':'fresas','hindbær':'frambuesas','blåbær':'arándanos',
+  'brombær':'moras','kirsebær':'cerezas','druer':'uvas','vandmelon':'sandía','melon':'melón',
+  'ananas':'piña','mango':'mango','kiwi':'kiwi','avocado':'aguacate','fersken':'melocotón',
+  'blomme':'ciruela','blommer':'ciruelas',
+  // Verduras
+  'kartoffel':'patata','kartofler':'patatas','løg':'cebolla','rødløg':'cebolla roja',
+  'hvidløg':'ajo','tomat':'tomate','tomater':'tomates','agurk':'pepino','salat':'lechuga',
+  'gulerod':'zanahoria','gulerødder':'zanahorias','broccoli':'brócoli','blomkål':'coliflor',
+  'kål':'col','spinat':'espinaca','champignon':'champiñón','svamp':'seta','svampe':'setas',
+  'peberfrugt':'pimiento','peberfrugter':'pimientos','squash':'calabacín','majs':'maíz',
+  'ærter':'guisantes','bønner':'judías','linser':'lentejas','kikærter':'garbanzos',
+  'porre':'puerro','selleri':'apio','rødbede':'remolacha','asparges':'espárragos',
+  'aubergine':'berenjena','ingefær':'jengibre','citrongræs':'hierba limón',
+  // Aceites y salsas
+  'olie':'aceite','olivenolie':'aceite de oliva','solsikkeolie':'aceite de girasol',
+  'eddike':'vinagre','honning':'miel','syltetøj':'mermelada','marmelade':'mermelada',
+  'sennep':'mostaza','ketchup':'ketchup','mayonnaise':'mayonesa','remoulade':'remoulade',
+  'sovs':'salsa',
+  // Bebidas
+  'vand':'agua','danskvand':'agua con gas','kaffe':'café','te':'té','juice':'zumo',
+  'øl':'cerveza','vin':'vino','sodavand':'refresco','saft':'zumo concentrado',
+  'kakao':'cacao','mælkechokolade':'chocolate con leche',
+  // Snacks y dulces
+  'chokolade':'chocolate','slik':'chuches','chips':'patatas fritas','nødder':'frutos secos',
+  'mandler':'almendras','valnødder':'nueces','hasselnødder':'avellanas','rosiner':'pasas',
+  'popcorn':'palomitas','marcipan':'mazapán','vaffel':'gofre','vafler':'gofres',
+  'lakrids':'regaliz','bolsjer':'caramelos','vingummi':'gominolas','tyggegummi':'chicle',
+  // Congelados
+  'pizza':'pizza','pizzadej':'masa de pizza','fiskefilet':'filete de pescado',
+  'fiskepinde':'palitos de pescado','kylling nuggets':'nuggets de pollo',
+  // Higiene y hogar
+  'shampoo':'champú','balsam':'suavizante','tandpasta':'pasta de dientes',
+  'tandbørste':'cepillo de dientes','toiletpapir':'papel higiénico',
+  'køkkenrulle':'papel de cocina','husholdningsfilm':'film transparente','alufolie':'papel de aluminio',
+  'vaskepulver':'detergente','vaskemiddel':'detergente','skyllemiddel':'suavizante',
+  'sæbe':'jabón','deodorant':'desodorante','tampons':'tampones','bind':'compresas',
+  'ble':'pañal','bleer':'pañales','opvaskemiddel':'lavavajillas','rengøring':'limpieza',
+  'toiletrens':'limpiador wc','viskestykke':'trapo de cocina','sponsvamp':'estropajo',
+  // Adjetivos y estados
+  'økologisk':'ecológico','økologiske':'ecológicos','naturel':'natural','naturlig':'natural',
+  'frisk':'fresco','friske':'frescos','frosset':'congelado','frossen':'congelado',
+  'ryged':'ahumado','røget':'ahumado','kogt':'cocido','rå':'crudo','hel':'entero','hele':'enteros',
+  'skiveskåret':'en lonchas','hakket':'picado','reven':'rallado','fyldt':'relleno',
+  'glutenfri':'sin gluten','laktosefri':'sin lactosa','sukkerfri':'sin azúcar','fedtfri':'sin grasa',
+  'fedtfattig':'bajo en grasa','lavfedt':'bajo en grasa','fuldkorn':'integral',
+  'lys':'claro','mørk':'oscuro','sød':'dulce','sur':'agrio','stærk':'fuerte','mild':'suave',
+  'alkoholfri':'sin alcohol','klassisk':'clásico','familie':'familiar','stor':'grande',
+  'lille':'pequeño','mellem':'mediano','portion':'ración','hvidt':'blanco','rødt':'tinto',
+  'grøn':'verde','grønne':'verdes','rød':'rojo','røde':'rojos','blå':'azul',
+  // Unidades / packaging
+  'pakke':'paquete','pose':'bolsa','poser':'bolsas','stk':'ud','stykker':'unidades',
+  'flaske':'botella','dåse':'lata','glas':'tarro','æg':'huevos','æggekasse':'huevera',
+  'liter':'l','pund':'libra','gram':'g','kilo':'kg',
+  // Comidas
+  'morgenmad':'desayuno','frokost':'comida','aftensmad':'cena','snack':'snack','mellemmåltid':'tentempié'
+};
+
+function translateDaEs(text){
+  if(!text) return null;
+  const original = String(text);
+  let work = ' ' + original.toLowerCase() + ' ';
+  let matched = false;
+
+  // Frases largas primero. Ordenamos por longitud descendente.
+  const phrases = DA_ES_PHRASES.slice().sort((a,b) => b[0].length - a[0].length);
+  for(const [da, es] of phrases){
+    const re = new RegExp('(^|[\\s.,;:()\\-/])' + da.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&') + '(?=$|[\\s.,;:()\\-/])','gi');
+    if(re.test(work)){
+      work = work.replace(re, (m, pre) => pre + '⟦' + es + '⟧');
+      matched = true;
+    }
+  }
+  // Palabras sueltas.
+  for(const [da, es] of Object.entries(DA_ES)){
+    const re = new RegExp('(^|[\\s.,;:()\\-/])' + da.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&') + '(?=$|[\\s.,;:()\\-/])','gi');
+    if(re.test(work)){
+      work = work.replace(re, (m, pre) => pre + '⟦' + es + '⟧');
+      matched = true;
+    }
+  }
+  if(!matched) return null;
+
+  // Restauramos las porciones no traducidas del original (con mayúsculas).
+  // Simple: quitamos los marcadores y capitalizamos la primera letra.
+  let out = work.trim().replace(/⟦([^⟧]+)⟧/g,'$1');
+  out = out.charAt(0).toUpperCase() + out.slice(1);
+  return out;
+}
+
 function flattenSallingClearances(raw){
   // Los food-waste vienen anidados por tienda o clearances. Aplanamos a items uniformes.
   const out = [];
@@ -3220,7 +3351,7 @@ function renderSallingOffers(){
     row.innerHTML = `
       ${o.img ? `<img src="${esc(o.img)}" loading="lazy" style="width:34px;height:34px;object-fit:contain;border-radius:6px;background:var(--sf);flex-shrink:0" />` : `<div class="ai-emoji">🏷️</div>`}
       <div class="exp-info">
-        <div class="exp-title">${esc(o.name)}</div>
+        <div class="exp-title">${esc(o.name)}${(() => { const es = translateDaEs(o.name); return es ? ` <span style="color:var(--tx3);font-weight:400;font-size:12px">· ${esc(es)}</span>` : ''; })()}</div>
         <div class="exp-meta">${oldStr}${priceStr}${pctStr}</div>
       </div>
       <button class="sok" style="padding:6px 12px;font-size:12px;flex-shrink:0">Añadir</button>
