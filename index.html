@@ -2233,18 +2233,22 @@ function renderAcList(rawQuery){
     ].filter(Boolean).join(' · ');
     const storeBadge = h.store && h.store !== curList ? `<span class="ai-store">${esc(h.store)}</span>` : '';
 
+    const allergy = detectAllergy(h.name + ' ' + (h.brand || ''));
     const item = document.createElement('div');
     item.className = 'ac-item' + (i === 0 ? ' on' : '');
+    if(allergy) item.style.background = 'rgba(220,53,69,0.08)';
+    const allergyMark = allergy ? `<span title="Alergia: ${esc(allergy)}" style="color:var(--red);font-weight:700;margin-right:4px">⚠️</span>` : '';
     item.innerHTML = `
       ${h.img ? `<img src="${esc(h.img)}" loading="lazy" />` : `<div class="ai-emoji">${emoji}</div>`}
       <div class="ai-info">
-        <div class="ai-name">${esc(h.name)}</div>
-        <div class="ai-meta">${storeBadge}${esc(meta)}</div>
+        <div class="ai-name">${allergyMark}${esc(h.name)}</div>
+        <div class="ai-meta">${storeBadge}${esc(meta)}${allergy ? ` · <span style="color:var(--red);font-weight:700">alergia ${esc(allergy)}</span>` : ''}</div>
       </div>
       ${priceTxt ? `<div class="ai-price">${priceTxt}</div>` : ''}
     `;
     item.onmousedown = (e) => e.preventDefault(); // evita que el input pierda foco antes del click
     item.onclick = () => {
+      if(allergy && !confirm(`⚠️ ALERGIA (${allergy})\n\n"${h.name}" contiene leche de ${allergy}.\n\n¿Añadir de todas formas?`)) return;
       addItem(h.name, h.brand || '', '', h.cat || 'otros', h.unit || $('munit').value || '', h.img || '', h.source || 'Reciente', h.price || 0);
       $('minput').value = '';
       $('munit').value = '';
@@ -3348,16 +3352,25 @@ function renderSallingOffers(){
     const priceStr = formatDKK(o.price);
     const oldStr = o.oldPrice && o.oldPrice > o.price ? `<span style="text-decoration:line-through;color:var(--tx3);margin-right:6px">${formatDKK(o.oldPrice)}</span>` : '';
     const pctStr = o.percentOff ? `<span style="background:var(--red);color:#fff;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700;margin-left:4px">-${o.percentOff}%</span>` : '';
+    const allergy = detectAllergy(o.name);
+    if(allergy){
+      row.style.background = 'rgba(220,53,69,0.08)';
+      row.style.borderColor = 'var(--red)';
+    }
+    const allergyBadge = allergy
+      ? `<div style="background:var(--red);color:#fff;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;margin-bottom:3px;display:inline-flex;align-items:center;gap:4px">⚠️ ALERGIA · ${esc(allergy)}</div>`
+      : '';
     row.innerHTML = `
       ${o.img ? `<img src="${esc(o.img)}" loading="lazy" style="width:34px;height:34px;object-fit:contain;border-radius:6px;background:var(--sf);flex-shrink:0" />` : `<div class="ai-emoji">🏷️</div>`}
       <div class="exp-info">
         <div class="exp-title">${esc(o.name)}${(() => { const es = translateDaEs(o.name); return es ? ` <span style="color:var(--tx3);font-weight:400;font-size:12px">· ${esc(es)}</span>` : ''; })()}</div>
         <div class="exp-meta">${oldStr}${priceStr}${pctStr}</div>
       </div>
-      <button class="sok" style="padding:6px 12px;font-size:12px;flex-shrink:0">Añadir</button>
+      <button class="sok" style="padding:6px 12px;font-size:12px;flex-shrink:0${allergy ? ';background:var(--red)' : ''}">Añadir</button>
     `;
     row.querySelector('button').onclick = (e) => {
       e.stopPropagation();
+      if(allergy && !confirm(`⚠️ ALERGIA (${allergy})\n\n"${o.name}"\n\ncontiene leche de ${allergy}. ¿Añadir de todas formas?`)) return;
       const brand = (getSallingCfg().storeBrand || 'Salling').toUpperCase();
       addItem(o.name, brand, o.ean || '', 'otros', '', o.img || '', 'Salling', o.price || 0);
       row.style.opacity = '.5';
@@ -4116,16 +4129,23 @@ function mkItem(item){
     : '€';
   const priceCls = priceUnit ? 'price' : 'price empty';
 
+  const allergy = detectAllergy((item.name || '') + ' ' + (item.brand || ''));
+  if(allergy){
+    li.style.borderLeft = '3px solid var(--red)';
+  }
+  const allergyMark = allergy ? `<span title="Alergia: ${esc(allergy)}" style="color:var(--red);font-weight:700;margin-right:3px">⚠️</span>` : '';
+
   li.innerHTML = `
     ${item.img ? `<img class="iimg" src="${esc(item.img)}" loading="lazy" />` : `<div class="iemoji">${emoji}</div>`}
     <div class="chk${item.checked ? ' on' : ''}" data-a="chk" data-id="${item.key}">
       ${item.checked ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
     </div>
     <div class="iinfo">
-      <div class="iname">${esc(item.name)}</div>
+      <div class="iname">${allergyMark}${esc(item.name)}</div>
       <div class="imeta">
         ${item.brand ? `<span>${esc(item.brand)}</span>` : ''}
         ${item.source ? `<span class="sourcebadge">${esc(item.source)}</span>` : ''}
+        ${allergy ? `<span style="color:var(--red);font-weight:700">⚠️ ${esc(allergy)}</span>` : ''}
         <span class="ubadge" style="background:${col};color:#fff">${ini}</span>
       </div>
     </div>
