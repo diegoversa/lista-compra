@@ -1644,6 +1644,8 @@ function launchApp(){
 
   embedParamsInUrl();
   updateSalaNav();
+  // Prefetch de ofertas Salling en background (si están configuradas y la caché es vieja).
+  try{ prefetchSallingOffersIfStale(); }catch{}
 }
 
 function embedParamsInUrl(){
@@ -2202,6 +2204,62 @@ function renderAcList(rawQuery){
   const q = String(rawQuery || '').trim().toLowerCase();
   if(q.length < 1){ hideAcList(); return; }
 
+  list.innerHTML = '';
+
+  // Sugerencias de Salling: si la palabra que escribes (o su traducción DA) matchea
+  // alguna oferta activa, va como sección "🇩🇰 En oferta ahora" arriba del historial.
+  const sallingMatches = searchSallingOffers(rawQuery);
+  if(sallingMatches.length){
+    const header = document.createElement('div');
+    header.className = 'ac-item';
+    header.style.cssText = 'font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);background:var(--sf2);cursor:default;padding:6px 12px';
+    const daHint = translateEsToDa(rawQuery);
+    header.innerHTML = `🇩🇰 En oferta ahora${daHint.length ? ` <span style="color:var(--tx2);text-transform:none;letter-spacing:0">· en danés: ${esc(daHint.slice(0,3).join(', '))}</span>` : ''}`;
+    list.appendChild(header);
+
+    sallingMatches.forEach(o => {
+      const allergyS = detectAllergy(o.name);
+      const priceStr = formatDKK(o.price);
+      const oldStr = o.oldPrice && o.oldPrice > o.price ? ` <span style="text-decoration:line-through;color:var(--tx3);font-size:10px">${formatDKK(o.oldPrice)}</span>` : '';
+      const pctStr = o.percentOff ? ` <span style="background:var(--red);color:#fff;padding:1px 5px;border-radius:999px;font-size:9px;font-weight:700">-${o.percentOff}%</span>` : '';
+      const brandBadge = o.storeBrand ? `<span class="ai-store" style="background:var(--sf2);color:var(--tx2)">${esc(o.storeBrand)}</span>` : '';
+      const esName = translateDaEs(o.name);
+      const allergyMark = allergyS ? `<span title="Alergia: ${esc(allergyS)}" style="color:var(--red);font-weight:700;margin-right:4px">⚠️</span>` : '';
+
+      const item = document.createElement('div');
+      item.className = 'ac-item';
+      if(allergyS) item.style.background = 'rgba(220,53,69,0.08)';
+      item.innerHTML = `
+        ${o.img ? `<img src="${esc(o.img)}" loading="lazy" />` : `<div class="ai-emoji">🏷️</div>`}
+        <div class="ai-info">
+          <div class="ai-name">${allergyMark}${esc(o.name)}${esName ? ` <span style="color:var(--tx3);font-weight:400;font-size:11px">· ${esc(esName)}</span>` : ''}</div>
+          <div class="ai-meta">${brandBadge}${o.storeCity ? esc(o.storeCity) + ' · ' : ''}${priceStr}${oldStr}${pctStr}${allergyS ? ` · <span style="color:var(--red);font-weight:700">alergia ${esc(allergyS)}</span>` : ''}</div>
+        </div>
+        <div class="ai-price" style="color:var(--red)">${priceStr}</div>
+      `;
+      item.onmousedown = (e) => e.preventDefault();
+      item.onclick = () => {
+        if(allergyS && !confirm(`⚠️ ALERGIA (${allergyS})\n\n"${o.name}" contiene leche de ${allergyS}.\n\n¿Añadir de todas formas?`)) return;
+        const brand = (o.storeBrand || 'Salling').toUpperCase();
+        addItem(o.name, brand, o.ean || '', 'otros', '', o.img || '', 'Salling', o.price || 0);
+        $('minput').value = '';
+        $('munit').value = '';
+        hideAcList();
+        $('minput').focus();
+      };
+      list.appendChild(item);
+    });
+
+    // Separador visual entre Salling y historial local.
+    if(hist.length){
+      const sep = document.createElement('div');
+      sep.className = 'ac-item';
+      sep.style.cssText = 'font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);background:var(--sf2);cursor:default;padding:6px 12px';
+      sep.textContent = '📦 Tus productos';
+      list.appendChild(sep);
+    }
+  }
+
   // Palabras que empiezan (mejor) vs contienen la query.
   const scored = hist
     .map(h => {
@@ -2224,7 +2282,6 @@ function renderAcList(rawQuery){
     .sort((a,b) => b.s - a.s)
     .slice(0, 8);
 
-  list.innerHTML = '';
   scored.forEach(({ h }, i) => {
     const emoji = productEmoji(h.name) || (CATS[h.cat] || CATS.otros).i;
     const priceTxt = h.price ? formatEUR(h.price) : '';
@@ -3187,6 +3244,337 @@ function translateDaEs(text){
   return out;
 }
 
+// Diccionario ES→DA para buscar ofertas escribiendo en español.
+// Cada español mapea a uno o varios términos daneses posibles.
+const ES_DA = {
+  // Carne y pescado
+  'solomillo':['mørbrad','oksemørbrad','svinemørbrad','filet mignon'],
+  'ternera':['oksekød','okse','oksemørbrad','oksefilet','hakket oksekød'],
+  'buey':['oksekød','okse'],
+  'vaca':['oksekød','okse'],
+  'cerdo':['svinekød','svin','svinemørbrad','svinefilet','hakket svinekød'],
+  'cordero':['lam','lammekød'],
+  'pollo':['kylling','kyllingebryst','kyllingefilet','kyllingelår','høne'],
+  'pavo':['kalkun'],
+  'pato':['and'],
+  'jamón':['skinke','spegeskinke'],
+  'jamon':['skinke','spegeskinke'],
+  'bacon':['bacon'],
+  'salchicha':['pølse','pølser','frankfurter'],
+  'salchichas':['pølser','pølse'],
+  'chorizo':['chorizo'],
+  'albóndigas':['frikadeller','kødboller'],
+  'albondigas':['frikadeller','kødboller'],
+  'carne':['kød','kødhak'],
+  'carne picada':['hakket kød','hakket oksekød','hakket svinekød'],
+  'filete':['filet','bøf','steak'],
+  'bistec':['bøf','steak','oksesteg'],
+  'chuleta':['kotelet','svinekotelet'],
+  'costilla':['ribben','spareribs'],
+  'hígado':['lever'],
+  'higado':['lever'],
+  'paté':['leverpostej','postej'],
+  'pate':['leverpostej','postej'],
+  'pechuga':['bryst','kyllingebryst'],
+  'pescado':['fisk','fiskefilet'],
+  'salmón':['laks','røget laks'],
+  'salmon':['laks','røget laks'],
+  'atún':['tun','tunmousse','tun i olie','tun i vand'],
+  'atun':['tun'],
+  'bacalao':['torsk','klipfisk'],
+  'gambas':['rejer','tigerrejer'],
+  'langostinos':['tigerrejer','store rejer'],
+  'caballa':['makrel','røget makrel'],
+  'arenque':['sild','marinerede sild'],
+  'sardina':['sardin','sardiner'],
+  'sardinas':['sardiner'],
+  'trucha':['ørred'],
+  'lubina':['bars'],
+  'mejillones':['muslinger'],
+  'calamar':['blæksprutte'],
+  'palitos de pescado':['fiskepinde'],
+  // Lácteos
+  'leche':['mælk','sødmælk','letmælk','minimælk','skummetmælk'],
+  'leche entera':['sødmælk'],
+  'leche semi':['letmælk'],
+  'leche desnatada':['minimælk','skummetmælk'],
+  'nata':['fløde','piskefløde','madlavningsfløde'],
+  'nata montada':['flødeskum'],
+  'mantequilla':['smør','kærnesmør'],
+  'queso':['ost'],
+  'queso rallado':['revet ost'],
+  'queso crema':['flødeost','philadelphia'],
+  'queso feta':['feta'],
+  'yogur':['yoghurt','skyr','naturell yoghurt'],
+  'yogur natural':['naturell yoghurt','skyr'],
+  'skyr':['skyr'],
+  'kefir':['kefir'],
+  'huevos':['æg'],
+  'huevo':['æg'],
+  // Panadería / cereales
+  'pan':['brød','rugbrød','franskbrød','toastbrød'],
+  'pan integral':['fuldkorn brød','rugbrød'],
+  'pan de molde':['toastbrød'],
+  'pan blanco':['franskbrød'],
+  'pan de centeno':['rugbrød'],
+  'baguette':['baguette'],
+  'panecillos':['rundstykker','boller'],
+  'bollos':['boller','wienerbrød'],
+  'galletas':['kiks','småkager','kager'],
+  'pastel':['kage'],
+  'harina':['mel','hvedemel'],
+  'arroz':['ris'],
+  'pasta':['pasta','spaghetti','penne','makaroni','lasagne'],
+  'espaguetis':['spaghetti'],
+  'lasaña':['lasagne'],
+  'avena':['havre','havregryn'],
+  'copos de avena':['havregryn'],
+  'muesli':['müsli','muesli'],
+  'cereales':['morgenmadsprodukter','cornflakes','müsli'],
+  // Fruta
+  'manzana':['æble','æbler'],
+  'manzanas':['æbler'],
+  'pera':['pære','pærer'],
+  'peras':['pærer'],
+  'plátano':['banan','bananer'],
+  'plátanos':['bananer'],
+  'platano':['banan','bananer'],
+  'platanos':['bananer'],
+  'naranja':['appelsin','appelsiner'],
+  'naranjas':['appelsiner'],
+  'limón':['citron'],
+  'limon':['citron'],
+  'lima':['lime'],
+  'fresa':['jordbær'],
+  'fresas':['jordbær'],
+  'frambuesa':['hindbær'],
+  'frambuesas':['hindbær'],
+  'arándanos':['blåbær'],
+  'arandanos':['blåbær'],
+  'moras':['brombær'],
+  'cerezas':['kirsebær'],
+  'uvas':['druer','vindruer'],
+  'sandía':['vandmelon'],
+  'sandia':['vandmelon'],
+  'melón':['melon'],
+  'melon':['melon'],
+  'piña':['ananas'],
+  'pina':['ananas'],
+  'mango':['mango'],
+  'kiwi':['kiwi'],
+  'aguacate':['avocado'],
+  'melocotón':['fersken'],
+  'melocoton':['fersken'],
+  'ciruela':['blomme','blommer'],
+  'ciruelas':['blommer'],
+  'granada':['granatæble'],
+  'coco':['kokos','kokosmælk'],
+  // Verduras
+  'patata':['kartoffel','kartofler'],
+  'patatas':['kartofler'],
+  'cebolla':['løg','rødløg'],
+  'cebolla roja':['rødløg'],
+  'ajo':['hvidløg'],
+  'tomate':['tomat','tomater','cherrytomater'],
+  'tomates':['tomater'],
+  'tomate cherry':['cherrytomater'],
+  'pepino':['agurk'],
+  'lechuga':['salat','iceberg salat','hjertesalat'],
+  'ensalada':['salat','salatmix'],
+  'zanahoria':['gulerod','gulerødder'],
+  'zanahorias':['gulerødder'],
+  'brócoli':['broccoli'],
+  'brocoli':['broccoli'],
+  'coliflor':['blomkål'],
+  'col':['kål','hvidkål','rødkål','spidskål'],
+  'espinaca':['spinat','babyspinat'],
+  'espinacas':['spinat','babyspinat'],
+  'champiñón':['champignon','svamp'],
+  'champiñones':['champignon','svampe'],
+  'champinon':['champignon'],
+  'champinones':['champignon'],
+  'setas':['svampe','svamp'],
+  'pimiento':['peberfrugt','peberfrugter','snackpeber'],
+  'pimientos':['peberfrugter','snackpeber'],
+  'calabacín':['squash','courgette'],
+  'calabacin':['squash','courgette'],
+  'maíz':['majs'],
+  'maiz':['majs'],
+  'guisantes':['ærter'],
+  'judías':['bønner','grønne bønner','kidneybønner'],
+  'judias':['bønner'],
+  'judías verdes':['grønne bønner'],
+  'lentejas':['linser'],
+  'garbanzos':['kikærter'],
+  'puerro':['porre','porrer'],
+  'apio':['selleri','bladselleri'],
+  'remolacha':['rødbede'],
+  'espárragos':['asparges'],
+  'esparragos':['asparges'],
+  'berenjena':['aubergine'],
+  'jengibre':['ingefær'],
+  'aceituna':['oliven'],
+  'aceitunas':['oliven'],
+  // Aceites, salsas, condimentos
+  'aceite':['olie','olivenolie','solsikkeolie','rapsolie'],
+  'aceite de oliva':['olivenolie'],
+  'aceite de girasol':['solsikkeolie'],
+  'vinagre':['eddike','balsamicoeddike'],
+  'sal':['salt','havsalt'],
+  'pimienta':['peber','sort peber'],
+  'azúcar':['sukker'],
+  'azucar':['sukker'],
+  'miel':['honning'],
+  'mermelada':['syltetøj','marmelade'],
+  'mostaza':['sennep'],
+  'ketchup':['ketchup'],
+  'mayonesa':['mayonnaise'],
+  'salsa':['sovs'],
+  'especias':['krydderier','krydderi'],
+  // Bebidas
+  'agua':['vand','kildevand'],
+  'agua con gas':['danskvand'],
+  'café':['kaffe','filterkaffe','instantkaffe'],
+  'cafe':['kaffe'],
+  'té':['te','sort te','grøn te'],
+  'zumo':['juice','saft','æblejuice','appelsinjuice'],
+  'refresco':['sodavand','cola'],
+  'cerveza':['øl','pilsner','lager'],
+  'vino':['vin'],
+  'vino tinto':['rødvin'],
+  'vino blanco':['hvidvin'],
+  'vino rosado':['rosé','rosévin'],
+  'cava':['mousserende vin','crémant'],
+  'champagne':['champagne'],
+  'cacao':['kakao'],
+  'chocolate caliente':['varm kakao','chokoladedrik'],
+  // Snacks
+  'chocolate':['chokolade','mælkechokolade','mørk chokolade'],
+  'chuches':['slik','vingummi','bolsjer','lakrids'],
+  'gominolas':['vingummi','bamsemix'],
+  'regaliz':['lakrids'],
+  'chicle':['tyggegummi'],
+  'palomitas':['popcorn'],
+  'patatas fritas':['chips','kartoffelchips'],
+  'chips':['chips'],
+  'frutos secos':['nødder'],
+  'almendras':['mandler'],
+  'nueces':['valnødder'],
+  'avellanas':['hasselnødder'],
+  'anacardos':['cashewnødder'],
+  'pistachos':['pistacienødder'],
+  'pipas':['solsikkekerner','græskarkerner'],
+  'pasas':['rosiner'],
+  'mazapán':['marcipan'],
+  'gofre':['vaffel','vafler'],
+  'helado':['is','isvafler'],
+  // Congelados y preparados
+  'pizza':['pizza','frost pizza','dybfrost pizza'],
+  'masa de pizza':['pizzadej'],
+  'filete de pescado':['fiskefilet'],
+  'palitos':['fiskepinde'],
+  'nuggets':['nuggets','kylling nuggets','kyllingenuggets'],
+  'lasagne':['lasagne'],
+  'sushi':['sushi'],
+  'wok':['wok'],
+  // Higiene y hogar
+  'champú':['shampoo'],
+  'champu':['shampoo'],
+  'suavizante':['balsam','skyllemiddel'],
+  'gel':['bad','showergel','bruser'],
+  'jabón':['sæbe','flydende sæbe'],
+  'jabon':['sæbe'],
+  'pasta de dientes':['tandpasta'],
+  'cepillo de dientes':['tandbørste'],
+  'papel higiénico':['toiletpapir'],
+  'papel higienico':['toiletpapir'],
+  'papel de cocina':['køkkenrulle'],
+  'film transparente':['husholdningsfilm'],
+  'papel de aluminio':['alufolie'],
+  'detergente':['vaskepulver','vaskemiddel'],
+  'lavavajillas':['opvaskemiddel','opvasketabs'],
+  'lejía':['klor','klorin'],
+  'lejia':['klorin'],
+  'desodorante':['deodorant'],
+  'compresas':['bind','hygiejnebind'],
+  'tampones':['tampons'],
+  'pañales':['bleer','ble'],
+  'panales':['bleer'],
+  'preservativo':['kondom'],
+  'toallitas':['vådservietter','wet wipes'],
+  'limpiador':['rengøring','universalrengøring'],
+  'limpiador wc':['toiletrens'],
+  'trapo':['viskestykke','karklud'],
+  'estropajo':['sponsvamp'],
+  // Adjetivos
+  'ecológico':['økologisk','økologiske'],
+  'ecologico':['økologisk'],
+  'orgánico':['økologisk','økologiske'],
+  'organico':['økologisk'],
+  'bio':['økologisk'],
+  'natural':['naturel','naturlig'],
+  'fresco':['frisk','friske'],
+  'congelado':['frosset','frossen','dybfrost'],
+  'ahumado':['ryged','røget'],
+  'cocido':['kogt'],
+  'crudo':['rå'],
+  'entero':['hel','hele'],
+  'lonchas':['skiveskåret','skiver'],
+  'picado':['hakket'],
+  'rallado':['reven','revet'],
+  'relleno':['fyldt'],
+  'sin gluten':['glutenfri'],
+  'sin lactosa':['laktosefri'],
+  'sin azúcar':['sukkerfri'],
+  'sin azucar':['sukkerfri'],
+  'sin grasa':['fedtfri'],
+  'bajo en grasa':['fedtfattig','lavfedt'],
+  'integral':['fuldkorn'],
+  'sin alcohol':['alkoholfri'],
+  'clásico':['klassisk'],
+  'clasico':['klassisk'],
+  'familiar':['familie','familieportion'],
+  'grande':['stor','stort'],
+  'pequeño':['lille'],
+  'pequeno':['lille'],
+  'mediano':['mellem']
+};
+
+function translateEsToDa(esQuery){
+  if(!esQuery) return [];
+  const q = esQuery.toLowerCase().trim();
+  if(!q) return [];
+  const out = new Set();
+  // 1) Match exacto (frases y palabras).
+  if(ES_DA[q]) ES_DA[q].forEach(t => out.add(t));
+  // 2) Match por prefijo (para plurales/derivados: "solomill" → "solomillo").
+  for(const [es, das] of Object.entries(ES_DA)){
+    if(q.length >= 3 && es.startsWith(q) && es !== q){
+      das.forEach(t => out.add(t));
+    }
+  }
+  // 3) Cada palabra individual (para "solomillo cerdo" → mørbrad + svinekød).
+  const words = q.split(/\s+/).filter(w => w.length >= 3);
+  if(words.length > 1){
+    for(const w of words){
+      if(ES_DA[w]) ES_DA[w].forEach(t => out.add(t));
+    }
+  }
+  return Array.from(out);
+}
+
+function searchSallingOffers(query){
+  if(!sallingOffersCache.length) return [];
+  const q = String(query || '').trim();
+  if(!q) return [];
+  const daTerms = translateEsToDa(q);
+  const needles = [q.toLowerCase(), ...daTerms.map(t => t.toLowerCase())];
+  return sallingOffersCache.filter(o => {
+    const name = (o.name || '').toLowerCase();
+    return needles.some(n => name.includes(n));
+  }).slice(0, 6);
+}
+
 function flattenSallingClearances(raw){
   // Los food-waste vienen anidados por tienda o clearances. Aplanamos a items uniformes.
   const out = [];
@@ -3294,6 +3682,58 @@ $('sallingOffersModal').onclick = e => { if(e.target === $('sallingOffersModal')
 
 let sallingOffersCache = [];
 let sallingBrandFilter = 'all';
+const SALLING_CACHE_KEY = 'lc_v6_salling_cache';
+const SALLING_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
+
+function readSallingCacheFromDisk(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(SALLING_CACHE_KEY) || 'null');
+    if(!raw || !Array.isArray(raw.offers) || !raw.at) return null;
+    if(Date.now() - raw.at > SALLING_CACHE_TTL_MS) return null;
+    return raw;
+  }catch{ return null; }
+}
+function writeSallingCacheToDisk(offers){
+  try{
+    localStorage.setItem(SALLING_CACHE_KEY, JSON.stringify({ at: Date.now(), offers }));
+  }catch{}
+}
+
+// Hidrata sallingOffersCache desde localStorage al arrancar el script para que las
+// sugerencias en el autocomplete estén disponibles antes del primer fetch.
+(() => {
+  const cached = readSallingCacheFromDisk();
+  if(cached) sallingOffersCache = cached.offers;
+})();
+
+async function prefetchSallingOffersIfStale(){
+  const cfg = getSallingCfg();
+  if(!cfg.apiKey || !cfg.zip) return;
+  const cached = readSallingCacheFromDisk();
+  if(cached){ sallingOffersCache = cached.offers; return; }
+  // Cache vieja o vacía: hacemos el fetch en background sin bloquear el UI.
+  try{
+    const stores = await sallingSearchStores(cfg.zip);
+    const results = await Promise.allSettled(stores.map(s =>
+      sallingFetchFoodWaste(s.id).then(raw => ({ raw, store: s }))
+    ));
+    const merged = [];
+    for(const r of results){
+      if(r.status !== 'fulfilled') continue;
+      const { raw, store } = r.value;
+      const items = flattenSallingClearances(raw);
+      for(const it of items){
+        it.storeBrand = it.brand || store.brand || '';
+        it.storeName = store.name || '';
+        it.storeCity = store.city || '';
+        it.storeId = store.id;
+        merged.push(it);
+      }
+    }
+    sallingOffersCache = merged;
+    writeSallingCacheToDisk(merged);
+  }catch{ /* silencioso: si no hay red o falla auth, no molestamos al usuario */ }
+}
 
 async function openSallingOffers(){
   closeSidebar();
@@ -3348,6 +3788,7 @@ async function openSallingOffers(){
     }
 
     sallingOffersCache = merged;
+    writeSallingCacheToDisk(merged);
     renderSallingBrandChips(Array.from(brands));
 
     const brandSummary = Array.from(brands).map(b => b.toUpperCase()).join(' · ') || 'sin ofertas';
