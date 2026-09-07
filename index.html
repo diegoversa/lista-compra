@@ -34,11 +34,11 @@
     html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased}
     body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;min-height:100dvh}
 
-    #setup,#waiting,#picker{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem 1.5rem;text-align:center}
-    #waiting,#picker{display:none}
-    #picker h1,#picker p{font-size:14px;color:var(--tx2);line-height:1.6}
-    #picker h1{font-size:28px;font-weight:600;letter-spacing:-.5px;margin-bottom:.5rem;color:var(--tx)}
-    #picker p{margin-bottom:2rem}
+    #setup,#waiting,#picker,#login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:2rem 1.5rem;text-align:center}
+    #waiting,#picker,#login{display:none}
+    #picker h1,#picker p,#login h1,#login p{font-size:14px;color:var(--tx2);line-height:1.6}
+    #picker h1,#login h1{font-size:28px;font-weight:600;letter-spacing:-.5px;margin-bottom:.5rem;color:var(--tx)}
+    #picker p,#login p{margin-bottom:2rem}
     .room-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px;border:1px solid var(--bd2);border-radius:var(--rs);background:var(--sf);color:var(--tx);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;margin-bottom:8px;text-align:left}
     .room-btn:active{background:var(--sf2)}
     .room-btn .rlbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -293,6 +293,38 @@
       <button class="gbtn" id="pickerNewRoom">➕ Nueva sala</button>
       <button class="picker-link" id="pickerChangeAccount">Cambiar cuenta de Firebase</button>
     </div>
+  </div>
+</div>
+
+<div id="login">
+  <div style="font-size:48px;margin-bottom:1rem">🛒</div>
+  <h1>Mercao</h1>
+  <p>Inicia sesión para continuar. La cuenta te sigue en Safari, en el acceso directo de pantalla de inicio y en cualquier otro dispositivo.</p>
+  <div class="card">
+    <button class="gbtn" id="loginGoogle" style="width:100%;background:#fff;color:#3c4043;border:1px solid #dadce0;padding:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'DM Sans',sans-serif">
+      <span style="display:inline-block;width:20px;height:20px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg></span>
+      Continuar con Google
+    </button>
+
+    <div style="text-align:center;color:var(--tx3);font-size:11px;margin-bottom:12px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em">o usa un email</div>
+
+    <div class="f">
+      <label>Email</label>
+      <input id="loginEmail" type="email" placeholder="tu@email.com" autocomplete="email" spellcheck="false" />
+    </div>
+    <div class="f">
+      <label>Contraseña</label>
+      <input id="loginPwd" type="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" />
+    </div>
+
+    <div id="loginError" style="color:var(--red);font-size:12px;margin-bottom:10px;min-height:16px"></div>
+
+    <div style="display:flex;gap:6px">
+      <button class="gbtn" id="loginBtn" style="flex:1">Iniciar sesión</button>
+      <button class="gbtn" id="loginRegBtn" style="flex:1;background:var(--tx)">Crear cuenta</button>
+    </div>
+
+    <button class="picker-link" id="loginChangeAccount" style="margin-top:12px;width:100%">Cambiar cuenta de Firebase</button>
   </div>
 </div>
 
@@ -1440,14 +1472,58 @@ if(invited){
   // No autoconectamos: obligamos a teclear el nombre desde el botón "Unirse".
   setTimeout(() => $('sname').focus(), 100);
 }else if(ownBookmark){
-  // Acceso directo propio a una sala concreta: autoconecta sin picker.
+  // Acceso directo propio a una sala concreta: autoconecta si hay sesión, si no login.
   doConnect(ip, ik, ir, iu || (saved?.userName) || 'Yo');
-}else if(menuShortcut){
-  // Acceso directo al menú principal (URL sin r): siempre muestra el picker.
-  showPicker();
-}else if(saved){
-  // Credenciales guardadas: por defecto también picker (mismo criterio que antes).
-  showPicker();
+}else if(menuShortcut || saved){
+  // Cred de Firebase disponibles. Comprobamos sesión ANTES del picker.
+  ensureAuthOrLogin(saved).then(ok => { if(ok) showPicker(); });
+}
+
+async function ensureAuthOrLogin(sk){
+  try{
+    if(!sk?.projectId || !sk?.apiKey) return true;
+
+    // Init Firebase una sola vez. Reusa el instance si ya está inicializado.
+    let app;
+    try{ app = initializeApp({
+      apiKey: sk.apiKey,
+      databaseURL: `https://${sk.projectId}-default-rtdb.europe-west1.firebasedatabase.app`,
+      projectId: sk.projectId
+    }, 'lc'); }catch(e){
+      // "Firebase App named 'lc' already exists" → reusa el existente.
+      const { getApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      app = getApp('lc');
+    }
+    const auth = getAuth(app);
+    window.__mercaoAuth = auth;
+
+    if(localStorage.getItem('lc_v6_auth_pending_google')){
+      try{
+        const rr = await getRedirectResult(auth);
+        if(rr?.user){
+          localStorage.setItem(AUTH_MODE_KEY, 'email');
+          if(rr.user.email) localStorage.setItem(AUTH_EMAIL_KEY, rr.user.email);
+        }
+      }catch{}
+      localStorage.removeItem('lc_v6_auth_pending_google');
+    }
+
+    const user = await new Promise(resolve => {
+      const off = onAuthStateChanged(auth, u => { off(); resolve(u); });
+    });
+
+    if(!user || user.isAnonymous){
+      showLoginScreen();
+      return false;
+    }
+    localStorage.setItem(UK, user.uid);
+    uid = user.uid;
+    return true;
+  }catch(e){
+    // Si algo falla en la inicialización, mostrar login para no dejar la app colgada.
+    showLoginScreen();
+    return false;
+  }
 }
 
 function collectPickerRooms(){
@@ -1584,16 +1660,22 @@ let adminSecret = '';
 
 async function doConnect(p,k,r,u,secret){
   try{
-    const app = initializeApp({
-      apiKey:k,
-      databaseURL:`https://${p}-default-rtdb.europe-west1.firebasedatabase.app`,
-      projectId:p
-    }, 'lc');
+    let app;
+    try{
+      app = initializeApp({
+        apiKey:k,
+        databaseURL:`https://${p}-default-rtdb.europe-west1.firebasedatabase.app`,
+        projectId:p
+      }, 'lc');
+    }catch(e){
+      // Ya inicializada por ensureAuthOrLogin. Reusamos la misma instancia.
+      const { getApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      app = getApp('lc');
+    }
 
-    // Autenticación: si el usuario tiene una sesión de email persistente (currentUser)
-    // la respetamos. Si no y ha usado email antes, no autoconectamos como anónimo para
-    // que pueda ver el modal de login y no perder su identidad. Solo caemos a anónimo
-    // si no hay preferencia previa o si Firebase ya restauró una sesión.
+    // Autenticación: SIN anónimo. Si no hay sesión persistida (email o Google),
+    // llevamos al usuario a la pantalla #login para que se autentique. Sin sesión
+    // no seguimos con Firebase Realtime Database.
     const auth = getAuth(app);
     window.__mercaoAuth = auth;
     try{
@@ -1614,28 +1696,20 @@ async function doConnect(p,k,r,u,secret){
         const off = onAuthStateChanged(auth, u => { off(); resolve(u); });
       });
 
-      const preferredMode = localStorage.getItem('lc_v6_auth_mode');
-      let cred = existing ? { user: existing } : null;
-
-      if(!cred && preferredMode !== 'email'){
-        cred = await signInAnonymously(auth);
-      }else if(!cred && preferredMode === 'email'){
-        // No hay sesión y el usuario prefiere email: entramos anónimo temporal para
-        // no romper el arranque; al abrir el modal de cuenta podrá loguearse y migrar.
-        cred = await signInAnonymously(auth);
+      if(!existing || existing.isAnonymous){
+        // Sin cuenta real → pantalla de login. El botón "Iniciar sesión" o "Google"
+        // completará el flujo y hará location.reload(). doConnect se re-ejecutará con
+        // la sesión ya activa.
+        showLoginScreen();
+        return;
       }
 
       window.__legacyUid = uid;
-      uid = cred.user.uid;
+      uid = existing.uid;
+      localStorage.setItem(UK, existing.uid);
     }catch(authErr){
       const code = authErr?.code || '';
-      let msg = 'No se pudo autenticar con Firebase.';
-      if(code === 'auth/admin-restricted-operation' || code === 'auth/operation-not-allowed'){
-        msg = 'Falta habilitar Anonymous Auth en Firebase Console → Authentication → Sign-in method.';
-      }else if(code){
-        msg = `Auth: ${code}`;
-      }
-      $('serr').textContent = msg;
+      $('serr').textContent = 'Auth: ' + (code || authErr?.message || 'error');
       $('serr').style.display = 'block';
       return;
     }
@@ -4694,6 +4768,91 @@ async function doAuthAction(mode){
   }
 }
 
+function showLoginScreen(){
+  $('setup').style.display = 'none';
+  $('picker').style.display = 'none';
+  $('waiting').style.display = 'none';
+  $('app').style.display = 'none';
+  $('login').style.display = 'flex';
+  const email = localStorage.getItem(AUTH_EMAIL_KEY) || '';
+  if(email && $('loginEmail') && !$('loginEmail').value) $('loginEmail').value = email;
+  setTimeout(() => $('loginEmail')?.focus(), 200);
+}
+
+if($('loginGoogle')){
+  $('loginGoogle').onclick = () => doGoogleAuthFromLogin();
+}
+if($('loginBtn')){
+  $('loginBtn').onclick = () => doAuthActionFromLogin('login');
+}
+if($('loginRegBtn')){
+  $('loginRegBtn').onclick = () => doAuthActionFromLogin('register');
+}
+if($('loginChangeAccount')){
+  $('loginChangeAccount').onclick = () => {
+    if(!confirm('¿Cambiar la cuenta de Firebase? Volverás al formulario de Project ID + API Key.')) return;
+    localStorage.removeItem(SK);
+    localStorage.removeItem(AUTH_MODE_KEY);
+    location.reload();
+  };
+}
+
+async function doGoogleAuthFromLogin(){
+  const errEl = $('loginError');
+  errEl.textContent = '';
+  if(!window.__mercaoAuth){ errEl.textContent = 'Firebase no está inicializado.'; return; }
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  const auth = window.__mercaoAuth;
+  spin('Abriendo Google...');
+  try{
+    try{
+      const cred = await signInWithPopup(auth, provider);
+      localStorage.setItem(AUTH_MODE_KEY, 'email');
+      if(cred.user.email) localStorage.setItem(AUTH_EMAIL_KEY, cred.user.email);
+      localStorage.setItem(UK, cred.user.uid);
+      unspin();
+      setTimeout(() => location.reload(), 200);
+    }catch(e){
+      if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/operation-not-supported-in-this-environment'){
+        localStorage.setItem('lc_v6_auth_pending_google', '1');
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      throw e;
+    }
+  }catch(e){
+    unspin();
+    errEl.textContent = friendlyAuthError(e.code) + (e.message && !friendlyAuthError(e.code).includes(e.message) ? ` (${e.message})` : '');
+  }
+}
+
+async function doAuthActionFromLogin(mode){
+  const email = $('loginEmail').value.trim();
+  const pwd = $('loginPwd').value;
+  const errEl = $('loginError');
+  errEl.textContent = '';
+  if(!email || !pwd){ errEl.textContent = 'Rellena email y contraseña.'; return; }
+  if(!window.__mercaoAuth){ errEl.textContent = 'Firebase no está inicializado.'; return; }
+  spin(mode === 'register' ? 'Creando cuenta...' : 'Iniciando sesión...');
+  try{
+    let cred;
+    if(mode === 'register'){
+      cred = await createUserWithEmailAndPassword(window.__mercaoAuth, email, pwd);
+    }else{
+      cred = await signInWithEmailAndPassword(window.__mercaoAuth, email, pwd);
+    }
+    localStorage.setItem(AUTH_MODE_KEY, 'email');
+    localStorage.setItem(AUTH_EMAIL_KEY, email);
+    localStorage.setItem(UK, cred.user.uid);
+    unspin();
+    setTimeout(() => location.reload(), 200);
+  }catch(e){
+    unspin();
+    errEl.textContent = friendlyAuthError(e.code) + (e.message && !friendlyAuthError(e.code).includes(e.message) ? ` (${e.message})` : '');
+  }
+}
+
 if($('si-account')){
   $('si-account').onclick = () => {
     closeSidebar();
@@ -4713,7 +4872,7 @@ if($('authCancel')){
   $('authRegister').onclick = () => doAuthAction('register');
   $('authGoogle').onclick = doGoogleAuth;
   $('authLogout').onclick = async () => {
-    if(!confirm('Cerrar sesión de email? Volverás a modo anónimo y en el siguiente refresco podrías recibir otra identidad.')) return;
+    if(!confirm('Cerrar sesión? Tendrás que volver a iniciarla para usar la app.')) return;
     localStorage.removeItem(AUTH_MODE_KEY);
     try{ await signOut(window.__mercaoAuth); }catch{}
     setTimeout(() => location.reload(), 200);
