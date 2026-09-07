@@ -1508,6 +1508,7 @@ async function ensureAuthOrLogin(sk){
     let app;
     try{ app = initializeApp({
       apiKey: sk.apiKey,
+      authDomain: `${sk.projectId}.firebaseapp.com`,
       databaseURL: `https://${sk.projectId}-default-rtdb.europe-west1.firebasedatabase.app`,
       projectId: sk.projectId
     }, 'lc'); }catch(e){
@@ -1698,6 +1699,7 @@ async function doConnect(p,k,r,u,secret){
     try{
       app = initializeApp({
         apiKey:k,
+        authDomain:`${p}.firebaseapp.com`,
         databaseURL:`https://${p}-default-rtdb.europe-west1.firebasedatabase.app`,
         projectId:p
       }, 'lc');
