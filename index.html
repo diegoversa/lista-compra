@@ -421,6 +421,7 @@
   <div class="sbsec">
     <div class="sblabel">Acciones</div>
     <button class="sbBtn" id="si-rename">✏️ Cambiar mi nombre</button>
+    <button class="sbBtn accent" id="si-account">🔐 Cuenta (email · sesión permanente)</button>
     <button class="sbBtn" id="si-picker">🏠 Menú de salas</button>
     <button class="sbBtn" id="si-notif" style="display:none">🔔 Activar avisos de nuevos usuarios</button>
     <button class="sbBtn" id="si-adminkey" style="display:none">🔑 Ver mi clave de admin</button>
@@ -568,6 +569,38 @@
   </div>
 </div>
 
+<div class="overlay" id="authModal">
+  <div class="sheet" style="max-height:90dvh;overflow-y:auto">
+    <div class="stitle">🔐 Cuenta con email</div>
+    <div class="ssub">Un login que dura entre refrescos y contextos (Safari, acceso directo, iPad…) y te da SIEMPRE la misma identidad. Adiós al problema de "otra vez soy un usuario nuevo".</div>
+
+    <div id="authCurrent" style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;margin-bottom:1rem;font-size:13px"></div>
+
+    <div id="authForm">
+      <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Email</label>
+      <input id="authEmail" type="email" placeholder="tu@email.com" autocomplete="email" spellcheck="false" />
+
+      <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Contraseña</label>
+      <input id="authPwd" type="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" />
+
+      <div id="authError" style="color:var(--red);font-size:12px;margin-bottom:12px;min-height:16px"></div>
+
+      <div class="sactions" style="flex-wrap:wrap;gap:6px">
+        <button class="scancel" id="authCancel">Cerrar</button>
+        <button class="sok" id="authLogin">Iniciar sesión</button>
+        <button class="sok" id="authRegister" style="background:var(--tx)">Crear cuenta</button>
+      </div>
+    </div>
+
+    <div id="authLogoutBlock" style="display:none">
+      <div class="sactions">
+        <button class="scancel" id="authClose2">Cerrar</button>
+        <button class="sok" id="authLogout" style="background:var(--red)">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="a2hsModal">
   <div class="sheet">
     <div class="stitle">📲 Añadir a pantalla de inicio</div>
@@ -711,7 +744,8 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, remove, update, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -1549,13 +1583,29 @@ async function doConnect(p,k,r,u,secret){
       projectId:p
     }, 'lc');
 
-    // Autenticación anónima primero: sin esto, las reglas de Firebase no pueden
-    // distinguir a nadie y cualquiera con la API key podría escribir en la base.
+    // Autenticación: si el usuario tiene una sesión de email persistente (currentUser)
+    // la respetamos. Si no y ha usado email antes, no autoconectamos como anónimo para
+    // que pueda ver el modal de login y no perder su identidad. Solo caemos a anónimo
+    // si no hay preferencia previa o si Firebase ya restauró una sesión.
     const auth = getAuth(app);
+    window.__mercaoAuth = auth;
     try{
-      const cred = await signInAnonymously(auth);
-      // Sustituimos la UID de localStorage por la que emite Firebase.
-      // localStorage.UK se mantiene como "legacyUid" para migrar admin/miembros existentes.
+      // Esperamos a que Firebase resuelva su primera restauración de sesión.
+      const existing = await new Promise(resolve => {
+        const off = onAuthStateChanged(auth, u => { off(); resolve(u); });
+      });
+
+      const preferredMode = localStorage.getItem('lc_v6_auth_mode');
+      let cred = existing ? { user: existing } : null;
+
+      if(!cred && preferredMode !== 'email'){
+        cred = await signInAnonymously(auth);
+      }else if(!cred && preferredMode === 'email'){
+        // No hay sesión y el usuario prefiere email: entramos anónimo temporal para
+        // no romper el arranque; al abrir el modal de cuenta podrá loguearse y migrar.
+        cred = await signInAnonymously(auth);
+      }
+
       window.__legacyUid = uid;
       uid = cred.user.uid;
     }catch(authErr){
@@ -4435,6 +4485,142 @@ function menuShortcutUrl(){
   if(uid) params.set('id', uid);
   // No metemos r ni l a propósito: es el shortcut al menú.
   return location.pathname + '?' + params.toString();
+}
+
+// ─────────────────────────────────────────────────────────────
+// CUENTA CON EMAIL Y PASSWORD (persistente en cualquier contexto)
+// ─────────────────────────────────────────────────────────────
+const AUTH_MODE_KEY = 'lc_v6_auth_mode';       // 'email' | 'anonymous'
+const AUTH_EMAIL_KEY = 'lc_v6_auth_email';     // último email usado
+
+function currentAuthUser(){
+  try{
+    const apps = window.__mercaoAuth ? [window.__mercaoAuth] : [];
+    if(!apps.length) return null;
+    return apps[0].currentUser;
+  }catch{ return null; }
+}
+
+function refreshAuthPanel(){
+  const cur = currentAuthUser();
+  const info = $('authCurrent');
+  const form = $('authForm');
+  const logout = $('authLogoutBlock');
+  if(!info) return;
+
+  if(cur && !cur.isAnonymous){
+    info.innerHTML = `Sesión iniciada como <b>${esc(cur.email || '(sin email)')}</b><br><span style="color:var(--tx3);font-family:'DM Mono',monospace;font-size:11px">UID: ${esc(cur.uid)}</span>`;
+    form.style.display = 'none';
+    logout.style.display = 'block';
+  }else{
+    const uidText = cur?.uid ? `<br><span style="color:var(--tx3);font-family:'DM Mono',monospace;font-size:11px">UID anónima: ${esc(cur.uid)}</span>` : '';
+    info.innerHTML = `Ahora mismo estás como <b>anónimo</b> — Firebase te da una identidad distinta en cada contexto (Safari, shortcut, otro móvil). Con email + contraseña eres SIEMPRE la misma persona y no pierdes el rol admin ni las salas.${uidText}`;
+    form.style.display = 'block';
+    logout.style.display = 'none';
+    const email = localStorage.getItem(AUTH_EMAIL_KEY) || '';
+    if(email && !$('authEmail').value) $('authEmail').value = email;
+  }
+}
+
+async function migrateUidAcrossSalas(oldUid, newUid){
+  if(!oldUid || !newUid || oldUid === newUid || !db) return;
+  const rooms = getSavedRooms();
+  for(const r of rooms){
+    try{
+      const adminSnap = await get(ref(db, `listas/${r.id}/_admin`));
+      const admin = adminSnap.val();
+      if(admin?.uid === oldUid){
+        await update(ref(db, `listas/${r.id}/_admin`), { uid: newUid, migratedFromAnon: oldUid, migratedAt: Date.now() });
+      }
+      const memSnap = await get(ref(db, `listas/${r.id}/_members/${oldUid}`));
+      const mem = memSnap.val();
+      if(mem){
+        await set(ref(db, `listas/${r.id}/_members/${newUid}`), { ...mem, uid: newUid, migratedFromAnon: oldUid });
+        await remove(ref(db, `listas/${r.id}/_members/${oldUid}`));
+      }
+    }catch(e){ /* seguimos con las demás salas si una falla */ }
+  }
+}
+
+function friendlyAuthError(code){
+  switch(code){
+    case 'auth/invalid-email': return 'El email no es válido.';
+    case 'auth/user-not-found': return 'No hay ninguna cuenta con ese email. ¿Quieres crearla?';
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return 'Contraseña incorrecta.';
+    case 'auth/email-already-in-use': return 'Ese email ya tiene cuenta. Usa "Iniciar sesión".';
+    case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
+    case 'auth/operation-not-allowed': return 'Falta habilitar Email/Password en Firebase Console → Authentication → Sign-in method.';
+    case 'auth/network-request-failed': return 'Sin conexión.';
+    default: return code || 'Error desconocido';
+  }
+}
+
+async function doAuthAction(mode){
+  const email = $('authEmail').value.trim();
+  const pwd = $('authPwd').value;
+  const errEl = $('authError');
+  errEl.textContent = '';
+
+  if(!email || !pwd){ errEl.textContent = 'Rellena email y contraseña.'; return; }
+  if(!window.__mercaoAuth){ errEl.textContent = 'Firebase no está inicializado. Conéctate a una sala primero.'; return; }
+
+  spin(mode === 'register' ? 'Creando cuenta...' : 'Iniciando sesión...');
+  const oldUid = currentAuthUser()?.uid || null;
+  const wasAnon = currentAuthUser()?.isAnonymous || false;
+
+  try{
+    let cred;
+    if(mode === 'register'){
+      cred = await createUserWithEmailAndPassword(window.__mercaoAuth, email, pwd);
+      if(user) try{ await updateProfile(cred.user, { displayName: user }); }catch{}
+    }else{
+      cred = await signInWithEmailAndPassword(window.__mercaoAuth, email, pwd);
+    }
+
+    localStorage.setItem(AUTH_MODE_KEY, 'email');
+    localStorage.setItem(AUTH_EMAIL_KEY, email);
+    localStorage.setItem(UK, cred.user.uid);
+
+    // Si venías de anónimo con cuentas y rol admin, muévelo a la nueva UID.
+    if(wasAnon && oldUid && oldUid !== cred.user.uid){
+      unspin();
+      spin('Migrando salas a la nueva cuenta...');
+      await migrateUidAcrossSalas(oldUid, cred.user.uid);
+    }
+
+    unspin();
+    toast(mode === 'register' ? 'Cuenta creada ✓' : 'Sesión iniciada ✓');
+    setTimeout(() => location.reload(), 350);
+  }catch(e){
+    unspin();
+    errEl.textContent = friendlyAuthError(e.code) + (e.message && !friendlyAuthError(e.code).includes(e.message) ? ` (${e.message})` : '');
+  }
+}
+
+if($('si-account')){
+  $('si-account').onclick = () => {
+    closeSidebar();
+    $('authEmail').value = '';
+    $('authPwd').value = '';
+    $('authError').textContent = '';
+    refreshAuthPanel();
+    $('authModal').classList.add('on');
+  };
+}
+
+if($('authCancel')){
+  $('authCancel').onclick = () => $('authModal').classList.remove('on');
+  $('authClose2').onclick = () => $('authModal').classList.remove('on');
+  $('authModal').onclick = e => { if(e.target === $('authModal')) $('authModal').classList.remove('on'); };
+  $('authLogin').onclick = () => doAuthAction('login');
+  $('authRegister').onclick = () => doAuthAction('register');
+  $('authLogout').onclick = async () => {
+    if(!confirm('Cerrar sesión de email? Volverás a modo anónimo y en el siguiente refresco podrías recibir otra identidad.')) return;
+    localStorage.removeItem(AUTH_MODE_KEY);
+    try{ await signOut(window.__mercaoAuth); }catch{}
+    setTimeout(() => location.reload(), 200);
+  };
 }
 
 if($('si-a2hs')){
