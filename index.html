@@ -1044,7 +1044,58 @@ function extractProductName(p){
   ).trim();
 }
 
+function lookupLocalByBarcode(code){
+  const c = String(code || '').trim();
+  if(!c) return null;
+
+  // 1) Ofertas Salling actualmente cacheadas: nombre, precio y tienda al momento.
+  if(Array.isArray(sallingOffersCache)){
+    const hit = sallingOffersCache.find(o => (o.ean || '') === c);
+    if(hit){
+      const esName = translateDaEs(hit.name) || '';
+      return {
+        found: true,
+        source: 'salling',
+        sourceLabel: 'Salling',
+        sourceShort: (hit.storeBrand || 'Salling').toUpperCase(),
+        name: hit.name + (esName ? ` (${esName})` : ''),
+        brand: (hit.storeBrand || 'Salling').toUpperCase(),
+        img: hit.img || '',
+        barcode: c,
+        rawCategories: '',
+        cat: guesscat(hit.name),
+        price: Number(hit.price) || 0
+      };
+    }
+  }
+
+  // 2) Historial local: si ya compraste este código antes, reutiliza toda su ficha.
+  const prev = Array.isArray(hist) ? hist.find(h => (h.barcode || '') === c) : null;
+  if(prev){
+    return {
+      found: true,
+      source: 'hist',
+      sourceLabel: 'Recientes',
+      sourceShort: prev.store || 'Reciente',
+      name: prev.name || '',
+      brand: prev.brand || '',
+      img: prev.img || '',
+      barcode: c,
+      rawCategories: '',
+      cat: prev.cat || 'otros',
+      price: Number(prev.price) || 0
+    };
+  }
+
+  return null;
+}
+
 async function lookupProductByBarcode(code){
+  // Antes de pedir a Open Food Facts miramos si tenemos el producto localmente,
+  // así los EANs de Salling (Netto/Bilka/Føtex) o los ya comprados aparecen al momento.
+  const local = lookupLocalByBarcode(code);
+  if(local) return local;
+
   for(const source of PRODUCT_DBS){
     try{
       const ctrl = new AbortController();
@@ -1235,7 +1286,7 @@ const SCAN_CONFIRM_WINDOW_MS = 1400;
 const SCAN_AFTER_ADD_COOLDOWN_MS = 1800;
 const SAME_CODE_COOLDOWN_MS = 10000;
 const scannedCodeCooldown = {};
-let pBrand = '', pImg = '', pCode = '', pSource = '';
+let pBrand = '', pImg = '', pCode = '', pSource = '', pPrice = 0;
 let amAdmin = false;
 let searchQuery = '';
 
@@ -2031,7 +2082,8 @@ async function handleCodeContinuous(code){
       product.cat,
       '',
       product.img,
-      product.sourceShort
+      product.sourceShort,
+      Number(product.price) || 0
     );
     return true;
   }
@@ -2056,6 +2108,7 @@ async function handleCode(code){
   pImg = product.img || '';
   pCode = code;
   pSource = product.sourceShort || '';
+  pPrice = Number(product.price) || 0;
 
   if(product.found){
     openModal(
@@ -2089,7 +2142,9 @@ function openModal(code, sub, prefill, title, img, cat){
   $('mname').value = prefill || '';
   const prev = lookupHistByName(prefill);
   $('munitm').value = prev?.unit || '';
-  $('mprice').value = prev?.price ? Number(prev.price).toFixed(2) : '';
+  // Prioriza el precio del lookup actual (Salling, etc.) sobre el histórico.
+  const scannedPrice = pPrice || (prev?.price ? Number(prev.price) : 0);
+  $('mprice').value = scannedPrice ? scannedPrice.toFixed(2) : '';
   $('mcat').value = cat || prev?.cat || 'otros';
 
   const im = $('mimg');
@@ -2124,6 +2179,7 @@ $('mok').onclick = () => {
   pImg = '';
   pCode = '';
   pSource = '';
+  pPrice = 0;
 };
 
 $('mcancel').onclick = closeModal;
@@ -3148,6 +3204,14 @@ const DA_ES = {
   'mel':'harina','sukker':'azúcar','salt':'sal','peber':'pimienta','krydderier':'especias',
   // Carne y pescado
   'kød':'carne','oksekød':'ternera','svinekød':'cerdo','lam':'cordero','kalkun':'pavo',
+  'bøf':'filete','tykstegsbøf':'chuletón / filete de tapa','tyksteg':'entrecot','oksesteg':'filete de ternera',
+  'oksesteak':'entrecot de ternera','oksefilet':'filete de ternera','oksekotelet':'chuleta de ternera',
+  'oksehak':'ternera picada','kødhak':'carne picada',
+  'svinesteg':'filete de cerdo','svinefilet':'filete de cerdo','svinekotelet':'chuleta de cerdo','svineribben':'costillas de cerdo',
+  'lammesteg':'filete de cordero','lammekotelet':'chuleta de cordero','lammekød':'carne de cordero',
+  'kyllingebryst':'pechuga de pollo','kyllingefilet':'filete de pollo','kyllingelår':'muslos de pollo','kyllingenuggets':'nuggets de pollo',
+  'ribben':'costillas','spareribs':'costillas',
+  'steg':'asado','filet':'filete','kotelet':'chuleta','bryst':'pechuga',
   'kylling':'pollo','and':'pato','bacon':'bacon','skinke':'jamón','pølse':'salchicha',
   'pølser':'salchichas','frikadeller':'albóndigas','leverpostej':'paté','fisk':'pescado',
   'laks':'salmón','tun':'atún','torsk':'bacalao','sild':'arenque','rejer':'gambas',
@@ -3248,12 +3312,27 @@ function translateDaEs(text){
 // Cada español mapea a uno o varios términos daneses posibles.
 const ES_DA = {
   // Carne y pescado
-  'solomillo':['mørbrad','oksemørbrad','svinemørbrad','filet mignon'],
-  'ternera':['oksekød','okse','oksemørbrad','oksefilet','hakket oksekød'],
-  'buey':['oksekød','okse'],
-  'vaca':['oksekød','okse'],
-  'cerdo':['svinekød','svin','svinemørbrad','svinefilet','hakket svinekød'],
-  'cordero':['lam','lammekød'],
+  'solomillo':['mørbrad','oksemørbrad','svinemørbrad','filet mignon','tykstegsbøf','oksesteg','oksesteak','oksefilet','bøf','okse','tyksteg'],
+  'solomillos':['mørbrad','tykstegsbøf','oksesteg','bøf'],
+  'ternera':['oksekød','okse','oksemørbrad','oksefilet','oksesteg','oksesteak','oksehak','hakket oksekød','oksekotelet','tykstegsbøf','tyksteg','bøf'],
+  'buey':['oksekød','okse','oksesteg'],
+  'vaca':['oksekød','okse','oksesteg'],
+  'entrecot':['ribeye','entrecote','tyksteg','tykstegsbøf','oksesteak'],
+  'entrecote':['ribeye','entrecote','tyksteg','tykstegsbøf','oksesteak'],
+  'chuletón':['ribeye','tyksteg','tykstegsbøf','oksekotelet'],
+  'chuleton':['ribeye','tyksteg','tykstegsbøf','oksekotelet'],
+  'filete':['filet','bøf','tykstegsbøf','oksesteg','oksesteak','oksefilet','svinesteg','svinefilet','kyllingefilet','fiskefilet'],
+  'filetes':['filet','bøf','tykstegsbøf','oksesteg','oksesteak','oksefilet','svinesteg','svinefilet','kyllingefilet','fiskefilet'],
+  'bistec':['bøf','oksesteg','oksesteak','tykstegsbøf'],
+  'bistecs':['bøf','oksesteg','oksesteak','tykstegsbøf'],
+  'chuleta':['kotelet','svinekotelet','oksekotelet','lammekotelet'],
+  'chuletas':['kotelet','svinekotelet','oksekotelet','lammekotelet'],
+  'costilla':['ribben','spareribs','okseribben','svineribben'],
+  'costillas':['ribben','spareribs','okseribben','svineribben'],
+  'asado':['steg','oksesteg','svinesteg','lammesteg'],
+  'roast beef':['roastbeef','oksesteg'],
+  'cerdo':['svinekød','svin','svinemørbrad','svinefilet','hakket svinekød','svinesteg','svinekotelet','svineribben'],
+  'cordero':['lam','lammekød','lammesteg','lammekotelet'],
   'pollo':['kylling','kyllingebryst','kyllingefilet','kyllingelår','høne'],
   'pavo':['kalkun'],
   'pato':['and'],
@@ -3265,12 +3344,8 @@ const ES_DA = {
   'chorizo':['chorizo'],
   'albóndigas':['frikadeller','kødboller'],
   'albondigas':['frikadeller','kødboller'],
-  'carne':['kød','kødhak'],
-  'carne picada':['hakket kød','hakket oksekød','hakket svinekød'],
-  'filete':['filet','bøf','steak'],
-  'bistec':['bøf','steak','oksesteg'],
-  'chuleta':['kotelet','svinekotelet'],
-  'costilla':['ribben','spareribs'],
+  'carne':['kød','kødhak','oksekød','svinekød'],
+  'carne picada':['hakket kød','hakket oksekød','hakket svinekød','kødhak','oksehak'],
   'hígado':['lever'],
   'higado':['lever'],
   'paté':['leverpostej','postej'],
