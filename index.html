@@ -577,6 +577,13 @@
     <div id="authCurrent" style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;margin-bottom:1rem;font-size:13px"></div>
 
     <div id="authForm">
+      <button class="sok" id="authGoogle" style="width:100%;background:#fff;color:#3c4043;border:1px solid #dadce0;padding:12px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px">
+        <span style="display:inline-block;width:18px;height:18px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg></span>
+        Continuar con Google
+      </button>
+
+      <div style="text-align:center;color:var(--tx3);font-size:11px;margin-bottom:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em">o usa un email</div>
+
       <label style="font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Email</label>
       <input id="authEmail" type="email" placeholder="tu@email.com" autocomplete="email" spellcheck="false" />
 
@@ -744,7 +751,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, remove, update, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, linkWithPopup, linkWithRedirect } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ─────────────────────────────────────────────────────────────
@@ -1590,6 +1597,18 @@ async function doConnect(p,k,r,u,secret){
     const auth = getAuth(app);
     window.__mercaoAuth = auth;
     try{
+      // Si volvemos de un flujo signInWithRedirect (Google), completamos el login.
+      if(localStorage.getItem('lc_v6_auth_pending_google')){
+        try{
+          const rr = await getRedirectResult(auth);
+          if(rr?.user){
+            localStorage.setItem(AUTH_MODE_KEY, 'email');
+            if(rr.user.email) localStorage.setItem(AUTH_EMAIL_KEY, rr.user.email);
+          }
+        }catch{}
+        localStorage.removeItem('lc_v6_auth_pending_google');
+      }
+
       // Esperamos a que Firebase resuelva su primera restauración de sesión.
       const existing = await new Promise(resolve => {
         const off = onAuthStateChanged(auth, u => { off(); resolve(u); });
@@ -4509,7 +4528,9 @@ function refreshAuthPanel(){
   if(!info) return;
 
   if(cur && !cur.isAnonymous){
-    info.innerHTML = `Sesión iniciada como <b>${esc(cur.email || '(sin email)')}</b><br><span style="color:var(--tx3);font-family:'DM Mono',monospace;font-size:11px">UID: ${esc(cur.uid)}</span>`;
+    const providers = (cur.providerData || []).map(p => p.providerId).join(', ') || 'email';
+    const providerLabel = providers.includes('google') ? '🔵 Google' : '📧 Email';
+    info.innerHTML = `${providerLabel} · Sesión iniciada como <b>${esc(cur.email || '(sin email)')}</b><br><span style="color:var(--tx3);font-family:'DM Mono',monospace;font-size:11px">UID: ${esc(cur.uid)}</span>`;
     form.style.display = 'none';
     logout.style.display = 'block';
   }else{
@@ -4554,6 +4575,81 @@ function friendlyAuthError(code){
     case 'auth/network-request-failed': return 'Sin conexión.';
     default: return code || 'Error desconocido';
   }
+}
+
+async function doGoogleAuth(){
+  const errEl = $('authError');
+  errEl.textContent = '';
+  if(!window.__mercaoAuth){ errEl.textContent = 'Firebase no está inicializado. Conéctate a una sala primero.'; return; }
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  const auth = window.__mercaoAuth;
+  const cur = auth.currentUser;
+  const wasAnon = !!(cur && cur.isAnonymous);
+  const oldUid = cur?.uid || null;
+
+  spin('Abriendo Google...');
+  try{
+    let cred = null;
+
+    // Si estás como anónimo intentamos "linkar" la cuenta Google a tu UID actual.
+    // Así conservas el rol admin y las membresías SIN migrar nada.
+    if(wasAnon){
+      try{
+        cred = await linkWithPopup(cur, provider);
+      }catch(e){
+        // Si el email de Google ya tiene cuenta, o el link falla por popup bloqueado,
+        // caemos al signIn normal (creará nueva UID y migramos las salas).
+        if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/operation-not-supported-in-this-environment'){
+          localStorage.setItem('lc_v6_auth_pending_google', '1');
+          await linkWithRedirect(cur, provider);
+          return; // vuelve tras el redirect y se procesa en getRedirectResult
+        }
+        if(e?.code !== 'auth/credential-already-in-use' && e?.code !== 'auth/email-already-in-use'){
+          throw e;
+        }
+        // Cae al signIn normal.
+      }
+    }
+
+    if(!cred){
+      try{
+        cred = await signInWithPopup(auth, provider);
+      }catch(e){
+        if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/operation-not-supported-in-this-environment'){
+          localStorage.setItem('lc_v6_auth_pending_google', '1');
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        throw e;
+      }
+    }
+
+    await finishAfterGoogleLogin(cred, wasAnon, oldUid);
+  }catch(e){
+    unspin();
+    errEl.textContent = friendlyAuthError(e.code) + (e.message && !friendlyAuthError(e.code).includes(e.message) ? ` (${e.message})` : '');
+  }
+}
+
+async function finishAfterGoogleLogin(cred, wasAnon, oldUid){
+  const user2 = cred?.user;
+  if(!user2) return;
+  localStorage.setItem(AUTH_MODE_KEY, 'email');
+  if(user2.email) localStorage.setItem(AUTH_EMAIL_KEY, user2.email);
+  localStorage.setItem(UK, user2.uid);
+
+  // Si venías de anónimo y la UID cambió (no linkeó), migra las salas.
+  if(wasAnon && oldUid && oldUid !== user2.uid){
+    unspin();
+    spin('Migrando salas a la cuenta de Google...');
+    await migrateUidAcrossSalas(oldUid, user2.uid);
+  }
+  unspin();
+  toast(`Google · ${user2.email || 'sesión iniciada'} ✓`);
+  setTimeout(() => location.reload(), 350);
 }
 
 async function doAuthAction(mode){
@@ -4615,6 +4711,7 @@ if($('authCancel')){
   $('authModal').onclick = e => { if(e.target === $('authModal')) $('authModal').classList.remove('on'); };
   $('authLogin').onclick = () => doAuthAction('login');
   $('authRegister').onclick = () => doAuthAction('register');
+  $('authGoogle').onclick = doGoogleAuth;
   $('authLogout').onclick = async () => {
     if(!confirm('Cerrar sesión de email? Volverás a modo anónimo y en el siguiente refresco podrías recibir otra identidad.')) return;
     localStorage.removeItem(AUTH_MODE_KEY);
