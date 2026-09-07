@@ -1446,6 +1446,15 @@ if(invited){
   if(setupIntro) setupIntro.textContent = `Te han invitado a "${ir}". Escribe tu nombre para entrar.`;
 }
 
+// Firebase config por defecto para esta app (dominio propio de Diego). La API key
+// de Firebase Web NO es un secreto: es pública por diseño; la seguridad viene de
+// Firebase Auth + reglas. Con esto, al entrar por primera vez la app salta directa
+// al login sin pedir Project ID / API Key.
+const DEFAULT_FIREBASE = {
+  projectId: 'lista-compra-7baba',
+  apiKey: 'AIzaSyB2aJl8L0SbT0yxkKb4XJkb1AGvmMC2M9I'
+};
+
 let saved = (() => {
   try{
     const v = JSON.parse(localStorage.getItem(SK));
@@ -1455,14 +1464,26 @@ let saved = (() => {
 })();
 
 // Si venimos por un acceso directo del menú (p+k+id sin r), guardamos las credenciales
-// en SK para que el picker las pueda usar. roomId queda como referencia por si el usuario
-// no elige nada (no se autoconecta, solo sirve de fallback en flujos posteriores).
+// en SK para que el picker las pueda usar.
 if(menuShortcut && !saved){
   const seed = {
     projectId: ip,
     apiKey: ik,
     roomId: 'familia',
     userName: iu || 'Yo'
+  };
+  localStorage.setItem(SK, JSON.stringify(seed));
+  saved = seed;
+}
+
+// Primer arranque sin nada guardado: usamos los defaults hardcodeados para que la
+// app pueda ir DIRECTA al login sin el paso intermedio de "escribe Project ID + API Key".
+if(!saved && !invited){
+  const seed = {
+    projectId: DEFAULT_FIREBASE.projectId,
+    apiKey: DEFAULT_FIREBASE.apiKey,
+    roomId: 'inicial',
+    userName: 'Yo'
   };
   localStorage.setItem(SK, JSON.stringify(seed));
   saved = seed;
@@ -1581,6 +1602,19 @@ function showPicker(){
 function hidePicker(){
   $('picker').style.display = 'none';
   $('setup').style.display = 'flex';
+  // Si ya tenemos Firebase config guardada, no volvemos a pedir Project ID + API Key.
+  // El usuario ya está autenticado a este punto: solo necesita elegir sala y nombre.
+  if(saved?.projectId && saved?.apiKey){
+    $('spid').value = saved.projectId;
+    $('skey').value = saved.apiKey;
+    $('fpid').style.display = 'none';
+    $('fkey').style.display = 'none';
+    const setupTitle = document.querySelector('#setup h1');
+    if(setupTitle) setupTitle.textContent = 'Crear nueva sala';
+    const setupIntro = document.querySelector('#setup > p');
+    if(setupIntro) setupIntro.textContent = 'Elige un nombre para la sala y tu nombre.';
+    $('gobtn').textContent = 'Crear sala';
+  }
 }
 
 function enterRoomFromPicker(roomId){
