@@ -2025,7 +2025,9 @@ function subscribe(name){
   }
 
   onValue(ref(db,`listas/${room}/${name}/items`), snap => {
-    items = snap.val() || {};
+    const val = snap.val() || {};
+    console.log('[Mercao] items snap', { room, list: name, count: Object.keys(val).length, keys: Object.keys(val) });
+    items = val;
     saveItemsToCache(room, name, items);
     $('dot').className = 'dot ok';
     render();
@@ -2033,6 +2035,7 @@ function subscribe(name){
     $('dot').className = 'dot er';
     $('sub').textContent = 'Error: ' + e.message;
     toast('Error Firebase: ' + e.message);
+    console.error('[Mercao] items listener error', { room, list: name, e });
   });
 }
 
@@ -2686,7 +2689,8 @@ function addItem(name, brand='', barcode='', cat='otros', unit='', img='', sourc
   if(exact){
     const patch = { qty:(exact[1].qty || 1) + 1 };
     if(price && !exact[1].price) patch.price = price;
-    update(ref(db,`listas/${room}/${curList}/items/${exact[0]}`), patch);
+    update(ref(db,`listas/${room}/${curList}/items/${exact[0]}`), patch)
+      .catch(err => toast(`❌ No se pudo actualizar: ${err.code || err.message}`));
     toast(`+1 ${name}`);
     return;
   }
@@ -2704,6 +2708,9 @@ function addItem(name, brand='', barcode='', cat='otros', unit='', img='', sourc
     checked:false,
     ts:Date.now(),
     addedBy:user
+  }).catch(err => {
+    toast(`❌ No se pudo guardar "${name}": ${err.code || err.message}`);
+    console.error('[Mercao] push item falló', { room, curList, err });
   });
 
   const hi = hist.findIndex(h => (h.name || '').toLowerCase() === name.toLowerCase());
