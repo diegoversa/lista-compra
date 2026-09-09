@@ -2026,11 +2026,38 @@ function subscribe(name){
 
   onValue(ref(db,`listas/${room}/${name}/items`), snap => {
     const val = snap.val() || {};
-    console.log('[Mercao] items snap', { room, list: name, count: Object.keys(val).length, keys: Object.keys(val) });
+    // Detecta items nuevos comparando con el estado anterior. Se guardan para que
+    // render() los expanda de categoría, haga scroll y les de un flash visual.
+    const prevKeys = new Set(Object.keys(items || {}));
+    const newlyAdded = [];
+    for(const [k, v] of Object.entries(val)){
+      if(!prevKeys.has(k)){
+        newlyAdded.push({ key: k, cat: v.cat || 'otros' });
+      }
+    }
+    console.log('[Mercao] items snap', { room, list: name, count: Object.keys(val).length, new: newlyAdded });
     items = val;
     saveItemsToCache(room, name, items);
     $('dot').className = 'dot ok';
+    // Si hay items nuevos, forzamos que su categoría esté abierta antes del render.
+    for(const it of newlyAdded){ if(collapsed[it.cat]) collapsed[it.cat] = false; }
+    if(newlyAdded.length){ localStorage.setItem(CK, JSON.stringify(collapsed)); }
     render();
+    // Después del render, hacer scroll al primer item nuevo y darle un flash breve.
+    if(newlyAdded.length){
+      requestAnimationFrame(() => {
+        for(const it of newlyAdded){
+          const li = document.querySelector(`li.item[data-key="${it.key}"]`);
+          if(li){
+            li.scrollIntoView({ behavior:'smooth', block:'center' });
+            li.style.transition = 'background .4s';
+            li.style.background = 'var(--acl)';
+            setTimeout(() => { li.style.background = ''; }, 900);
+            break;
+          }
+        }
+      });
+    }
   }, e => {
     $('dot').className = 'dot er';
     $('sub').textContent = 'Error: ' + e.message;
@@ -5140,7 +5167,10 @@ function render(){
       `;
 
       const ul = sec.querySelector('ul');
-      byCat[cat].forEach(item => ul.appendChild(mkItem(item)));
+      byCat[cat].forEach(item => {
+        try{ ul.appendChild(mkItem(item)); }
+        catch(err){ console.error('[Mercao] mkItem falló', { item, err }); }
+      });
       c.appendChild(sec);
     });
 
@@ -5150,7 +5180,10 @@ function render(){
       const sec = document.createElement('div');
       sec.className = 'catsec';
       sec.innerHTML = `<div class="cathdr"><span>📦</span>${esc(cat)}<span class="pill">${byCat[cat].length}</span></div><ul class="items"></ul>`;
-      byCat[cat].forEach(item => sec.querySelector('ul').appendChild(mkItem(item)));
+      byCat[cat].forEach(item => {
+        try{ sec.querySelector('ul').appendChild(mkItem(item)); }
+        catch(err){ console.error('[Mercao] mkItem falló', { item, err }); }
+      });
       c.appendChild(sec);
     });
   }
