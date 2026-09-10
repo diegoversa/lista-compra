@@ -1021,6 +1021,22 @@ function productEmoji(name){
   return null;
 }
 
+// Alerta de alergia: leche de cabra u oveja. Keywords en danés y otros idiomas
+// típicos de etiquetas de supermercado.
+const ALLERGY_KEYWORDS = [
+  { re: /\b(ged|gede|geden|gedeost|gedemælk|gedemaelk|chèvre|chevre|goat|caprin[oa])\b/i, kind: 'cabra' },
+  { re: /\b(får|fåre|fåren|fåreost|fåremælk|faareost|faaremælk|sheep|ovin[oa]|manchego|pecorino|roquefort|feta|halloumi)\b/i, kind: 'oveja' }
+];
+
+function detectAllergy(text){
+  if(!text) return null;
+  const kinds = [];
+  for(const rule of ALLERGY_KEYWORDS){
+    if(rule.re.test(text) && !kinds.includes(rule.kind)) kinds.push(rule.kind);
+  }
+  return kinds.length ? kinds.join(' + ') : null;
+}
+
 function guesscatExtended(n, oc = '', fallback = 'otros'){
   const s = (n + ' ' + oc).toLowerCase();
 
