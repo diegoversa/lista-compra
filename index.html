@@ -5169,7 +5169,22 @@ function render(){
       const ul = sec.querySelector('ul');
       byCat[cat].forEach(item => {
         try{ ul.appendChild(mkItem(item)); }
-        catch(err){ console.error('[Mercao] mkItem falló', { item, err }); }
+        catch(err){
+          console.error('[Mercao] mkItem falló', { item, err });
+          const li = document.createElement('li');
+          li.className = 'item';
+          li.style.background = 'rgba(220,53,69,0.08)';
+          li.style.borderLeft = '3px solid var(--red)';
+          li.innerHTML = `
+            <div class="iemoji">⚠️</div>
+            <div class="iinfo" style="min-width:0">
+              <div class="iname" style="color:var(--red)">${esc(item.name || '(sin nombre)')}</div>
+              <div class="imeta" style="color:var(--red);white-space:normal">Error al pintar: ${esc(String(err?.message || err))}</div>
+            </div>
+            <button class="delbtn" data-a="del" data-id="${item.key}" title="Eliminar">✕</button>
+          `;
+          ul.appendChild(li);
+        }
       });
       c.appendChild(sec);
     });
